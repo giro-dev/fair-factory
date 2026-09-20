@@ -43,7 +43,8 @@ public class DefaultAgent implements Agent {
                 : UUID.randomUUID().toString();
 
         String systemPrompt = promptLoader.load(definition.id(), locale);
-        String context = "\n\nYou are assisting household " + householdId + " and member " + memberId
+        String context = "\n\nYou are assisting household " + householdId
+                + (memberId != null ? " and member " + memberId : "")
                 + ". When calling tools that require a householdId, always use " + householdId
                 + ". When a tool needs year and week, prefer getCurrentIsoWeek().";
 

@@ -5,6 +5,7 @@ import dev.agiro.fanel.assistant.api.AgentResponse;
 import dev.agiro.fanel.assistant.domain.AgentService;
 import dev.agiro.fanel.household.api.HouseholdApi;
 import dev.agiro.fanel.household.api.HouseholdDto;
+import dev.agiro.fanel.shared.security.CurrentAccess;
 import dev.agiro.fanel.shared.security.MemberPrincipal;
 import dev.agiro.fanel.shared.web.ForbiddenException;
 import jakarta.validation.Valid;
@@ -23,25 +24,39 @@ import java.util.UUID;
 public class ChatController {
     private final AgentService agentService;
     private final HouseholdApi households;
+    private final CurrentAccess access;
 
-    public ChatController(AgentService agentService, HouseholdApi households) {
+    public ChatController(AgentService agentService, HouseholdApi households, CurrentAccess access) {
         this.agentService = agentService;
         this.households = households;
+        this.access = access;
     }
 
     @PostMapping("/chat")
     public AgentResponse chat(@PathVariable UUID householdId,
                               @Valid @RequestBody AgentRequest request,
                               @AuthenticationPrincipal MemberPrincipal principal) {
-        requireHousehold(principal, householdId);
+        UUID memberId = resolveActingMember(householdId, principal, request.memberId());
         Locale locale = resolveLocale(householdId);
-        return agentService.chat(householdId, principal.memberId(), request, locale);
+        return agentService.chat(householdId, memberId, request, locale);
     }
 
-    private void requireHousehold(MemberPrincipal principal, UUID householdId) {
-        if (principal == null || !principal.householdId().equals(householdId)) {
+    /**
+     * Members always chat as themselves. Full-access callers (global admin, API token) may pass the
+     * member picked in the "who am I" selector as {@code request.memberId}; without it the chat
+     * proceeds unattributed.
+     */
+    private UUID resolveActingMember(UUID householdId, MemberPrincipal principal, UUID requestedMemberId) {
+        if (principal != null) {
+            if (!principal.householdId().equals(householdId)) {
+                throw new ForbiddenException("You are not a member of this household");
+            }
+            return principal.memberId();
+        }
+        if (!access.hasFullAccess()) {
             throw new ForbiddenException("You are not a member of this household");
         }
+        return requestedMemberId != null ? households.getMember(householdId, requestedMemberId).id() : null;
     }
 
     private Locale resolveLocale(UUID householdId) {

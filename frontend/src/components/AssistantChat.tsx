@@ -124,7 +124,7 @@ function tryParseRecipe(text: string): RecipeSuggestion | undefined {
 
 export function AssistantChat() {
   const { t } = useTranslation()
-  const { household } = useHousehold()
+  const { household, member } = useHousehold()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [agents, setAgents] = useState<Agent[]>([])
@@ -186,7 +186,7 @@ export function AssistantChat() {
     try {
       const response = await api<AgentResponse>(`/households/${household.id}/assistant/chat`, {
         method: 'POST',
-        body: JSON.stringify({ agentId: selectedAgent, conversationId, message: input, attachments }),
+        body: JSON.stringify({ agentId: selectedAgent, conversationId, message: input, attachments, memberId: member?.id ?? null }),
       })
       console.debug('[AssistantChat] agent response:', response)
       setConversationIds((prev) => ({ ...prev, [selectedAgent]: response.conversationId }))
@@ -355,6 +355,7 @@ export function AssistantChat() {
             </div>
 
             <div className="assistant-input">
+              {!member && <p className="assistant-hint">{t('assistant.pickMember')}</p>}
               {selected?.supportsMedia && (
                 <label className="assistant-file">
                   <input

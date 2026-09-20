@@ -18,6 +18,29 @@ public class CurrentAccess {
         return hasAuthority("ROLE_ADMIN");
     }
 
+    /** Instance-wide API token client ({@code Bearer fanel.api.token}); not bound to a household. */
+    public boolean isApiClient() {
+        return hasAuthority("ROLE_API");
+    }
+
+    /**
+     * The global bootstrap admin (env-configured), as opposed to a household member whose role is
+     * ADMIN: members are always bound to a single household.
+     */
+    public boolean isGlobalAdmin() {
+        return isAdmin() && householdId().isEmpty();
+    }
+
+    /** Callers allowed to operate across households: global admin, household-admin members, API token. */
+    public boolean hasFullAccess() {
+        return isAdmin() || isApiClient();
+    }
+
+    /** Callers allowed to create households and see them all: the global admin or the API token. */
+    public boolean hasGlobalAccess() {
+        return isGlobalAdmin() || isApiClient();
+    }
+
     public boolean isAdult() {
         return principal().map(MemberPrincipal::role).map(AccessRole.ADULT::equals).orElse(false);
     }

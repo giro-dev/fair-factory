@@ -29,12 +29,19 @@ public class HouseholdController {
 
     @GetMapping
     public List<HouseholdDto> list() {
-        return service.list();
+        if (access.hasGlobalAccess()) {
+            return service.list();
+        }
+        // Members are bound to a single household: they only ever see their own.
+        return access.householdId()
+                .map(id -> List.of(service.get(id)))
+                .orElseGet(List::of);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public HouseholdDto create(@Valid @RequestBody CreateHousehold request) {
+        if (!access.hasGlobalAccess()) throw new ForbiddenException("Only the global admin can create households");
         return service.create(request.name(), request.locale(), request.timezone());
     }
 
@@ -47,13 +54,20 @@ public class HouseholdController {
     @ResponseStatus(HttpStatus.CREATED)
     public MemberDto addMember(@PathVariable UUID id, @Valid @RequestBody CreateMember request) {
         boolean adultAddingChild = access.isAdult() && request.role() == MemberRole.CHILD;
-        if (!access.isAdmin() && !adultAddingChild) {
+        if (!access.hasFullAccess() && !adultAddingChild) {
             throw new ForbiddenException("Only admins can add this kind of member");
         }
         MemberDto created = service.addMember(id, request.name(), request.role(), request.color());
         if (adultAddingChild) {
             UUID creatorId = access.memberId().orElseThrow();
             created = service.setMemberGuardians(id, created.id(), List.of(creatorId));
+        }
+        if (request.pin() != null && !request.pin().isBlank()) {
+            created = service.setMemberPin(id, created.id(), request.pin());
+        }
+        if (request.username() != null && !request.username().isBlank()
+                && request.password() != null && !request.password().isBlank()) {
+            created = service.setMemberCredentials(id, created.id(), request.username(), request.password());
         }
         return created;
     }
@@ -66,6 +80,7 @@ public class HouseholdController {
     @PutMapping("/{id}/members/{memberId}/pin")
     public MemberDto setPin(@PathVariable UUID id, @PathVariable UUID memberId,
                             @RequestBody SetPin request) {
+        requireCanManageMember(id, memberId);
         return service.setMemberPin(id, memberId, request.pin());
     }
 
@@ -99,20 +114,20 @@ public class HouseholdController {
     @PutMapping("/{id}/members/{memberId}/role")
     public MemberDto setRole(@PathVariable UUID id, @PathVariable UUID memberId,
                              @Valid @RequestBody SetRole request) {
-        if (!access.isAdmin()) throw new ForbiddenException("Only admins can change a member's role");
+        if (!access.hasFullAccess()) throw new ForbiddenException("Only admins can change a member's role");
         return service.setMemberRole(id, memberId, request.role());
     }
 
     @PutMapping("/{id}/members/{childId}/guardians")
     public MemberDto setGuardians(@PathVariable UUID id, @PathVariable UUID childId,
                                   @Valid @RequestBody SetGuardians request) {
-        if (!access.isAdmin()) throw new ForbiddenException("Only admins can manage guardians");
+        if (!access.hasFullAccess()) throw new ForbiddenException("Only admins can manage guardians");
         return service.setMemberGuardians(id, childId, request.guardianIds());
     }
 
     /** Admins can manage anyone; adults only themselves or their related children; others only themselves. */
     private void requireCanManageMember(UUID householdId, UUID targetMemberId) {
-        if (access.isAdmin()) return;
+        if (access.hasFullAccess()) return;
         if (access.memberId().map(id -> id.equals(targetMemberId)).orElse(false)) return;
         if (access.isAdult() && access.memberId()
                 .map(id -> service.relatedChildIds(householdId, id).contains(targetMemberId))
@@ -123,7 +138,8 @@ public class HouseholdController {
     }
 
     public record CreateHousehold(@NotBlank String name, @NotBlank String locale, @NotBlank String timezone) {}
-    public record CreateMember(@NotBlank String name, MemberRole role, String color) {}
+    public record CreateMember(@NotBlank String name, MemberRole role, String color,
+                               String pin, String username, String password) {}
     public record UpdateMember(String name, String color) {}
     public record SetPin(String pin) {}
     public record SetCredentials(@NotBlank String username, @NotBlank String password) {}

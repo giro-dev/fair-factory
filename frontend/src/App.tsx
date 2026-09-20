@@ -1,6 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { NavLink, Route, Routes } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import { api } from './api/client'
 import { Households } from './pages/Households'
 import { Menu } from './pages/Menu'
 import { Recipes } from './pages/Recipes'
@@ -10,10 +11,12 @@ import { Chores } from './pages/Chores'
 import { Members } from './pages/Members'
 import { Account } from './pages/Account'
 import { Login } from './pages/Login'
+import { Setup } from './pages/Setup'
 import { Placeholder } from './pages/Placeholder'
 import { HouseholdProvider, useHousehold } from './context/HouseholdContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { WhoAmI } from './components/WhoAmI'
+import { HouseholdSwitcher } from './components/HouseholdSwitcher'
 import { ThemeToggle } from './components/ThemeToggle'
 import { AssistantChat } from './components/AssistantChat'
 import { useHouseholdEvents } from './hooks/useHouseholdEvents'
@@ -83,8 +86,8 @@ const icons = {
 
 function Shell() {
   const { t } = useTranslation()
+  const { household, canManageHouseholds } = useHousehold()
   const { logout } = useAuth()
-  const { household } = useHousehold()
   useHouseholdEvents(household?.id)
   const nav = [
     ['/menu', t('nav.menu'), icons.menu],
@@ -104,8 +107,9 @@ function Shell() {
           ))}
         </nav>
         <div className="sidebar-footer">
+          <HouseholdSwitcher />
           <div className="footer-actions">
-            <NavLink to="/households">{icons.households}<span>{t('households.title')}</span></NavLink>
+            {canManageHouseholds && <NavLink to="/households">{icons.households}<span>{t('households.title')}</span></NavLink>}
             <NavLink to="/compte" aria-label={t('account.title')} className="icon-link">{icons.account}</NavLink>
             <button type="button" className="icon-link" aria-label={t('account.logout')} onClick={logout}>{icons.logout}</button>
             <ThemeToggle />
@@ -116,7 +120,8 @@ function Shell() {
       <div className="topbar">
         <div className="brand">Fanel</div>
         <div className="topbar-actions">
-          <NavLink to="/households" aria-label={t('households.title')} className="icon-link">{icons.households}</NavLink>
+          <HouseholdSwitcher />
+          {canManageHouseholds && <NavLink to="/households" aria-label={t('households.title')} className="icon-link">{icons.households}</NavLink>}
           <NavLink to="/compte" aria-label={t('account.title')} className="icon-link">{icons.account}</NavLink>
           <button type="button" className="icon-link" aria-label={t('account.logout')} onClick={logout}>{icons.logout}</button>
           <ThemeToggle />
@@ -141,19 +146,29 @@ function Shell() {
   )
 }
 
-function AuthenticatedApp() {
-  const { t } = useTranslation()
-  const { user, loading } = useAuth()
-  if (loading) return <main className="login-page"><p>{t('loading')}</p></main>
-  if (!user) return <Login />
-  return <HouseholdProvider><Shell /></HouseholdProvider>
+function Gate() {
+  const { username } = useAuth()
+  const setup = useQuery({
+    queryKey: ['setup'],
+    queryFn: () => api<{ required: boolean }>('/setup'),
+    staleTime: 60_000,
+  })
+  if (setup.isPending) return null
+  // First run (or an admin login on an empty instance): create the household first.
+  if (setup.data?.required) return <Setup />
+  if (!username) return <Login />
+  return (
+    <HouseholdProvider>
+      <Shell />
+    </HouseholdProvider>
+  )
 }
 
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthenticatedApp />
+        <Gate />
       </AuthProvider>
     </QueryClientProvider>
   )

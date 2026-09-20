@@ -10,6 +10,8 @@ import dev.agiro.fanel.household.api.MemberDto;
 import dev.agiro.fanel.menu.api.MealPlanDto;
 import dev.agiro.fanel.menu.api.MealSlotDto;
 import dev.agiro.fanel.menu.api.MenuApi;
+import dev.agiro.fanel.shared.security.CurrentAccess;
+import dev.agiro.fanel.shared.web.ForbiddenException;
 import dev.agiro.fanel.shopping.api.ShoppingApi;
 import dev.agiro.fanel.shopping.api.ShoppingItemDto;
 import dev.agiro.fanel.shopping.api.ShoppingListDto;
@@ -37,18 +39,21 @@ public class ExportController {
     private final ShoppingApi shopping;
     private final CalendarApi calendar;
     private final ChoresApi chores;
+    private final CurrentAccess access;
 
     public ExportController(HouseholdApi households, MenuApi menu, ShoppingApi shopping,
-                            CalendarApi calendar, ChoresApi chores) {
+                            CalendarApi calendar, ChoresApi chores, CurrentAccess access) {
         this.households = households;
         this.menu = menu;
         this.shopping = shopping;
         this.calendar = calendar;
         this.chores = chores;
+        this.access = access;
     }
 
     @GetMapping("/{householdId}/export")
     public HouseholdExport export(@PathVariable UUID householdId) {
+        if (!access.hasFullAccess()) throw new ForbiddenException("Only admins can export a household");
         HouseholdDto household = households.get(householdId);
         List<MemberDto> members = households.listMembers(householdId);
         List<MealPlanDto> mealPlans = menu.listAll(householdId);
@@ -66,6 +71,7 @@ public class ExportController {
     @PostMapping("/import")
     @ResponseStatus(HttpStatus.CREATED)
     public HouseholdDto importHousehold(@RequestBody HouseholdExport payload) {
+        if (!access.hasGlobalAccess()) throw new ForbiddenException("Only the global admin can import households");
         HouseholdDto household = households.create(payload.household().name(), payload.household().locale(),
                 payload.household().timezone());
 

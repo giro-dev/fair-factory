@@ -504,26 +504,6 @@ legend { font-size: 0.85rem; font-weight: 600; color: var(--muted); padding: 0 0
   padding: 0.35rem 0;
 }
 .day-event:hover:not(:disabled) { background: transparent; color: var(--accent-strong); }
-.login-page {
-  min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-}
-.login-card {
-  display: grid;
-  gap: 1rem;
-  width: min(100%, 380px);
-  padding: 2rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.login-card .brand { padding: 0; }
-.login-card h1 { margin: 0.5rem 0 0; }
-.login-card [role="alert"] { margin: 0; }
-
 /* ---------- Responsive: mobile bottom nav ---------- */
 
 @media (max-width: 760px) {
@@ -1002,3 +982,26 @@ legend { font-size: 0.85rem; font-weight: 600; color: var(--muted); padding: 0 0
   gap: 0.5rem;
   color: var(--accent);
 }
+
+.household-switcher {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.topbar .household-switcher { width: auto; max-width: 12rem; }
+
+.member-badge {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.assistant-hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.5rem; }

@@ -10,6 +10,7 @@ import dev.agiro.fanel.household.infra.HouseholdRepository;
 import dev.agiro.fanel.household.infra.MemberRepository;
 import dev.agiro.fanel.shared.web.ConflictException;
 import dev.agiro.fanel.shared.web.EntityNotFoundException;
+import dev.agiro.fanel.shared.web.ForbiddenException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -144,6 +145,25 @@ public class HouseholdService implements HouseholdApi {
         return findMember(householdId, memberId).wardIds();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSetupRequired() {
+        return households.count() == 0;
+    }
+
+    @Override
+    public synchronized MemberDto bootstrap(String householdName, String locale, String timezone,
+                                            String memberName, String username, String rawPassword) {
+        if (!isSetupRequired()) {
+            throw new ForbiddenException("Setup has already been completed");
+        }
+        Household household = households.save(new Household(householdName, locale, timezone));
+        events.publishEvent(new HouseholdCreated(household.getId()));
+        Member member = members.save(household.addMember(memberName, MemberRole.ADMIN, null));
+        member.setCredentials(username, passwordEncoder.encode(rawPassword));
+        return toDto(members.save(member));
+    }
+
     private Member findMember(UUID householdId, UUID memberId) {
         return members.findById(memberId)
                 .filter(m -> m.getHousehold().getId().equals(householdId))
@@ -163,6 +183,6 @@ public class HouseholdService implements HouseholdApi {
     private static MemberDto toDto(Member member) {
         return new MemberDto(member.getId(), member.getHousehold().getId(), member.getName(),
                 member.getRole(), member.getColor(), member.getCreatedAt(), member.getUsername(),
-                member.guardianIds());
+                member.guardianIds(), member.hasPin(), member.hasCredentials());
     }
 }

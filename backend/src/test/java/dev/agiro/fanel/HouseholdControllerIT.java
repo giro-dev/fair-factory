@@ -6,10 +6,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -21,36 +19,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 @AutoConfigureMockMvc
 abstract class HouseholdControllerIT {
     @Autowired MockMvc mvc;
-
-    @Test
-    void authenticatesWithBrowserSession() throws Exception {
-        mvc.perform(get("/api/v1/auth/me"))
-                .andExpect(status().isUnauthorized());
-
-        var result = mvc.perform(post("/api/v1/auth/login").with(csrf())
-                        .param("username", "admin")
-                        .param("password", "admin"))
-                .andExpect(status().isNoContent())
-                .andReturn();
-        var session = (MockHttpSession) result.getRequest().getSession(false);
-
-        mvc.perform(get("/api/v1/auth/me").session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("admin"));
-
-        mvc.perform(post("/api/v1/auth/logout").session(session).with(csrf()))
-                .andExpect(status().isNoContent());
-        mvc.perform(get("/api/v1/auth/me").session(session))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void rejectsInvalidBrowserCredentials() throws Exception {
-        mvc.perform(post("/api/v1/auth/login").with(csrf())
-                        .param("username", "admin")
-                        .param("password", "wrong"))
-                .andExpect(status().isUnauthorized());
-    }
 
     @Test
     void createsAndListsHousehold() throws Exception {

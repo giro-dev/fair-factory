@@ -2,6 +2,7 @@ package dev.agiro.fanel.assistant.web;
 
 import dev.agiro.fanel.assistant.api.AgentDefinition;
 import dev.agiro.fanel.assistant.domain.AgentRegistry;
+import dev.agiro.fanel.shared.security.CurrentAccess;
 import dev.agiro.fanel.shared.security.MemberPrincipal;
 import dev.agiro.fanel.shared.web.ForbiddenException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,21 +18,22 @@ import java.util.UUID;
 @RequestMapping("/api/v1/households/{householdId}/assistant/agents")
 public class AgentController {
     private final AgentRegistry registry;
+    private final CurrentAccess access;
 
-    public AgentController(AgentRegistry registry) {
+    public AgentController(AgentRegistry registry, CurrentAccess access) {
         this.registry = registry;
+        this.access = access;
     }
 
     @GetMapping
     public List<AgentDefinition> list(@PathVariable UUID householdId,
                                       @AuthenticationPrincipal MemberPrincipal principal) {
-        requireHousehold(principal, householdId);
-        return registry.list();
-    }
-
-    private void requireHousehold(MemberPrincipal principal, UUID householdId) {
-        if (principal == null || !principal.householdId().equals(householdId)) {
+        boolean allowed = principal != null
+                ? principal.householdId().equals(householdId)
+                : access.hasFullAccess();
+        if (!allowed) {
             throw new ForbiddenException("You are not a member of this household");
         }
+        return registry.list();
     }
 }

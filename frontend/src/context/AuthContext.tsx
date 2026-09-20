@@ -1,41 +1,47 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { currentUser, login as requestLogin, logout as requestLogout, type CurrentUser } from '../api/client'
+import { createContext, useContext, useSyncExternalStore, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { getAuthHeader, getCredentials, setCredentials, subscribe } from '../auth/authStore'
 
 type AuthContextValue = {
-  user: CurrentUser | null
-  loading: boolean
+  username?: string
   login: (username: string, password: string) => Promise<boolean>
-  logout: () => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<CurrentUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const credentials = useSyncExternalStore(subscribe, getCredentials)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    void currentUser().then(setUser).finally(() => setLoading(false))
-    const unauthorized = () => setUser(null)
-    window.addEventListener('fanel:unauthorized', unauthorized)
-    return () => window.removeEventListener('fanel:unauthorized', unauthorized)
-  }, [])
-
-  const login = async (username: string, password: string) => {
-    const authenticated = await requestLogin(username, password)
-    if (authenticated) setUser(await currentUser())
-    return authenticated
+  const value: AuthContextValue = {
+    username: credentials?.username,
+    login: async (username, password) => {
+      setCredentials({ username, password })
+      try {
+        const response = await fetch('/api/v1/me', { headers: { authorization: getAuthHeader()! } })
+        if (!response.ok) {
+          setCredentials(null)
+          return false
+        }
+        await queryClient.invalidateQueries()
+        return true
+      } catch {
+        setCredentials(null)
+        return false
+      }
+    },
+    logout: () => {
+      setCredentials(null)
+      localStorage.removeItem('fanel.memberId')
+      localStorage.removeItem('fanel.householdId')
+    },
   }
 
-  const logout = async () => {
-    await requestLogout()
-    setUser(null)
-  }
-
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)
   if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context

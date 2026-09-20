@@ -20,4 +20,14 @@ public interface HouseholdApi {
 
     /** Children that the given adult/admin member is responsible for. Empty for children or unknown members. */
     List<UUID> relatedChildIds(UUID householdId, UUID memberId);
+
+    /** Whether the instance has never been set up (no household exists yet). */
+    boolean isSetupRequired();
+
+    /**
+     * First-run bootstrap: creates the first household together with its ADMIN member and its
+     * login credentials, atomically. Only allowed while {@link #isSetupRequired()} is true.
+     */
+    MemberDto bootstrap(String householdName, String locale, String timezone,
+                        String memberName, String username, String rawPassword);
 }

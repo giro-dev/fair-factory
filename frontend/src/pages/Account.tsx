@@ -8,8 +8,7 @@ import { subscribeToNotifications, unsubscribeFromNotifications } from '../notif
 
 export function Account() {
   const { t } = useTranslation()
-  const { user, logout } = useAuth()
-  const username = user?.username
+  const { username, logout } = useAuth()
   const { member } = useHousehold()
   const queryClient = useQueryClient()
   const [newUsername, setNewUsername] = useState('')
@@ -60,7 +59,7 @@ export function Account() {
       <p>{t('account.loggedInAs', { username })}</p>
       <button type="button" className="link" onClick={logout}>{t('account.logout')}</button>
 
-      {'serviceWorker' in navigator && 'PushManager' in window && member?.role === 'ADULT' && (
+      {'serviceWorker' in navigator && 'PushManager' in window && member && member.role !== 'CHILD' && (
         <div>
           <button
             type="button"
@@ -73,7 +72,7 @@ export function Account() {
         </div>
       )}
 
-      {member?.role === 'ADULT' ? (
+      {member && member.role !== 'CHILD' ? (
         <form className="create-form" onSubmit={(event) => { event.preventDefault(); setSaved(false); mutation.mutate() }}>
           <p>{t('account.setCredentialsFor', { name: member.name })}</p>
           <label>

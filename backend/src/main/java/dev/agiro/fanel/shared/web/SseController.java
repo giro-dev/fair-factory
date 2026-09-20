@@ -1,6 +1,7 @@
 package dev.agiro.fanel.shared.web;
 
 import dev.agiro.fanel.shared.events.HouseholdEvent;
+import dev.agiro.fanel.shared.security.CurrentAccess;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,9 +20,17 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequestMapping("/api/v1/events")
 public class SseController {
     private final List<Subscription> subscriptions = new CopyOnWriteArrayList<>();
+    private final CurrentAccess access;
+
+    public SseController(CurrentAccess access) {
+        this.access = access;
+    }
 
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@RequestParam UUID household) {
+        boolean allowed = access.hasFullAccess()
+                || access.householdId().map(household::equals).orElse(false);
+        if (!allowed) throw new ForbiddenException("Not allowed to subscribe to this household");
         SseEmitter emitter = new SseEmitter(0L);
         Subscription subscription = new Subscription(household, emitter);
         subscriptions.add(subscription);
