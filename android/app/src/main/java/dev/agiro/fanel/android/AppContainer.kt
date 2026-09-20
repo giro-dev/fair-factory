@@ -31,7 +31,7 @@ class AppContainer(context: Context) : AppContainerContract {
         context.applicationContext,
         FanelDatabase::class.java,
         "fanel-android.db"
-    ).addMigrations(FanelDatabase.MIGRATION_1_2).build()
+    ).addMigrations(FanelDatabase.MIGRATION_1_2, FanelDatabase.MIGRATION_2_3).build()
 
     private val syncPreferences = SyncPreferences(context.applicationContext)
 

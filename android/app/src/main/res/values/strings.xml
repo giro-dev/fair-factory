@@ -17,6 +17,7 @@
     <string name="event_title">Títol</string>
     <string name="event_date">Data</string>
     <string name="event_time_optional">Hora (opcional)</string>
+    <string name="event_duration_minutes">Durada en minuts (opcional)</string>
     <string name="event_pick_time">Tria l\'hora</string>
     <string name="event_clear_time">Treu l\'hora</string>
     <string name="event_clear_until">Treu la data de fi</string>

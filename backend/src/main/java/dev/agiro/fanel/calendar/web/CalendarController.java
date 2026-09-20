@@ -34,15 +34,17 @@ public class CalendarController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CalendarEventDto create(@PathVariable UUID householdId, @Valid @RequestBody CreateEvent request) {
-        return calendar.create(householdId, request.title(), request.date(), request.time(), request.addedBy(),
-                request.assigneeIds(), request.recurrenceFreq(), request.recurrenceInterval(), request.recurrenceUntil());
+        return calendar.create(householdId, request.title(), request.date(), request.time(), request.durationMinutes(),
+                request.addedBy(), request.assigneeIds(), request.recurrenceFreq(), request.recurrenceInterval(),
+                request.recurrenceUntil());
     }
 
     @PatchMapping("/{eventId}")
     public CalendarEventDto update(@PathVariable UUID householdId, @PathVariable UUID eventId,
                                    @RequestBody UpdateEvent request) {
         return calendar.update(householdId, eventId, request.title(), request.date(), request.time(),
-                request.assigneeIds(), request.recurrenceFreq(), request.recurrenceInterval(), request.recurrenceUntil());
+                request.durationMinutes(), request.assigneeIds(), request.recurrenceFreq(),
+                request.recurrenceInterval(), request.recurrenceUntil());
     }
 
     @DeleteMapping("/{eventId}")
@@ -51,12 +53,14 @@ public class CalendarController {
         calendar.delete(householdId, eventId);
     }
 
-    public record CreateEvent(@NotBlank String title, @NotNull LocalDate date, LocalTime time, UUID addedBy,
+    public record CreateEvent(@NotBlank String title, @NotNull LocalDate date, LocalTime time,
+                              Integer durationMinutes, UUID addedBy,
                               List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
                               LocalDate recurrenceUntil) {
     }
 
-    public record UpdateEvent(String title, LocalDate date, LocalTime time, List<UUID> assigneeIds,
+    public record UpdateEvent(String title, LocalDate date, LocalTime time, Integer durationMinutes,
+                              List<UUID> assigneeIds,
                               RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval, LocalDate recurrenceUntil) {
     }
 }

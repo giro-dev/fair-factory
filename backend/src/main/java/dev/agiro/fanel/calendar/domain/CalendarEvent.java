@@ -31,6 +31,9 @@ public class CalendarEvent extends UuidEntity {
     private LocalDate date;
     @Column(name = "event_time")
     private LocalTime time;
+    /** Length in minutes; only meaningful when {@link #time} is set. */
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
     @Column(name = "added_by")
     @JdbcTypeCode(SqlTypes.CHAR)
     private UUID addedBy;
@@ -54,13 +57,14 @@ public class CalendarEvent extends UuidEntity {
 
     protected CalendarEvent() {}
 
-    public CalendarEvent(UUID householdId, String title, LocalDate date, LocalTime time, UUID addedBy,
-                         List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
-                         LocalDate recurrenceUntil) {
+    public CalendarEvent(UUID householdId, String title, LocalDate date, LocalTime time, Integer durationMinutes,
+                         UUID addedBy, List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq,
+                         Integer recurrenceInterval, LocalDate recurrenceUntil) {
         this.householdId = householdId;
         this.title = title;
         this.date = date;
         this.time = time;
+        this.durationMinutes = durationMinutes;
         this.addedBy = addedBy;
         if (assigneeIds != null) this.assigneeIds = new HashSet<>(assigneeIds);
         this.recurrenceFreq = recurrenceFreq;
@@ -72,6 +76,7 @@ public class CalendarEvent extends UuidEntity {
     public String getTitle() { return title; }
     public LocalDate getDate() { return date; }
     public LocalTime getTime() { return time; }
+    public Integer getDurationMinutes() { return durationMinutes; }
     public UUID getAddedBy() { return addedBy; }
     public List<UUID> getAssigneeIds() { return assigneeIds.stream().toList(); }
     public RecurrenceFrequency getRecurrenceFreq() { return recurrenceFreq; }
@@ -81,6 +86,7 @@ public class CalendarEvent extends UuidEntity {
     public void setTitle(String title) { this.title = title; }
     public void setDate(LocalDate date) { this.date = date; }
     public void setTime(LocalTime time) { this.time = time; }
+    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
     public void setAssigneeIds(List<UUID> assigneeIds) { this.assigneeIds = new HashSet<>(assigneeIds); }
     public void setRecurrence(RecurrenceFrequency freq, Integer interval, LocalDate until) {
         this.recurrenceFreq = freq;

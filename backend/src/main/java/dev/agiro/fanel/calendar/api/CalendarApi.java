@@ -10,11 +10,11 @@ public interface CalendarApi {
     List<CalendarEventDto> list(UUID householdId, LocalDate from, LocalDate to);
     /** Raw series, one row per event (no recurrence expansion); used for export. */
     List<CalendarEventDto> listAll(UUID householdId);
-    CalendarEventDto create(UUID householdId, String title, LocalDate date, LocalTime time, UUID addedBy,
-                            List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
-                            LocalDate recurrenceUntil);
+    CalendarEventDto create(UUID householdId, String title, LocalDate date, LocalTime time, Integer durationMinutes,
+                            UUID addedBy, List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq,
+                            Integer recurrenceInterval, LocalDate recurrenceUntil);
     CalendarEventDto update(UUID householdId, UUID eventId, String title, LocalDate date, LocalTime time,
-                            List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
-                            LocalDate recurrenceUntil);
+                            Integer durationMinutes, List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq,
+                            Integer recurrenceInterval, LocalDate recurrenceUntil);
     void delete(UUID householdId, UUID eventId);
 }

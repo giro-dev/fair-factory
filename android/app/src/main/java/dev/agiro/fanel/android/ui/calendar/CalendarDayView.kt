@@ -26,6 +26,7 @@ import dev.agiro.fanel.android.R
 import dev.agiro.fanel.android.data.local.CalendarEventEntity
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun CalendarDayView(
@@ -85,6 +86,8 @@ fun CalendarDayView(
     }
 }
 
+private val HOUR_MINUTE = DateTimeFormatter.ofPattern("HH:mm")
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DayEventCard(
@@ -109,8 +112,14 @@ private fun DayEventCard(
             Column {
                 Text(event.title, style = MaterialTheme.typography.bodyMedium)
                 event.time?.let {
+                    val start = runCatching { LocalTime.parse(it) }.getOrNull()
+                    val end = event.durationMinutes?.let { d -> start?.plusMinutes(d.toLong()) }
                     Text(
-                        text = LocalTime.parse(it).toString().substringBeforeLast(':'),
+                        text = when {
+                            start == null -> it
+                            end != null -> "${HOUR_MINUTE.format(start)}–${HOUR_MINUTE.format(end)}"
+                            else -> HOUR_MINUTE.format(start)
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

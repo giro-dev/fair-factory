@@ -86,6 +86,7 @@ fun EventEditorDialog(
     var time by remember {
         mutableStateOf(initial?.time?.let { runCatching { LocalTime.parse(it) }.getOrNull() })
     }
+    var durationText by remember { mutableStateOf(initial?.durationMinutes?.toString() ?: "") }
     var selectedMembers by remember {
         mutableStateOf(initial?.assigneeIds?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet())
     }
@@ -170,6 +171,18 @@ fun EventEditorDialog(
                             )
                         }
                     }
+                }
+
+                if (time != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = durationText,
+                        onValueChange = { durationText = it.filter(Char::isDigit); error = false },
+                        label = { Text(stringResource(R.string.event_duration_minutes)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 if (members.isNotEmpty()) {
@@ -274,7 +287,9 @@ fun EventEditorDialog(
             TextButton(
                 onClick = {
                     val interval = intervalText.toIntOrNull()
+                    val duration = durationText.toIntOrNull()
                     val invalid = title.isBlank() ||
+                        (time != null && durationText.isNotBlank() && (duration == null || duration < 1)) ||
                         (recurrenceFreq != null && (interval == null || interval < 1))
                     if (invalid) {
                         error = true
@@ -284,6 +299,7 @@ fun EventEditorDialog(
                                 title = title.trim(),
                                 date = date.toString(),
                                 time = time?.toString(),
+                                durationMinutes = if (time == null) null else duration,
                                 addedBy = initial?.addedBy,
                                 assigneeIds = selectedMembers.toList(),
                                 recurrenceFreq = recurrenceFreq,

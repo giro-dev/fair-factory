@@ -160,6 +160,8 @@
     },
     "every": "Cada",
     "until": "Hasta (opcional)",
+    "duration": "Duración",
+    "minutes": "min",
     "recurringNote": "Los cambios y la eliminación afectan a toda la serie.",
     "confirmDeleteSeries": "¿Borrar toda la serie \"{{title}}\"?"
   },

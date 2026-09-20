@@ -146,9 +146,10 @@ public class AssistantTools {
                                              @ToolParam(description = "Event title") String title,
                                              @ToolParam(description = "Date ISO-8601") String date,
                                              @ToolParam(description = "Optional time ISO-8601 (HH:MM)") String time,
+                                             @ToolParam(description = "Optional duration in minutes") Integer durationMinutes,
                                              @ToolParam(description = "Optional assignee member ids") List<UUID> assigneeIds) {
         return calendar.create(householdId, title, LocalDate.parse(date), time != null ? LocalTime.parse(time) : null,
-                null, assigneeIds, null, null, null);
+                durationMinutes, null, assigneeIds, null, null, null);
     }
 
     @Tool(description = "List household members")

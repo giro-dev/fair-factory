@@ -22,6 +22,7 @@ type CalEvent = {
   date: string
   anchorDate: string
   time?: string
+  durationMinutes?: number | null
   addedBy?: string
   assigneeIds: string[]
   recurrenceFreq?: RecurrenceFreq | null
@@ -33,6 +34,7 @@ type EventForm = {
   editingId: string | null
   date: string
   time: string
+  duration: string
   title: string
   assigneeIds: string[]
   recurrenceFreq: RecurrenceFreq | ''
@@ -44,6 +46,18 @@ const LOCALES = { ca: caLocale, es: esLocale }
 const REPEAT_OPTIONS: RecurrenceFreq[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']
 
 const todayIso = () => new Date().toLocaleDateString('sv-SE') // yyyy-mm-dd in local time
+
+const endIso = (date: string, time: string, minutes: number) => {
+  const d = new Date(`${date}T${time}`)
+  d.setMinutes(d.getMinutes() + minutes)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+const timeLabel = (e: CalEvent) =>
+  e.time && e.durationMinutes
+    ? `${e.time.slice(0, 5)}–${endIso(e.date, e.time, e.durationMinutes).slice(11)}`
+    : e.time?.slice(0, 5) ?? ''
 
 export function Calendar() {
   const { t, i18n } = useTranslation()
@@ -65,6 +79,7 @@ export function Calendar() {
     title: data.title,
     date: data.date,
     time: data.time || null,
+    durationMinutes: data.time && Number(data.duration) > 0 ? Number(data.duration) : null,
     assigneeIds: data.assigneeIds,
     recurrenceFreq: data.recurrenceFreq || null,
     recurrenceInterval: data.recurrenceFreq ? data.recurrenceInterval : null,
@@ -101,12 +116,13 @@ export function Calendar() {
 
   const openCreate = (date: string) =>
     setForm({
-      editingId: null, date, time: '', title: '', assigneeIds: [],
+      editingId: null, date, time: '', duration: '', title: '', assigneeIds: [],
       recurrenceFreq: '', recurrenceInterval: 1, recurrenceUntil: '',
     })
   const openEdit = (event: CalEvent) =>
     setForm({
-      editingId: event.id, date: event.anchorDate, time: event.time ?? '', title: event.title,
+      editingId: event.id, date: event.anchorDate, time: event.time ?? '',
+      duration: event.durationMinutes?.toString() ?? '', title: event.title,
       assigneeIds: event.assigneeIds,
       recurrenceFreq: event.recurrenceFreq ?? '',
       recurrenceInterval: event.recurrenceInterval ?? 1,
@@ -126,6 +142,7 @@ export function Calendar() {
     id: `${e.id}::${e.date}`,
     title: e.addedBy ? `${e.title} (${memberName(e.addedBy)})` : e.title,
     start: e.time ? `${e.date}T${e.time}` : e.date,
+    end: e.time && e.durationMinutes ? endIso(e.date, e.time, e.durationMinutes) : undefined,
     allDay: !e.time,
     extendedProps: { colors: colorsFor(e.assigneeIds), seriesId: e.id, date: e.date },
   }))
@@ -186,7 +203,7 @@ export function Calendar() {
             {eventsForDay(daySheet).map((e) => (
               <li key={e.id}>
                 <button type="button" className="link day-event" onClick={() => openEdit(e)}>
-                  {e.time && <span className="meta">{e.time}</span>}
+                  {e.time && <span className="meta">{timeLabel(e)}</span>}
                   <span>{e.title}</span>
                   {e.recurrenceFreq && <span className="meta" title={t('calendar.recurring')}>↻</span>}
                   {colorsFor(e.assigneeIds).length > 0 && (
@@ -215,6 +232,14 @@ export function Calendar() {
                    placeholder={t('calendar.titlePlaceholder')} required autoFocus />
             <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
             <input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+            {form.time && (
+              <label className="inline">
+                {t('calendar.duration')}
+                <input type="number" min={1} step={5} value={form.duration}
+                       onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+                {t('calendar.minutes')}
+              </label>
+            )}
             <fieldset>
               <legend>{t('calendar.assignees')}</legend>
               {members.map((m) => (

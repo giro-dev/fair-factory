@@ -49,8 +49,9 @@ export function Menu() {
       api<MealSlot>(`/households/${household!.id}/menu/slots?year=${year}&week=${week}`, {
         method: 'PUT', body: JSON.stringify(slot),
       }),
-    onSuccess: async () => {
-      setEditing(null)
+    onSuccess: async (_data, slot) => {
+      setEditing((cur) =>
+        cur && cur.day === slot.dayOfWeek && cur.meal === slot.mealType ? null : cur)
       await queryClient.invalidateQueries({ queryKey: ['menu'] })
     },
   })
@@ -93,16 +94,26 @@ export function Menu() {
                   })
                   return (
                     <td key={day} onClick={() => {
-                      setEditing({ day, meal }); setText(slot?.text ?? ''); setRecipeId(slot?.recipeId ?? '')
+                      if (!isEditing) {
+                        setEditing({ day, meal }); setText(slot?.text ?? ''); setRecipeId(slot?.recipeId ?? '')
+                      }
                     }}>
                       {isEditing ? (
-                        <form onSubmit={(e) => { e.preventDefault(); save() }}>
-                          <select value={recipeId} onChange={(e) => setRecipeId(e.target.value)} onBlur={save}>
+                        <form
+                          onSubmit={(e) => { e.preventDefault(); save() }}
+                          onBlur={(e) => {
+                            const form = e.currentTarget
+                            setTimeout(() => {
+                              if (!form.contains(document.activeElement)) save()
+                            }, 0)
+                          }}
+                        >
+                          <select value={recipeId} onChange={(e) => setRecipeId(e.target.value)}>
                             <option value="">{t('menu.noRecipe')}</option>
                             {recipes.data?.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                           </select>
                           <input value={text} onChange={(e) => setText(e.target.value)} autoFocus
-                                 placeholder={t('menu.notesPlaceholder')} onBlur={save} />
+                                 placeholder={t('menu.notesPlaceholder')} />
                         </form>
                       ) : (recipeName(slot?.recipeId) || slot?.text) ? (
                         <>

@@ -57,10 +57,12 @@ public class CalendarService implements CalendarApi {
     }
 
     @Override
-    public CalendarEventDto create(UUID householdId, String title, LocalDate date, LocalTime time, UUID addedBy,
-                                   List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq,
-                                   Integer recurrenceInterval, LocalDate recurrenceUntil) {
-        CalendarEvent saved = events.save(new CalendarEvent(householdId, title, date, time, addedBy, assigneeIds,
+    public CalendarEventDto create(UUID householdId, String title, LocalDate date, LocalTime time,
+                                   Integer durationMinutes, UUID addedBy, List<UUID> assigneeIds,
+                                   RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
+                                   LocalDate recurrenceUntil) {
+        CalendarEvent saved = events.save(new CalendarEvent(householdId, title, date, time,
+                positiveOrNull(durationMinutes), addedBy, assigneeIds,
                 recurrenceFreq, recurrenceInterval, recurrenceUntil));
         publisher.publishEvent(new HouseholdEvent(householdId, TOPIC));
         return toDto(saved, saved.getDate());
@@ -68,12 +70,14 @@ public class CalendarService implements CalendarApi {
 
     @Override
     public CalendarEventDto update(UUID householdId, UUID eventId, String title, LocalDate date, LocalTime time,
-                                   List<UUID> assigneeIds, RecurrenceFrequency recurrenceFreq,
-                                   Integer recurrenceInterval, LocalDate recurrenceUntil) {
+                                   Integer durationMinutes, List<UUID> assigneeIds,
+                                   RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
+                                   LocalDate recurrenceUntil) {
         CalendarEvent event = find(householdId, eventId);
         if (title != null) event.setTitle(title);
         if (date != null) event.setDate(date);
         if (time != null) event.setTime(time);
+        event.setDurationMinutes(positiveOrNull(durationMinutes));
         if (assigneeIds != null) event.setAssigneeIds(assigneeIds);
         event.setRecurrence(recurrenceFreq, recurrenceInterval, recurrenceUntil);
         publisher.publishEvent(new HouseholdEvent(householdId, TOPIC));
@@ -116,9 +120,14 @@ public class CalendarService implements CalendarApi {
         return occurrences;
     }
 
+    private static Integer positiveOrNull(Integer minutes) {
+        return minutes != null && minutes > 0 ? minutes : null;
+    }
+
     private static CalendarEventDto toDto(CalendarEvent event, LocalDate occurrenceDate) {
         return new CalendarEventDto(event.getId(), event.getHouseholdId(), event.getTitle(), occurrenceDate,
-                event.getDate(), event.getTime(), event.getAddedBy(), event.getAssigneeIds(),
+                event.getDate(), event.getTime(), event.getDurationMinutes(), event.getAddedBy(),
+                event.getAssigneeIds(),
                 event.getRecurrenceFreq(), event.getRecurrenceInterval(), event.getRecurrenceUntil());
     }
 }

@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CachedSnapshotEntity::class,
         PendingOperationEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class FanelDatabase : RoomDatabase() {
@@ -36,6 +36,12 @@ abstract class FanelDatabase : RoomDatabase() {
                         "`type` TEXT NOT NULL, `targetId` TEXT, `payloadJson` TEXT, " +
                         "`createdAtEpochMs` INTEGER NOT NULL, PRIMARY KEY(`id`))"
                 )
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE calendar_events ADD COLUMN durationMinutes INTEGER")
             }
         }
     }

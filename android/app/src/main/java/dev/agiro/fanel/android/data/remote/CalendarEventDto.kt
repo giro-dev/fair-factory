@@ -7,6 +7,7 @@ data class CalendarEventDto(
     val date: String,
     val anchorDate: String?,
     val time: String?,
+    val durationMinutes: Int?,
     val addedBy: String?,
     val assigneeIds: List<String>?,
     val recurrenceFreq: String?,

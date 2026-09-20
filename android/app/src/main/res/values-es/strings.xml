@@ -17,6 +17,7 @@
     <string name="event_title">Título</string>
     <string name="event_date">Fecha</string>
     <string name="event_time_optional">Hora (opcional)</string>
+    <string name="event_duration_minutes">Duración en minutos (opcional)</string>
     <string name="event_pick_time">Elige la hora</string>
     <string name="event_clear_time">Quitar la hora</string>
     <string name="event_clear_until">Quitar la fecha de fin</string>

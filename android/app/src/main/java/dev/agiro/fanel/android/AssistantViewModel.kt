@@ -1,6 +1,7 @@
 package dev.agiro.fanel.android
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -130,7 +131,8 @@ class AssistantViewModel(
                         createRecipe(recipeWithImage)
                     }
                 }
-                .onFailure {
+                .onFailure { e ->
+                    Log.w(TAG, "Assistant chat request failed", e)
                     _messages.update {
                         it + ChatMessage(
                             ChatRole.ASSISTANT,
@@ -176,7 +178,8 @@ class AssistantViewModel(
                         )
                     }
                 }
-                .onFailure {
+                .onFailure { e ->
+                    Log.w(TAG, "Create recipe from assistant failed", e)
                     _messages.update {
                         it + ChatMessage(
                             ChatRole.ASSISTANT,
@@ -194,6 +197,7 @@ class AssistantViewModel(
     }
 
     companion object {
+        private const val TAG = "AssistantViewModel"
         private val gson = Gson()
 
         private val CREATE_TRIGGERS = listOf(

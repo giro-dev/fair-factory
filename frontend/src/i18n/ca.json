@@ -160,6 +160,8 @@
     },
     "every": "Cada",
     "until": "Fins a (opcional)",
+    "duration": "Durada",
+    "minutes": "min",
     "recurringNote": "Els canvis i l'eliminació afecten tota la sèrie.",
     "confirmDeleteSeries": "Esborrar tota la sèrie \"{{title}}\"?"
   },

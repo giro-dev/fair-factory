@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object ApiFactory {
     fun calendarApi(baseUrl: String, authStore: AuthStore): CalendarApi =
@@ -27,7 +28,14 @@ object ApiFactory {
         retrofit(baseUrl, authStore).create(ChoresApi::class.java)
 
     fun assistantApi(baseUrl: String, authStore: AuthStore): AssistantApi =
-        retrofit(baseUrl, authStore).create(AssistantApi::class.java)
+        retrofit(
+            baseUrl,
+            authStore,
+            okHttpClient(authStore).newBuilder()
+                .readTimeout(ASSISTANT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .writeTimeout(ASSISTANT_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build()
+        ).create(AssistantApi::class.java)
 
     fun okHttpClient(authStore: AuthStore): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor { chain ->
@@ -46,11 +54,18 @@ object ApiFactory {
         )
         .build()
 
-    private fun retrofit(baseUrl: String, authStore: AuthStore): Retrofit {
+    private fun retrofit(
+        baseUrl: String,
+        authStore: AuthStore,
+        client: OkHttpClient = okHttpClient(authStore)
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
-            .client(okHttpClient(authStore))
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+
+    private const val ASSISTANT_READ_TIMEOUT_SECONDS = 120L
+    private const val ASSISTANT_WRITE_TIMEOUT_SECONDS = 60L
 }

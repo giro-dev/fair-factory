@@ -29,7 +29,8 @@ interface CalendarEventDao {
     suspend fun deleteByLocalId(householdId: String, localId: String)
 
     @Query(
-        "UPDATE calendar_events SET title = :title, time = :time, assigneeIds = :assigneeIds, " +
+        "UPDATE calendar_events SET title = :title, time = :time, durationMinutes = :durationMinutes, " +
+            "assigneeIds = :assigneeIds, " +
             "recurrenceFreq = :recurrenceFreq, recurrenceInterval = :recurrenceInterval, " +
             "recurrenceUntil = :recurrenceUntil " +
             "WHERE householdId = :householdId AND remoteId = :remoteId"
@@ -39,6 +40,7 @@ interface CalendarEventDao {
         remoteId: String,
         title: String,
         time: String?,
+        durationMinutes: Int?,
         assigneeIds: String,
         recurrenceFreq: String?,
         recurrenceInterval: Int?,

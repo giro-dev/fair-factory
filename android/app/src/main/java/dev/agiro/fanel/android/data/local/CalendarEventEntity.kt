@@ -12,6 +12,7 @@ data class CalendarEventEntity(
     val date: String,
     val anchorDate: String?,
     val time: String?,
+    val durationMinutes: Int?,
     val addedBy: String?,
     val assigneeIds: String,
     val recurrenceFreq: String?,

@@ -114,7 +114,8 @@ public class ExportController {
 
         for (CalendarEventDto event : payload.calendarEvents()) {
             List<UUID> assigneeIds = event.assigneeIds().stream().map(memberIds::get).filter(Objects::nonNull).toList();
-            calendar.create(household.id(), event.title(), event.anchorDate(), event.time(), memberIds.get(event.addedBy()),
+            calendar.create(household.id(), event.title(), event.anchorDate(), event.time(), event.durationMinutes(),
+                    memberIds.get(event.addedBy()),
                     assigneeIds, event.recurrenceFreq(), event.recurrenceInterval(), event.recurrenceUntil());
         }
 
