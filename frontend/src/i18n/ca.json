@@ -1,5 +1,5 @@
 {
-  "nav": { "menu": "Menú", "recipes": "Receptes", "calendar": "Calendari", "shopping": "Compra", "chores": "Tasques", "members": "Membres" },
+  "nav": { "menu": "Menú", "recipes": "Receptes", "calendar": "Calendari", "shopping": "Compra", "chores": "Tasques", "members": "Membres", "automation": "Automatitzacions" },
   "theme": { "label": "Canviar tema", "light": "Tema clar", "dark": "Tema fosc", "system": "Tema del sistema" },
   "login": { "title": "Inicia la sessió", "username": "Usuari", "password": "Contrasenya", "submit": "Entrar", "error": "Usuari o contrasenya incorrectes." },
   "households": { "title": "Llars", "name": "Nom", "locale": "Idioma", "timezone": "Zona horària", "create": "Crear llar", "empty": "Encara no hi ha llars.", "mine": "La meva llar", "switch": "Llar activa", "open": "Obrir", "current": "Activa", "memberCount_one": "{{count}} membre", "memberCount_other": "{{count}} membres" },
@@ -39,6 +39,10 @@
     "recipe-from-image": {
       "name": "Recepta des d'imatge",
       "description": "Extreu una recepta a partir d'una fotografia."
+    },
+    "menu-planner": {
+      "name": "Planificador de menús",
+      "description": "Omple els forats del menú setmanal amb receptes de la llar."
     }
   },
   "login": {
@@ -164,6 +168,27 @@
     "minutes": "min",
     "recurringNote": "Els canvis i l'eliminació afecten tota la sèrie.",
     "confirmDeleteSeries": "Esborrar tota la sèrie \"{{title}}\"?"
+  },
+  "automation": {
+    "title": "Automatitzacions",
+    "typeLabel": "Tipus",
+    "type": {
+      "MENU_PROPOSAL": "Proposta de menú",
+      "SHOPPING_REMINDER": "Recordatori de la compra"
+    },
+    "description": {
+      "MENU_PROPOSAL": "L'assistent omple els dinars i sopars buits de la setmana vinent amb receptes de la llar.",
+      "SHOPPING_REMINDER": "Envia un recordatori amb el nombre de productes pendents de la llista de la compra."
+    },
+    "add": "Afegeix regla",
+    "runNow": "Executa ara",
+    "lastRun": "Darrera execució",
+    "never": "Mai",
+    "enabled": "Activa",
+    "day": "Dia",
+    "hour": "Hora",
+    "delete": "Elimina",
+    "confirmDelete": "Vols eliminar aquesta regla?"
   },
   "chores": {
     "title": "Tasques",

@@ -1,5 +1,7 @@
 package dev.agiro.fanel.export.web;
 
+import dev.agiro.fanel.automation.api.AutomationApi;
+import dev.agiro.fanel.automation.api.AutomationRuleDto;
 import dev.agiro.fanel.calendar.api.CalendarApi;
 import dev.agiro.fanel.calendar.api.CalendarEventDto;
 import dev.agiro.fanel.chores.api.ChoreDto;
@@ -39,15 +41,17 @@ public class ExportController {
     private final ShoppingApi shopping;
     private final CalendarApi calendar;
     private final ChoresApi chores;
+    private final AutomationApi automation;
     private final CurrentAccess access;
 
     public ExportController(HouseholdApi households, MenuApi menu, ShoppingApi shopping,
-                            CalendarApi calendar, ChoresApi chores, CurrentAccess access) {
+                            CalendarApi calendar, ChoresApi chores, AutomationApi automation, CurrentAccess access) {
         this.households = households;
         this.menu = menu;
         this.shopping = shopping;
         this.calendar = calendar;
         this.chores = chores;
+        this.automation = automation;
         this.access = access;
     }
 
@@ -60,7 +64,8 @@ public class ExportController {
         List<ShoppingListDto> shoppingLists = shopping.listLists(householdId);
         List<CalendarEventDto> events = calendar.listAll(householdId);
         List<ChoreDto> choreList = chores.list(householdId);
-        return new HouseholdExport(household, members, mealPlans, shoppingLists, events, choreList);
+        List<AutomationRuleDto> automationRules = automation.list(householdId);
+        return new HouseholdExport(household, members, mealPlans, shoppingLists, events, choreList, automationRules);
     }
 
     /**
@@ -127,11 +132,19 @@ public class ExportController {
             if (chore.done()) chores.update(household.id(), created.id(), null, null, true);
         }
 
+        if (payload.automationRules() != null) {
+            for (AutomationRuleDto rule : payload.automationRules()) {
+                var created = automation.create(household.id(), rule.type(), rule.dayOfWeek(), rule.hour());
+                if (!rule.enabled()) automation.update(household.id(), created.id(), false, null, null);
+            }
+        }
+
         return household;
     }
 
     public record HouseholdExport(HouseholdDto household, List<MemberDto> members,
                                   List<MealPlanDto> mealPlans, List<ShoppingListDto> shoppingLists,
-                                  List<CalendarEventDto> calendarEvents, List<ChoreDto> chores) {
+                                  List<CalendarEventDto> calendarEvents, List<ChoreDto> chores,
+                                  List<AutomationRuleDto> automationRules) {
     }
 }

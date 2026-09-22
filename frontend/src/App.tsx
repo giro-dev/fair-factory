@@ -9,6 +9,7 @@ import { Shopping } from './pages/Shopping'
 import { Calendar } from './pages/Calendar'
 import { Chores } from './pages/Chores'
 import { Members } from './pages/Members'
+import { Automation } from './pages/Automation'
 import { Account } from './pages/Account'
 import { Login } from './pages/Login'
 import { Setup } from './pages/Setup'
@@ -76,6 +77,12 @@ const icons = {
       <path d="M14.5 20a5 5 0 0 1 7 0" />
     </svg>
   ),
+  automation: (
+    <svg viewBox="0 0 24 24" width="1.15rem" height="1.15rem" {...stroke}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  ),
   logout: (
     <svg viewBox="0 0 24 24" width="1.15rem" height="1.15rem" {...stroke}>
       <path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9" />
@@ -96,6 +103,7 @@ function Shell() {
     ['/compra', t('nav.shopping'), icons.shopping],
     ['/tasques', t('nav.chores'), icons.chores],
     ['/membres', t('nav.members'), icons.members],
+    ['/automatitzacions', t('nav.automation'), icons.automation],
   ] as const
   return (
     <div className="app-shell">
@@ -138,6 +146,7 @@ function Shell() {
           <Route path="/compra" element={<Shopping />} />
           <Route path="/tasques" element={<Chores />} />
           <Route path="/membres" element={<Members />} />
+          <Route path="/automatitzacions" element={<Automation />} />
           <Route path="*" element={<Placeholder title="Fanel" />} />
         </Routes>
       </main>

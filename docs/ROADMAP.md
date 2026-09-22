@@ -55,11 +55,11 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 
 ## Fase 3 — IA i MCP
 
-- [ ] `assistant`: tools `@Tool` sobre les APIs públiques dels mòduls (afegir a la compra, planificar àpat, llistar esdeveniments, assignar tasca…)
-- [ ] `ChatClient` amb memòria JDBC; proveïdor per configuració (Ollama / OpenAI / Anthropic), cap actiu per defecte
-- [ ] Xat a la UI ("planifica'm la setmana", "què falta pel sopar de dijous?")
+- [x] `assistant`: tools `@Tool` sobre les APIs públiques dels mòduls (`AssistantTools`: compra, menú, receptes, calendari, tasques)
+- [x] `ChatClient` amb memòria (de moment en memòria, no JDBC); proveïdor per configuració (Ollama / OpenAI / Anthropic), cap actiu per defecte
+- [x] Xat a la UI (`AssistantChat`, selector d'agents)
 - [ ] **Servidor MCP** a `/mcp` (Streamable HTTP) exposant tools, resources (menú, llista) i prompts; tokens per household amb àmbits
-- [ ] `automation`: regles programades (proposta de menú el diumenge, recordatori de compra el divendres) reactives a esdeveniments
+- [x] `automation`: regles programades setmanals per household (`automation_rule`, scheduler horari amb zona horària de la llar); tipus `MENU_PROPOSAL` (agent `menu-planner` omple els dinars/sopars buits de la setmana vinent) i `SHOPPING_REMINDER` (push amb el compte de pendents via `NotificationRequested`); CRUD a `/api/v1/households/{id}/automation/rules` i pàgina `/automatitzacions`
 - [ ] Importació ICS / CalDAV (lectura)
 
 ## Fase 4 — Clients Android i escriptori

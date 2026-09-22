@@ -1,5 +1,5 @@
 {
-  "nav": { "menu": "Menú", "recipes": "Recetas", "calendar": "Calendario", "shopping": "Compra", "chores": "Tareas", "members": "Miembros" },
+  "nav": { "menu": "Menú", "recipes": "Recetas", "calendar": "Calendario", "shopping": "Compra", "chores": "Tareas", "members": "Miembros", "automation": "Automatizaciones" },
   "theme": { "label": "Cambiar tema", "light": "Tema claro", "dark": "Tema oscuro", "system": "Tema del sistema" },
   "login": { "title": "Inicia sesión", "username": "Usuario", "password": "Contraseña", "submit": "Entrar", "error": "Usuario o contraseña incorrectos." },
   "households": { "title": "Hogares", "name": "Nombre", "locale": "Idioma", "timezone": "Zona horaria", "create": "Crear hogar", "empty": "Todavía no hay hogares.", "mine": "Mi hogar", "switch": "Hogar activo", "open": "Abrir", "current": "Activo", "memberCount_one": "{{count}} miembro", "memberCount_other": "{{count}} miembros" },
@@ -39,6 +39,10 @@
     "recipe-from-image": {
       "name": "Receta desde imagen",
       "description": "Extrae una receta a partir de una fotografía."
+    },
+    "menu-planner": {
+      "name": "Planificador de menús",
+      "description": "Rellena los huecos del menú semanal con recetas del hogar."
     }
   },
   "login": {
@@ -164,6 +168,27 @@
     "minutes": "min",
     "recurringNote": "Los cambios y la eliminación afectan a toda la serie.",
     "confirmDeleteSeries": "¿Borrar toda la serie \"{{title}}\"?"
+  },
+  "automation": {
+    "title": "Automatizaciones",
+    "typeLabel": "Tipo",
+    "type": {
+      "MENU_PROPOSAL": "Propuesta de menú",
+      "SHOPPING_REMINDER": "Recordatorio de la compra"
+    },
+    "description": {
+      "MENU_PROPOSAL": "El asistente rellena las comidas y cenas vacías de la semana próxima con recetas del hogar.",
+      "SHOPPING_REMINDER": "Envía un recordatorio con el número de productos pendientes de la lista de la compra."
+    },
+    "add": "Añadir regla",
+    "runNow": "Ejecutar ahora",
+    "lastRun": "Última ejecución",
+    "never": "Nunca",
+    "enabled": "Activa",
+    "day": "Día",
+    "hour": "Hora",
+    "delete": "Eliminar",
+    "confirmDelete": "¿Quieres eliminar esta regla?"
   },
   "chores": {
     "title": "Tareas",

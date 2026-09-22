@@ -68,3 +68,14 @@ fanel:
           provider: openai
           model: gpt-4o-mini
           temperature: 0.2
+      menu-planner:
+        name-key: assistant.menu-planner.name
+        description-key: assistant.menu-planner.description
+        prompt-key: menu-planner
+        supports-media: false
+        tools:
+          - AssistantTools
+        model:
+          provider: openai
+          model: gpt-4o-mini
+          temperature: 0.5
