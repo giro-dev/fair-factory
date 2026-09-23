@@ -8,6 +8,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: sqlite
       FANEL_SQLITE_PATH: /data/fanel.db
+      # Scheduled JSON backups land inside the fanel-data volume:
+      # FANEL_BACKUPS_DIR: /data/backups
+      # Prometheus metrics endpoint (authenticated):
+      # FANEL_METRICS_ACCESS: read-only
     ports:
       - "8080:8080"
     volumes:

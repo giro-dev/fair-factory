@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/setup").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/actuator/**").authenticated()
                         .anyRequest().permitAll())
                 .httpBasic(Customizer.withDefaults())
                 .addFilterBefore(apiTokenFilter, BasicAuthenticationFilter.class)

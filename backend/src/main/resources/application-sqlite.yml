@@ -2,6 +2,12 @@ spring:
   datasource:
     url: jdbc:sqlite:${FANEL_SQLITE_PATH:./data/fanel.db}
     driver-class-name: org.sqlite.JDBC
+    hikari:
+      # xerial SQLiteConfig pragmas applied on every connection (tests override the URL
+      # via @DynamicPropertySource, so URL parameters would be dropped there).
+      data-source-properties:
+        busy_timeout: 5000
+        journal_mode: WAL
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:

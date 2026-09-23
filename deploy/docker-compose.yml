@@ -7,6 +7,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: postgres
       FANEL_DB_URL: jdbc:postgresql://postgres:5432/fanel
+      # Scheduled JSON backups — mount a volume for them, e.g. add
+      # `fanel-data:/data` under volumes: and set:
+      # FANEL_BACKUPS_DIR: /data/backups
+      # Prometheus metrics endpoint (authenticated):
+      # FANEL_METRICS_ACCESS: read-only
     ports:
       - "8080:8080"
     depends_on:

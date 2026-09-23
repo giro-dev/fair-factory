@@ -65,15 +65,19 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 ## Fase 4 — Clients Android i escriptori
 
 - [x] Client TypeScript generat des d'OpenAPI, compartit per web / Capacitor / Tauri: especificació a `docs/openapi.json` (regenerada per `OpenApiSpecSqliteIT`), tipus a `frontend/src/api/schema.d.ts` (`npm run gen:api`), client `openapi-fetch` a `src/api/typed.ts`; pàgines migrades progressivament
-- [ ] Capacitor → APK Android (push natiu, compartir text a la llista, widget bàsic)
-- [ ] Tauri → escriptori Linux / Windows / macOS
-- [ ] (Opcional) client Kotlin generat si es fa app nativa
+- [x] APK Android — fet com a app nativa Kotlin/Compose (`android/`, vegeu android/README.md); push natiu, widget i compartir text a la llista pendents
+- [ ] Tauri → escriptori Linux / Windows / macOS (posposat: requereix toolchain Rust; la SPA necessita abans un ajust d'URL de servidor)
+- [ ] (Opcional) client Kotlin generat des d'OpenAPI per a l'app nativa (ara els models estan escrits a mà)
 
 ## Fase 5 — Maduresa
 
 - [ ] MCP client: Home Assistant, calendaris externs, supermercats
 - [ ] RAG sobre receptes (pgvector) si aporta valor
-- [ ] OIDC (Authelia/Authentik/Google), més idiomes, accessibilitat, mètriques, backups programats
+- [ ] OIDC (Authelia/Authentik/Google)
+- [ ] Més idiomes
+- [ ] Accessibilitat
+- [x] Mètriques: endpoint Prometheus `/actuator/prometheus` (micrometer-registry-prometheus, autenticat, s'activa amb `FANEL_METRICS_ACCESS=read-only`)
+- [x] Backups programats: `BackupScheduler` escriu l'export JSON de cada household a `FANEL_BACKUPS_DIR/<id>/<data>.json` cada dia a `FANEL_BACKUPS_HOUR` (zona horària del household) i poda més de `FANEL_BACKUPS_KEEP_DAYS` dies
 
 ## Riscos vigilats
 

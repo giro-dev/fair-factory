@@ -25,11 +25,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+    prometheus:
+      access: ${FANEL_METRICS_ACCESS:none}
 fanel:
   admin:
     user: ${FANEL_ADMIN_USER:admin}
@@ -42,6 +44,10 @@ fanel:
     subject: ${FANEL_VAPID_SUBJECT:mailto:admin@example.com}
     public-key: ${FANEL_VAPID_PUBLIC_KEY:}
     private-key: ${FANEL_VAPID_PRIVATE_KEY:}
+  backups:
+    dir: ${FANEL_BACKUPS_DIR:}
+    hour: ${FANEL_BACKUPS_HOUR:3}
+    keep-days: ${FANEL_BACKUPS_KEEP_DAYS:30}
   notifications:
     reminder-hour: ${FANEL_NOTIFICATIONS_REMINDER_HOUR:8}
   calendar:
