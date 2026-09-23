@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface CalendarEventRepository extends JpaRepository<CalendarEvent, UUID> {
     List<CalendarEvent> findAllByHouseholdIdOrderByDateAsc(UUID householdId);
     List<CalendarEvent> findAllByHouseholdIdAndDateBetweenOrderByDateAsc(UUID householdId, LocalDate from, LocalDate to);
+    List<CalendarEvent> findBySubscriptionId(UUID subscriptionId);
+    void deleteBySubscriptionId(UUID subscriptionId);
 
     @Modifying
     @Query(value = "DELETE FROM calendar_event_assignee WHERE member_id = :memberId", nativeQuery = true)

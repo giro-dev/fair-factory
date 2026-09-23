@@ -167,7 +167,28 @@
     "duration": "Duración",
     "minutes": "min",
     "recurringNote": "Los cambios y la eliminación afectan a toda la serie.",
-    "confirmDeleteSeries": "¿Borrar toda la serie \"{{title}}\"?"
+    "confirmDeleteSeries": "¿Borrar toda la serie \"{{title}}\"?",
+    "readOnlyExternal": "Solo lectura: proviene de \"{{name}}\".",
+    "import": {
+      "open": "Importar .ics",
+      "success": "{{count}} eventos importados.",
+      "error": "No se pudo importar el archivo."
+    },
+    "subscriptions": {
+      "open": "Calendarios externos",
+      "title": "Calendarios externos",
+      "add": "Añadir suscripción",
+      "name": "Nombre",
+      "url": "URL",
+      "color": "Color",
+      "sync": "Sincronizar",
+      "delete": "Eliminar",
+      "confirmDelete": "¿Eliminar la suscripción \"{{name}}\" y sus eventos?",
+      "lastSync": "Última sincronización",
+      "never": "Nunca",
+      "lastError": "Error",
+      "empty": "Ninguna suscripción."
+    }
   },
   "automation": {
     "title": "Automatizaciones",

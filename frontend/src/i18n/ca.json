@@ -167,7 +167,28 @@
     "duration": "Durada",
     "minutes": "min",
     "recurringNote": "Els canvis i l'eliminació afecten tota la sèrie.",
-    "confirmDeleteSeries": "Esborrar tota la sèrie \"{{title}}\"?"
+    "confirmDeleteSeries": "Esborrar tota la sèrie \"{{title}}\"?",
+    "readOnlyExternal": "Només lectura: prové de \"{{name}}\".",
+    "import": {
+      "open": "Importa .ics",
+      "success": "{{count}} esdeveniments importats.",
+      "error": "No s'ha pogut importar el fitxer."
+    },
+    "subscriptions": {
+      "open": "Calendaris externs",
+      "title": "Calendaris externs",
+      "add": "Afegeix subscripció",
+      "name": "Nom",
+      "url": "URL",
+      "color": "Color",
+      "sync": "Sincronitza",
+      "delete": "Elimina",
+      "confirmDelete": "Eliminar la subscripció \"{{name}}\" i els seus esdeveniments?",
+      "lastSync": "Darrera sincronització",
+      "never": "Mai",
+      "lastError": "Error",
+      "empty": "Cap subscripció."
+    }
   },
   "automation": {
     "title": "Automatitzacions",

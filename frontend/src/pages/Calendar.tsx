@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import FullCalendar from '@fullcalendar/react'
@@ -28,6 +28,17 @@ type CalEvent = {
   recurrenceFreq?: RecurrenceFreq | null
   recurrenceInterval?: number | null
   recurrenceUntil?: string | null
+  source?: 'LOCAL' | 'ICS'
+  subscriptionId?: string | null
+}
+
+type Subscription = {
+  id: string
+  name: string
+  url: string
+  color?: string | null
+  lastSyncedAt?: string | null
+  lastError?: string | null
 }
 
 type EventForm = {
@@ -40,6 +51,8 @@ type EventForm = {
   recurrenceFreq: RecurrenceFreq | ''
   recurrenceInterval: number
   recurrenceUntil: string
+  /** Set when the event comes from an external subscription: the modal is read-only. */
+  externalSource: string | null
 }
 
 const LOCALES = { ca: caLocale, es: esLocale }
@@ -66,6 +79,12 @@ export function Calendar() {
 
   const [daySheet, setDaySheet] = useState<string | null>(null)
   const [form, setForm] = useState<EventForm | null>(null)
+  const [subsOpen, setSubsOpen] = useState(false)
+  const [subName, setSubName] = useState('')
+  const [subUrl, setSubUrl] = useState('')
+  const [subColor, setSubColor] = useState('#2c6e8e')
+  const [importMessage, setImportMessage] = useState<string | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
 
   const events = useQuery({
     queryKey: ['calendar', household?.id],
@@ -73,7 +92,43 @@ export function Calendar() {
     enabled: !!household,
   })
 
+  const subscriptions = useQuery({
+    queryKey: ['calendar-subscriptions', household?.id],
+    queryFn: () => api<Subscription[]>(`/households/${household!.id}/calendar/subscriptions`),
+    enabled: !!household,
+  })
+
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['calendar'] })
+  const invalidateSubs = () => queryClient.invalidateQueries({ queryKey: ['calendar-subscriptions'] })
+
+  const addSubscription = useMutation({
+    mutationFn: () => api<Subscription>(`/households/${household!.id}/calendar/subscriptions`, {
+      method: 'POST', body: JSON.stringify({ name: subName, url: subUrl, color: subColor }),
+    }),
+    onSuccess: async () => { setSubName(''); setSubUrl(''); await invalidateSubs(); await invalidate() },
+  })
+  const syncSubscription = useMutation({
+    mutationFn: (id: string) =>
+      api<Subscription>(`/households/${household!.id}/calendar/subscriptions/${id}/sync`, { method: 'POST' }),
+    onSuccess: async () => { await invalidateSubs(); await invalidate() },
+  })
+  const deleteSubscription = useMutation({
+    mutationFn: (id: string) =>
+      api(`/households/${household!.id}/calendar/subscriptions/${id}`, { method: 'DELETE' }),
+    onSuccess: async () => { await invalidateSubs(); await invalidate() },
+  })
+  const importIcs = useMutation({
+    mutationFn: (ics: string) => api<{ imported: number }>(`/households/${household!.id}/calendar/import`, {
+      method: 'POST', headers: { 'content-type': 'text/calendar' }, body: ics,
+    }),
+    onSuccess: async (result) => {
+      setImportMessage(t('calendar.import.success', { count: result.imported }))
+      await invalidate()
+    },
+    onError: () => setImportMessage(t('calendar.import.error')),
+  })
+
+  const subscriptionById = (id?: string | null) => subscriptions.data?.find((s) => s.id === id)
 
   const toBody = (data: EventForm) => ({
     title: data.title,
@@ -117,7 +172,7 @@ export function Calendar() {
   const openCreate = (date: string) =>
     setForm({
       editingId: null, date, time: '', duration: '', title: '', assigneeIds: [],
-      recurrenceFreq: '', recurrenceInterval: 1, recurrenceUntil: '',
+      recurrenceFreq: '', recurrenceInterval: 1, recurrenceUntil: '', externalSource: null,
     })
   const openEdit = (event: CalEvent) =>
     setForm({
@@ -127,6 +182,9 @@ export function Calendar() {
       recurrenceFreq: event.recurrenceFreq ?? '',
       recurrenceInterval: event.recurrenceInterval ?? 1,
       recurrenceUntil: event.recurrenceUntil ?? '',
+      externalSource: event.source === 'ICS'
+        ? (subscriptionById(event.subscriptionId)?.name ?? '')
+        : null,
     })
 
   const toggleAssignee = (id: string) => {
@@ -138,14 +196,19 @@ export function Calendar() {
     }))
   }
 
-  const calendarEvents = (events.data ?? []).map((e) => ({
-    id: `${e.id}::${e.date}`,
-    title: e.addedBy ? `${e.title} (${memberName(e.addedBy)})` : e.title,
-    start: e.time ? `${e.date}T${e.time}` : e.date,
-    end: e.time && e.durationMinutes ? endIso(e.date, e.time, e.durationMinutes) : undefined,
-    allDay: !e.time,
-    extendedProps: { colors: colorsFor(e.assigneeIds), seriesId: e.id, date: e.date },
-  }))
+  const calendarEvents = (events.data ?? []).map((e) => {
+    const subscriptionColor = e.source === 'ICS' ? subscriptionById(e.subscriptionId)?.color : undefined
+    return {
+      id: `${e.id}::${e.date}`,
+      title: e.addedBy ? `${e.title} (${memberName(e.addedBy)})` : e.title,
+      start: e.time ? `${e.date}T${e.time}` : e.date,
+      end: e.time && e.durationMinutes ? endIso(e.date, e.time, e.durationMinutes) : undefined,
+      allDay: !e.time,
+      backgroundColor: subscriptionColor,
+      borderColor: subscriptionColor,
+      extendedProps: { colors: colorsFor(e.assigneeIds), seriesId: e.id, date: e.date },
+    }
+  })
 
   const onDateClick = (arg: DateClickArg) => setDaySheet(arg.dateStr)
   const onEventClick = (arg: EventClickArg) => {
@@ -176,6 +239,21 @@ export function Calendar() {
   return (
     <section className="panel">
       <h2>{t('calendar.title')}</h2>
+      <div className="footer-actions" style={{ justifyContent: 'flex-start' }}>
+        <button type="button" className="link" onClick={() => setSubsOpen(true)}>
+          {t('calendar.subscriptions.open')}
+        </button>
+        <button type="button" className="link" onClick={() => fileInput.current?.click()}>
+          {t('calendar.import.open')}
+        </button>
+        <input ref={fileInput} type="file" accept=".ics,text/calendar" hidden
+               onChange={async (event) => {
+                 const file = event.target.files?.[0]
+                 event.target.value = ''
+                 if (file) importIcs.mutate(await file.text())
+               }} />
+      </div>
+      {importMessage && <p className="meta">{importMessage}</p>}
       {events.isPending && <p>{t('loading')}</p>}
       {events.isError && <p role="alert">{t('error')}</p>}
       <div className="calendar-view">
@@ -223,6 +301,13 @@ export function Calendar() {
       {form && (
         <Modal title={form.editingId ? t('calendar.editEvent') : t('calendar.newEvent')}
                onClose={() => setForm(null)}>
+          {form.externalSource !== null ? (
+            <div className="create-form modal-form">
+              <strong>{form.title}</strong>
+              {form.time && <span className="meta">{form.time.slice(0, 5)}</span>}
+              <p className="meta">{t('calendar.readOnlyExternal', { name: form.externalSource })}</p>
+            </div>
+          ) : (
           <form className="create-form modal-form" onSubmit={(e) => {
             e.preventDefault()
             if (!form.title || !form.date) return
@@ -290,6 +375,56 @@ export function Calendar() {
               )}
             </div>
           </form>
+          )}
+        </Modal>
+      )}
+
+      {subsOpen && (
+        <Modal title={t('calendar.subscriptions.title')} onClose={() => setSubsOpen(false)}>
+          <form className="create-form modal-form" onSubmit={(event) => {
+            event.preventDefault()
+            if (subName.trim() && subUrl.trim()) addSubscription.mutate()
+          }}>
+            <label>
+              {t('calendar.subscriptions.name')}
+              <input value={subName} onChange={(event) => setSubName(event.target.value)} required />
+            </label>
+            <label>
+              {t('calendar.subscriptions.url')}
+              <input value={subUrl} onChange={(event) => setSubUrl(event.target.value)} required
+                     placeholder="https://…" />
+            </label>
+            <label>
+              {t('calendar.subscriptions.color')}
+              <input type="color" value={subColor} onChange={(event) => setSubColor(event.target.value)} />
+            </label>
+            <button type="submit" disabled={addSubscription.isPending}>{t('calendar.subscriptions.add')}</button>
+          </form>
+          {addSubscription.isError && <p role="alert">{t('error')}</p>}
+          <ul className="item-list">
+            {(subscriptions.data ?? []).map((s) => (
+              <li key={s.id}>
+                <span className="member-chip" style={{ background: s.color ?? 'var(--tile)' }}>{s.name}</span>
+                <span className="meta">{s.url}</span>
+                <span className="meta">
+                  {t('calendar.subscriptions.lastSync')}: {s.lastSyncedAt
+                    ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' })
+                        .format(new Date(s.lastSyncedAt))
+                    : t('calendar.subscriptions.never')}
+                </span>
+                {s.lastError && <span className="meta">{t('calendar.subscriptions.lastError')}: {s.lastError}</span>}
+                <button type="button" className="link" disabled={syncSubscription.isPending}
+                        onClick={() => syncSubscription.mutate(s.id)}>{t('calendar.subscriptions.sync')}</button>
+                <button type="button" className="link" onClick={() => {
+                  if (window.confirm(t('calendar.subscriptions.confirmDelete', { name: s.name })))
+                    deleteSubscription.mutate(s.id)
+                }}>{t('calendar.subscriptions.delete')}</button>
+              </li>
+            ))}
+            {(subscriptions.data ?? []).length === 0 && (
+              <li className="meta">{t('calendar.subscriptions.empty')}</li>
+            )}
+          </ul>
         </Modal>
       )}
     </section>

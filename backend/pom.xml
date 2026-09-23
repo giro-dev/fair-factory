@@ -29,6 +29,7 @@
         <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-community-dialects</artifactId></dependency>
         <dependency><groupId>com.github.f4b6a3</groupId><artifactId>uuid-creator</artifactId><version>6.1.1</version></dependency>
         <dependency><groupId>com.interaso</groupId><artifactId>webpush</artifactId><version>1.2.0</version></dependency>
+        <dependency><groupId>net.sf.biweekly</groupId><artifactId>biweekly</artifactId><version>0.6.8</version></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>

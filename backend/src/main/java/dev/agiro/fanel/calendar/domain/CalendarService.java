@@ -2,16 +2,25 @@ package dev.agiro.fanel.calendar.domain;
 
 import dev.agiro.fanel.calendar.api.CalendarApi;
 import dev.agiro.fanel.calendar.api.CalendarEventDto;
+import dev.agiro.fanel.calendar.api.CalendarSubscriptionDto;
+import dev.agiro.fanel.calendar.api.EventSource;
 import dev.agiro.fanel.calendar.api.RecurrenceFrequency;
 import dev.agiro.fanel.calendar.infra.CalendarEventRepository;
+import dev.agiro.fanel.calendar.infra.IcsParser;
+import dev.agiro.fanel.calendar.infra.IcsParser.ParsedEvent;
+import dev.agiro.fanel.household.api.HouseholdApi;
 import dev.agiro.fanel.shared.events.HouseholdEvent;
+import dev.agiro.fanel.shared.web.ConflictException;
 import dev.agiro.fanel.shared.web.EntityNotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -27,10 +36,17 @@ public class CalendarService implements CalendarApi {
 
     private final CalendarEventRepository events;
     private final ApplicationEventPublisher publisher;
+    private final CalendarSubscriptionService subscriptions;
+    private final IcsParser icsParser;
+    private final HouseholdApi household;
 
-    public CalendarService(CalendarEventRepository events, ApplicationEventPublisher publisher) {
+    public CalendarService(CalendarEventRepository events, ApplicationEventPublisher publisher,
+                           CalendarSubscriptionService subscriptions, IcsParser icsParser, HouseholdApi household) {
         this.events = events;
         this.publisher = publisher;
+        this.subscriptions = subscriptions;
+        this.icsParser = icsParser;
+        this.household = household;
     }
 
     @Override
@@ -74,6 +90,7 @@ public class CalendarService implements CalendarApi {
                                    RecurrenceFrequency recurrenceFreq, Integer recurrenceInterval,
                                    LocalDate recurrenceUntil) {
         CalendarEvent event = find(householdId, eventId);
+        rejectExternal(event);
         if (title != null) event.setTitle(title);
         if (date != null) event.setDate(date);
         if (time != null) event.setTime(time);
@@ -86,8 +103,59 @@ public class CalendarService implements CalendarApi {
 
     @Override
     public void delete(UUID householdId, UUID eventId) {
-        events.delete(find(householdId, eventId));
+        CalendarEvent event = find(householdId, eventId);
+        rejectExternal(event);
+        events.delete(event);
         publisher.publishEvent(new HouseholdEvent(householdId, TOPIC));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CalendarSubscriptionDto> listSubscriptions(UUID householdId) {
+        return subscriptions.list(householdId);
+    }
+
+    // NOT_SUPPORTED: subscription creation/sync fetches a remote URL and must not hold a DB transaction.
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public CalendarSubscriptionDto createSubscription(UUID householdId, String name, String url, String color) {
+        return subscriptions.create(householdId, name, url, color);
+    }
+
+    @Override
+    public CalendarSubscriptionDto updateSubscription(UUID householdId, UUID subscriptionId, String name,
+                                                      String url, String color) {
+        return subscriptions.update(householdId, subscriptionId, name, url, color);
+    }
+
+    @Override
+    public void deleteSubscription(UUID householdId, UUID subscriptionId) {
+        subscriptions.delete(householdId, subscriptionId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public CalendarSubscriptionDto syncSubscription(UUID householdId, UUID subscriptionId) {
+        return subscriptions.syncSubscription(householdId, subscriptionId);
+    }
+
+    @Override
+    public int importIcs(UUID householdId, String ics, UUID addedBy) {
+        ZoneId zone;
+        try {
+            zone = ZoneId.of(household.get(householdId).timezone());
+        } catch (DateTimeException e) {
+            zone = ZoneId.systemDefault();
+        }
+        LocalDate today = LocalDate.now(zone);
+        List<ParsedEvent> parsed = icsParser.parse(ics, zone, today.minusMonths(1), today.plusMonths(12));
+        int imported = 0;
+        for (ParsedEvent p : parsed) {
+            create(householdId, p.title(), p.date(), p.time(), p.durationMinutes(), addedBy, null,
+                    p.freq(), p.interval(), p.until());
+            imported++;
+        }
+        return imported;
     }
 
     private CalendarEvent find(UUID householdId, UUID eventId) {
@@ -128,6 +196,13 @@ public class CalendarService implements CalendarApi {
         return new CalendarEventDto(event.getId(), event.getHouseholdId(), event.getTitle(), occurrenceDate,
                 event.getDate(), event.getTime(), event.getDurationMinutes(), event.getAddedBy(),
                 event.getAssigneeIds(),
-                event.getRecurrenceFreq(), event.getRecurrenceInterval(), event.getRecurrenceUntil());
+                event.getRecurrenceFreq(), event.getRecurrenceInterval(), event.getRecurrenceUntil(),
+                event.getSource(), event.getSubscriptionId());
+    }
+
+    private static void rejectExternal(CalendarEvent event) {
+        if (event.getSource() == EventSource.ICS) {
+            throw new ConflictException("External calendar events are read-only");
+        }
     }
 }

@@ -1,5 +1,6 @@
 package dev.agiro.fanel.calendar.domain;
 
+import dev.agiro.fanel.calendar.api.EventSource;
 import dev.agiro.fanel.calendar.api.RecurrenceFrequency;
 import dev.agiro.fanel.shared.domain.UuidEntity;
 import jakarta.persistence.CollectionTable;
@@ -55,6 +56,17 @@ public class CalendarEvent extends UuidEntity {
     @Column(name = "recurrence_until")
     private LocalDate recurrenceUntil;
 
+    /** LOCAL events are user-editable; ICS events are read-only copies of an external subscription. */
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private EventSource source = EventSource.LOCAL;
+    @Column(name = "subscription_id")
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID subscriptionId;
+    /** UID of the VEVENT inside the source calendar (for ICS-sourced events). */
+    @Column(name = "external_uid")
+    private String externalUid;
+
     protected CalendarEvent() {}
 
     public CalendarEvent(UUID householdId, String title, LocalDate date, LocalTime time, Integer durationMinutes,
@@ -82,6 +94,16 @@ public class CalendarEvent extends UuidEntity {
     public RecurrenceFrequency getRecurrenceFreq() { return recurrenceFreq; }
     public Integer getRecurrenceInterval() { return recurrenceInterval; }
     public LocalDate getRecurrenceUntil() { return recurrenceUntil; }
+    public EventSource getSource() { return source; }
+    public UUID getSubscriptionId() { return subscriptionId; }
+    public String getExternalUid() { return externalUid; }
+
+    /** Marks this event as coming from an ICS subscription. */
+    public void setExternal(UUID subscriptionId, String externalUid) {
+        this.source = EventSource.ICS;
+        this.subscriptionId = subscriptionId;
+        this.externalUid = externalUid;
+    }
 
     public void setTitle(String title) { this.title = title; }
     public void setDate(LocalDate date) { this.date = date; }

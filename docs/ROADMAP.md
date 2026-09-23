@@ -60,7 +60,7 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 - [x] Xat a la UI (`AssistantChat`, selector d'agents)
 - [ ] **Servidor MCP** a `/mcp` (Streamable HTTP) exposant tools, resources (menú, llista) i prompts; tokens per household amb àmbits
 - [x] `automation`: regles programades setmanals per household (`automation_rule`, scheduler horari amb zona horària de la llar); tipus `MENU_PROPOSAL` (agent `menu-planner` omple els dinars/sopars buits de la setmana vinent) i `SHOPPING_REMINDER` (push amb el compte de pendents via `NotificationRequested`); CRUD a `/api/v1/households/{id}/automation/rules` i pàgina `/automatitzacions`
-- [ ] Importació ICS / CalDAV (lectura)
+- [x] Importació ICS (lectura): subscripcions a URLs externes amb refresc periòdic (`calendar_subscription`, esdeveniments de només lectura `source=ICS`) i pujada puntual de fitxers `.ics` que crea esdeveniments locals editables; CalDAV no fet
 
 ## Fase 4 — Clients Android i escriptori
 

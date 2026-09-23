@@ -3,6 +3,7 @@ package dev.agiro.fanel.calendar.web;
 import dev.agiro.fanel.calendar.api.CalendarApi;
 import dev.agiro.fanel.calendar.api.CalendarEventDto;
 import dev.agiro.fanel.calendar.api.RecurrenceFrequency;
+import dev.agiro.fanel.shared.security.CurrentAccess;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,9 +20,11 @@ import java.util.UUID;
 @RequestMapping("/api/v1/households/{householdId}/calendar")
 public class CalendarController {
     private final CalendarApi calendar;
+    private final CurrentAccess access;
 
-    public CalendarController(CalendarApi calendar) {
+    public CalendarController(CalendarApi calendar, CurrentAccess access) {
         this.calendar = calendar;
+        this.access = access;
     }
 
     @GetMapping
@@ -51,6 +54,16 @@ public class CalendarController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID householdId, @PathVariable UUID eventId) {
         calendar.delete(householdId, eventId);
+    }
+
+    /** One-off import of an .ics file: every VEVENT becomes a normal, editable local event. */
+    @PostMapping(value = "/import", consumes = "text/calendar")
+    public ImportResult importIcs(@PathVariable UUID householdId, @RequestBody String ics) {
+        int imported = calendar.importIcs(householdId, ics, access.memberId().orElse(null));
+        return new ImportResult(imported);
+    }
+
+    public record ImportResult(int imported) {
     }
 
     public record CreateEvent(@NotBlank String title, @NotNull LocalDate date, LocalTime time,

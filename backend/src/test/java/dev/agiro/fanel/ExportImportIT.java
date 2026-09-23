@@ -43,10 +43,19 @@ abstract class ExportImportIT {
                                 """))
                 .andExpect(status().isCreated());
 
+        // A subscription whose fetch fails (connection refused, fast) still exports — with lastError set.
+        mvc.perform(post("/api/v1/households/" + id + "/calendar/subscriptions").with(httpBasic("admin", "admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Escola\",\"url\":\"http://127.0.0.1:1/cal.ics\"}"))
+                .andExpect(status().isCreated());
+
         String export = mvc.perform(get("/api/v1/households/" + id + "/export").with(httpBasic("admin", "admin")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.members[0].name").value("Maria"))
                 .andExpect(jsonPath("$.chores[0].title").value("Treure les escombraries"))
+                .andExpect(jsonPath("$.calendarSubscriptions[0].name").value("Escola"))
+                .andExpect(jsonPath("$.calendarEvents[*].source").value(org.hamcrest.Matchers.everyItem(
+                        org.hamcrest.Matchers.is("LOCAL"))))
                 .andReturn().getResponse().getContentAsString();
 
         mvc.perform(post("/api/v1/households/import").with(httpBasic("admin", "admin"))

@@ -4,6 +4,8 @@ import dev.agiro.fanel.automation.api.AutomationApi;
 import dev.agiro.fanel.automation.api.AutomationRuleDto;
 import dev.agiro.fanel.calendar.api.CalendarApi;
 import dev.agiro.fanel.calendar.api.CalendarEventDto;
+import dev.agiro.fanel.calendar.api.CalendarSubscriptionDto;
+import dev.agiro.fanel.calendar.api.EventSource;
 import dev.agiro.fanel.chores.api.ChoreDto;
 import dev.agiro.fanel.chores.api.ChoresApi;
 import dev.agiro.fanel.household.api.HouseholdApi;
@@ -62,10 +64,14 @@ public class ExportController {
         List<MemberDto> members = households.listMembers(householdId);
         List<MealPlanDto> mealPlans = menu.listAll(householdId);
         List<ShoppingListDto> shoppingLists = shopping.listLists(householdId);
-        List<CalendarEventDto> events = calendar.listAll(householdId);
+        List<CalendarEventDto> events = calendar.listAll(householdId).stream()
+                .filter(e -> e.source() != EventSource.ICS)
+                .toList();
+        List<CalendarSubscriptionDto> subscriptions = calendar.listSubscriptions(householdId);
         List<ChoreDto> choreList = chores.list(householdId);
         List<AutomationRuleDto> automationRules = automation.list(householdId);
-        return new HouseholdExport(household, members, mealPlans, shoppingLists, events, choreList, automationRules);
+        return new HouseholdExport(household, members, mealPlans, shoppingLists, events, choreList,
+                automationRules, subscriptions);
     }
 
     /**
@@ -139,12 +145,21 @@ public class ExportController {
             }
         }
 
+        // Sync failures are recorded on the subscription itself, so they cannot fail the import.
+        if (payload.calendarSubscriptions() != null) {
+            for (CalendarSubscriptionDto subscription : payload.calendarSubscriptions()) {
+                calendar.createSubscription(household.id(), subscription.name(), subscription.url(),
+                        subscription.color());
+            }
+        }
+
         return household;
     }
 
     public record HouseholdExport(HouseholdDto household, List<MemberDto> members,
                                   List<MealPlanDto> mealPlans, List<ShoppingListDto> shoppingLists,
                                   List<CalendarEventDto> calendarEvents, List<ChoreDto> chores,
-                                  List<AutomationRuleDto> automationRules) {
+                                  List<AutomationRuleDto> automationRules,
+                                  List<CalendarSubscriptionDto> calendarSubscriptions) {
     }
 }

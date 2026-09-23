@@ -44,6 +44,8 @@ fanel:
     private-key: ${FANEL_VAPID_PRIVATE_KEY:}
   notifications:
     reminder-hour: ${FANEL_NOTIFICATIONS_REMINDER_HOUR:8}
+  calendar:
+    ics-refresh-minutes: ${FANEL_CALENDAR_ICS_REFRESH_MINUTES:60}
   assistant:
     agents:
       general:
