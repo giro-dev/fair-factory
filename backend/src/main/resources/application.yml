@@ -44,6 +44,13 @@ fanel:
     subject: ${FANEL_VAPID_SUBJECT:mailto:admin@example.com}
     public-key: ${FANEL_VAPID_PUBLIC_KEY:}
     private-key: ${FANEL_VAPID_PRIVATE_KEY:}
+  oidc:
+    issuer: ${FANEL_OIDC_ISSUER:}
+    client-id: ${FANEL_OIDC_CLIENT_ID:}
+    client-secret: ${FANEL_OIDC_CLIENT_SECRET:}
+    name: ${FANEL_OIDC_NAME:SSO}
+    username-claim: ${FANEL_OIDC_USERNAME_CLAIM:preferred_username}
+    scopes: ${FANEL_OIDC_SCOPES:openid,profile,email}
   backups:
     dir: ${FANEL_BACKUPS_DIR:}
     hour: ${FANEL_BACKUPS_HOUR:3}

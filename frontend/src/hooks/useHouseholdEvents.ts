@@ -14,14 +14,17 @@ export function useHouseholdEvents(householdId?: string) {
   const queryClient = useQueryClient()
   useEffect(() => {
     if (!householdId) return
+    // EventSource cannot send headers; use fetch-based streaming. Session-cookie logins
+    // (OIDC) have no auth header and rely on the same-origin cookie instead.
     const authHeader = getAuthHeader()
-    if (!authHeader) return
-    // EventSource cannot send headers; use fetch-based streaming.
     const controller = new AbortController()
     void (async () => {
       try {
+        const headers: Record<string, string> = { accept: 'text/event-stream' }
+        if (authHeader) headers.authorization = authHeader
         const response = await fetch(`/api/v1/events?household=${householdId}`, {
-          headers: { authorization: authHeader, accept: 'text/event-stream' },
+          headers,
+          credentials: 'same-origin',
           signal: controller.signal,
         })
         if (!response.ok || !response.body) return

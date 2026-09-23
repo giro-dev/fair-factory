@@ -1,9 +1,11 @@
 package dev.agiro.fanel.shared.config;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,6 +20,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import dev.agiro.fanel.shared.security.HouseholdScopeFilter;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -41,15 +47,20 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, OncePerRequestFilter apiTokenFilter,
                                             HouseholdScopeFilter householdScopeFilter,
-                                            AuthenticationManager authenticationManager) throws Exception {
+                                            AuthenticationManager authenticationManager,
+                                            ObjectProvider<ClientRegistrationRepository> registrations,
+                                            ObjectProvider<OidcUserService> memberOidcUserService) throws Exception {
+        boolean oidcEnabled = registrations.getIfAvailable() != null;
         http.cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(
+                        oidcEnabled ? SessionCreationPolicy.IF_REQUIRED : SessionCreationPolicy.STATELESS))
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/assets/**", "/manifest.webmanifest", "/sw.js",
                                 "/actuator/health/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        .requestMatchers("/api/v1/setup").permitAll()
+                        .requestMatchers("/api/v1/setup", "/api/v1/auth/providers").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**", "/login").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/actuator/**").authenticated()
@@ -57,6 +68,19 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .addFilterBefore(apiTokenFilter, BasicAuthenticationFilter.class)
                 .addFilterAfter(householdScopeFilter, BasicAuthenticationFilter.class);
+        if (oidcEnabled) {
+            http.oauth2Login(oauth -> oauth
+                            .loginPage("/login")
+                            .defaultSuccessUrl("/", true)
+                            .failureUrl("/?sso=failed")
+                            .userInfoEndpoint(info -> info.oidcUserService(memberOidcUserService.getObject())))
+                    .logout(logout -> logout
+                            .logoutUrl("/api/v1/auth/logout")
+                            .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)))
+                    .exceptionHandling(handling -> handling.defaultAuthenticationEntryPointFor(
+                            new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                            PathPatternRequestMatcher.withDefaults().matcher("/api/**")));
+        }
         return http.build();
     }
 

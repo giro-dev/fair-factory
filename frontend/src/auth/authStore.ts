@@ -1,12 +1,19 @@
 const STORAGE_KEY = 'fanel.auth'
 
-export type Credentials = { username: string; password: string }
+export type Credentials =
+  | { kind: 'basic'; username: string; password: string }
+  | { kind: 'session'; username: string }
 
 function readStored(): Credentials | null {
   const raw = sessionStorage.getItem(STORAGE_KEY)
   if (!raw) return null
   try {
-    return JSON.parse(raw) as Credentials
+    const parsed = JSON.parse(raw) as Partial<Credentials> & { password?: string }
+    // Legacy entries have no kind: they are username/password credentials.
+    if (parsed && parsed.username && !('kind' in parsed)) {
+      return { kind: 'basic', username: parsed.username, password: parsed.password ?? '' }
+    }
+    return parsed as Credentials
   } catch {
     return null
   }
@@ -20,7 +27,9 @@ export function getCredentials(): Credentials | null {
 }
 
 export function getAuthHeader(): string | undefined {
-  return credentials ? `Basic ${btoa(`${credentials.username}:${credentials.password}`)}` : undefined
+  return credentials?.kind === 'basic'
+    ? `Basic ${btoa(`${credentials.username}:${credentials.password}`)}`
+    : undefined
 }
 
 export function setCredentials(next: Credentials | null) {

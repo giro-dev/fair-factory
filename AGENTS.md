@@ -22,6 +22,7 @@ Roadmap i fases: [`docs/ROADMAP.md`](docs/ROADMAP.md). Decisions: [`docs/adr/`](
 | 7 | **i18n català + castellà** des del principi (`ca` per defecte). Cap text d'usuari hardcodejat: `react-i18next` al frontend, `MessageSource` al backend. | [0007](docs/adr/0007-i18n.md) |
 | 8 | Comunicació entre mòduls per **esdeveniments de domini** (Spring Modulith, registre persistit), no per crides directes a la implementació d'un altre mòdul. | [0001](docs/adr/0001-monolit-modular.md) |
 | 9 | **Assistent multiagent** amb **un model/API per funció**: cada agent té el seu `ModelProfile` (Ollama, OpenAI, Anthropic…) i les tools compartides del mòdul `assistant`. | [0009](docs/adr/0009-assistant-multiagent.md) |
+| 10 | **Login extern opcional via OIDC** (`fanel.oidc.*`): sessió només per al flux SSO; Basic/Bearer queden stateless; membres resolts per claim d'usuari i fixats per `oidc_subject`. | [0010](docs/adr/0010-oidc-opcional.md) |
 
 ## Estructura del repositori
 

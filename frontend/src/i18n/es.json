@@ -1,8 +1,43 @@
 {
-  "nav": { "menu": "Menú", "recipes": "Recetas", "calendar": "Calendario", "shopping": "Compra", "chores": "Tareas", "members": "Miembros", "automation": "Automatizaciones" },
-  "theme": { "label": "Cambiar tema", "light": "Tema claro", "dark": "Tema oscuro", "system": "Tema del sistema" },
-  "login": { "title": "Inicia sesión", "username": "Usuario", "password": "Contraseña", "submit": "Entrar", "error": "Usuario o contraseña incorrectos." },
-  "households": { "title": "Hogares", "name": "Nombre", "locale": "Idioma", "timezone": "Zona horaria", "create": "Crear hogar", "empty": "Todavía no hay hogares.", "mine": "Mi hogar", "switch": "Hogar activo", "open": "Abrir", "current": "Activo", "memberCount_one": "{{count}} miembro", "memberCount_other": "{{count}} miembros" },
+  "nav": {
+    "menu": "Menú",
+    "recipes": "Recetas",
+    "calendar": "Calendario",
+    "shopping": "Compra",
+    "chores": "Tareas",
+    "members": "Miembros",
+    "automation": "Automatizaciones"
+  },
+  "theme": {
+    "label": "Cambiar tema",
+    "light": "Tema claro",
+    "dark": "Tema oscuro",
+    "system": "Tema del sistema"
+  },
+  "login": {
+    "title": "Inicia sesión",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "submit": "Entrar",
+    "error": "Usuario o contraseña incorrectos.",
+    "ssoWith": "Entra amb {{name}}",
+    "ssoError": "No se ha podido iniciar sesión con el proveedor externo. Comprueba que tu usuario coincide con un miembro del hogar.",
+    "or": "o"
+  },
+  "households": {
+    "title": "Hogares",
+    "name": "Nombre",
+    "locale": "Idioma",
+    "timezone": "Zona horaria",
+    "create": "Crear hogar",
+    "empty": "Todavía no hay hogares.",
+    "mine": "Mi hogar",
+    "switch": "Hogar activo",
+    "open": "Abrir",
+    "current": "Activo",
+    "memberCount_one": "{{count}} miembro",
+    "memberCount_other": "{{count}} miembros"
+  },
   "setup": {
     "title": "Bienvenido a Fanel",
     "subtitle": "Crea tu hogar para empezar.",
@@ -17,7 +52,9 @@
   "error": "No se ha podido cargar.",
   "offline": "Sin conexión",
   "online": "Conexión restablecida",
-  "placeholder": { "soon": "Próximamente." },
+  "placeholder": {
+    "soon": "Próximamente."
+  },
   "assistant": {
     "open": "Asistente",
     "title": "Asistente de Fanel",
@@ -44,13 +81,6 @@
       "name": "Planificador de menús",
       "description": "Rellena los huecos del menú semanal con recetas del hogar."
     }
-  },
-  "login": {
-    "title": "Inicia sesión",
-    "username": "Usuario",
-    "password": "Contraseña",
-    "submit": "Entrar",
-    "error": "Usuario o contraseña incorrectos."
   },
   "account": {
     "title": "Cuenta",

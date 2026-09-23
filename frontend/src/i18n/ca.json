@@ -1,8 +1,43 @@
 {
-  "nav": { "menu": "Menú", "recipes": "Receptes", "calendar": "Calendari", "shopping": "Compra", "chores": "Tasques", "members": "Membres", "automation": "Automatitzacions" },
-  "theme": { "label": "Canviar tema", "light": "Tema clar", "dark": "Tema fosc", "system": "Tema del sistema" },
-  "login": { "title": "Inicia la sessió", "username": "Usuari", "password": "Contrasenya", "submit": "Entrar", "error": "Usuari o contrasenya incorrectes." },
-  "households": { "title": "Llars", "name": "Nom", "locale": "Idioma", "timezone": "Zona horària", "create": "Crear llar", "empty": "Encara no hi ha llars.", "mine": "La meva llar", "switch": "Llar activa", "open": "Obrir", "current": "Activa", "memberCount_one": "{{count}} membre", "memberCount_other": "{{count}} membres" },
+  "nav": {
+    "menu": "Menú",
+    "recipes": "Receptes",
+    "calendar": "Calendari",
+    "shopping": "Compra",
+    "chores": "Tasques",
+    "members": "Membres",
+    "automation": "Automatitzacions"
+  },
+  "theme": {
+    "label": "Canviar tema",
+    "light": "Tema clar",
+    "dark": "Tema fosc",
+    "system": "Tema del sistema"
+  },
+  "login": {
+    "title": "Inicia la sessió",
+    "username": "Usuari",
+    "password": "Contrasenya",
+    "submit": "Entrar",
+    "error": "Usuari o contrasenya incorrectes.",
+    "ssoWith": "Entra amb {{name}}",
+    "ssoError": "No s'ha pogut iniciar la sessió amb el proveïdor extern. Comprova que el teu usuari coincideix amb un membre de la llar.",
+    "or": "o"
+  },
+  "households": {
+    "title": "Llars",
+    "name": "Nom",
+    "locale": "Idioma",
+    "timezone": "Zona horària",
+    "create": "Crear llar",
+    "empty": "Encara no hi ha llars.",
+    "mine": "La meva llar",
+    "switch": "Llar activa",
+    "open": "Obrir",
+    "current": "Activa",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_other": "{{count}} membres"
+  },
   "setup": {
     "title": "Benvingut a Fanel",
     "subtitle": "Crea la teva llar per començar.",
@@ -17,7 +52,9 @@
   "error": "No s'ha pogut carregar.",
   "offline": "Sense connexió",
   "online": "Connexió restablerta",
-  "placeholder": { "soon": "Properament." },
+  "placeholder": {
+    "soon": "Properament."
+  },
   "assistant": {
     "open": "Assistent",
     "title": "Assistent de Fanel",
@@ -44,13 +81,6 @@
       "name": "Planificador de menús",
       "description": "Omple els forats del menú setmanal amb receptes de la llar."
     }
-  },
-  "login": {
-    "title": "Inicia la sessió",
-    "username": "Usuari",
-    "password": "Contrasenya",
-    "submit": "Entrar",
-    "error": "Usuari o contrasenya incorrectes."
   },
   "account": {
     "title": "Compte",

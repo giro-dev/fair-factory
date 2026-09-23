@@ -73,7 +73,7 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 
 - [ ] MCP client: Home Assistant, calendaris externs, supermercats
 - [ ] RAG sobre receptes (pgvector) si aporta valor
-- [ ] OIDC (Authelia/Authentik/Google)
+- [x] OIDC (Authelia/Authentik/Google): login extern opcional via `fanel.oidc.*`; membres resolts per username claim i fixats per `oidc_subject`; sessió només per al flux SSO (ADR 0010)
 - [ ] Més idiomes
 - [ ] Accessibilitat
 - [x] Mètriques: endpoint Prometheus `/actuator/prometheus` (micrometer-registry-prometheus, autenticat, s'activa amb `FANEL_METRICS_ACCESS=read-only`)

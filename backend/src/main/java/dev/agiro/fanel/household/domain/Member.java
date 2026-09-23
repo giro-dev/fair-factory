@@ -31,6 +31,7 @@ public class Member extends UuidEntity {
     private String pin;
     private String username;
     private String passwordHash;
+    private String oidcSubject;
     private Instant createdAt;
 
     /** Adults (or admins) responsible for this member, when it's a child. */
@@ -75,6 +76,9 @@ public class Member extends UuidEntity {
         this.username = username;
         this.passwordHash = passwordHash;
     }
+
+    public String getOidcSubject() { return oidcSubject; }
+    public void setOidcSubject(String oidcSubject) { this.oidcSubject = oidcSubject; }
 
     public List<UUID> guardianIds() { return guardians.stream().map(UuidEntity::getId).toList(); }
     public List<UUID> wardIds() { return wards.stream().map(UuidEntity::getId).toList(); }

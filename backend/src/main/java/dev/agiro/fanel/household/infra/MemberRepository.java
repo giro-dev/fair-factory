@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface MemberRepository extends JpaRepository<Member, UUID> {
     List<Member> findAllByHouseholdId(UUID householdId);
     Optional<Member> findByUsername(String username);
+    Optional<Member> findByOidcSubject(String oidcSubject);
 
     @Modifying
     @Query(value = "DELETE FROM member_guardian WHERE child_id = :memberId OR guardian_id = :memberId", nativeQuery = true)

@@ -19,9 +19,10 @@ public class AutomationRunMarker {
 
     @Transactional
     public AutomationRule markRun(UUID householdId, UUID ruleId) {
-        AutomationRule rule = rules.findByHouseholdIdAndId(householdId, ruleId)
+        if (rules.stampLastRunAt(householdId, ruleId, Instant.now()) == 0) {
+            throw new EntityNotFoundException("Automation rule not found: " + ruleId);
+        }
+        return rules.findByHouseholdIdAndId(householdId, ruleId)
                 .orElseThrow(() -> new EntityNotFoundException("Automation rule not found: " + ruleId));
-        rule.setLastRunAt(Instant.now());
-        return rules.save(rule);
     }
 }
