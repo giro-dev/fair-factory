@@ -1,20 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api/client'
+import { client, unwrap } from '../api/typed'
+import type { AutomationRule, RuleType } from '../api/types'
 import { useHousehold } from '../context/HouseholdContext'
-
-type RuleType = 'MENU_PROPOSAL' | 'SHOPPING_REMINDER'
-
-type AutomationRule = {
-  id: string
-  householdId: string
-  type: RuleType
-  enabled: boolean
-  dayOfWeek: number
-  hour: number
-  lastRunAt?: string | null
-}
 
 const RULE_TYPES: RuleType[] = ['MENU_PROPOSAL', 'SHOPPING_REMINDER']
 const DAYS = [1, 2, 3, 4, 5, 6, 7]
@@ -34,34 +23,37 @@ export function Automation() {
   const formatInstant = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
 
+  const rulesPath = '/api/v1/households/{householdId}/automation/rules'
+  const rulePath = '/api/v1/households/{householdId}/automation/rules/{ruleId}'
   const rules = useQuery({
     queryKey: ['automation', household?.id],
-    queryFn: () => api<AutomationRule[]>(`/households/${household!.id}/automation/rules`),
+    queryFn: () => unwrap(client.GET(rulesPath, { params: { path: { householdId: household!.id } } })),
     enabled: !!household,
   })
   const invalidate = { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['automation'] }) }
 
   const create = useMutation({
-    mutationFn: () => api<AutomationRule>(`/households/${household!.id}/automation/rules`, {
-      method: 'POST', body: JSON.stringify({ type, dayOfWeek, hour }),
-    }),
+    mutationFn: () => unwrap(client.POST(rulesPath, {
+      params: { path: { householdId: household!.id } },
+      body: { type, dayOfWeek, hour },
+    })),
     ...invalidate,
   })
   const update = useMutation({
-    mutationFn: (rule: Partial<AutomationRule> & { id: string }) =>
-      api<AutomationRule>(`/households/${household!.id}/automation/rules/${rule.id}`, {
-        method: 'PUT', body: JSON.stringify(rule),
-      }),
+    mutationFn: (rule: { id: string } & Partial<Pick<AutomationRule, 'enabled' | 'dayOfWeek' | 'hour'>>) => {
+      const { id, ...body } = rule
+      return unwrap(client.PUT(rulePath, { params: { path: { householdId: household!.id, ruleId: id } }, body }))
+    },
     ...invalidate,
   })
   const runNow = useMutation({
-    mutationFn: (ruleId: string) =>
-      api<AutomationRule>(`/households/${household!.id}/automation/rules/${ruleId}/run`, { method: 'POST' }),
+    mutationFn: (ruleId: string) => unwrap(client.POST('/api/v1/households/{householdId}/automation/rules/{ruleId}/run',
+      { params: { path: { householdId: household!.id, ruleId } } })),
     ...invalidate,
   })
   const remove = useMutation({
     mutationFn: (ruleId: string) =>
-      api(`/households/${household!.id}/automation/rules/${ruleId}`, { method: 'DELETE' }),
+      unwrap(client.DELETE(rulePath, { params: { path: { householdId: household!.id, ruleId } } })),
     ...invalidate,
   })
 
@@ -107,21 +99,21 @@ export function Automation() {
             <div className="footer-actions">
                 <label className="inline">
                   <input type="checkbox" checked={rule.enabled}
-                         onChange={(event) => update.mutate({ id: rule.id, enabled: event.target.checked })} />
+                         onChange={(event) => update.mutate({ id: rule.id!, enabled: event.target.checked })} />
                   {t('automation.enabled')}
                 </label>
                 <select value={rule.dayOfWeek}
-                        onChange={(event) => update.mutate({ id: rule.id, dayOfWeek: Number(event.target.value) })}>
+                        onChange={(event) => update.mutate({ id: rule.id!, dayOfWeek: Number(event.target.value) })}>
                   {DAYS.map((d) => <option key={d} value={d}>{dayName(d)}</option>)}
                 </select>
                 <select value={rule.hour}
-                        onChange={(event) => update.mutate({ id: rule.id, hour: Number(event.target.value) })}>
+                        onChange={(event) => update.mutate({ id: rule.id!, hour: Number(event.target.value) })}>
                   {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
                 </select>
                 <button type="button" className="link" disabled={runNow.isPending}
-                        onClick={() => runNow.mutate(rule.id)}>{t('automation.runNow')}</button>
+                        onClick={() => runNow.mutate(rule.id!)}>{t('automation.runNow')}</button>
                 <button type="button" className="link" onClick={() => {
-                  if (window.confirm(t('automation.confirmDelete'))) remove.mutate(rule.id)
+                  if (window.confirm(t('automation.confirmDelete'))) remove.mutate(rule.id!)
                 }}>{t('automation.delete')}</button>
             </div>
           </li>

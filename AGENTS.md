@@ -81,6 +81,10 @@ Regles:
 | Preview del lloc de docs | `make dev-docs` (Hugo server a :1313) |
 | Imatge Docker | `docker build -f deploy/Dockerfile .` |
 | Execució auto-allotjada | `cd deploy && docker compose up -d` (Postgres) o `docker compose -f docker-compose.sqlite.yml up -d` |
+| Regenerar especificació OpenAPI (`docs/openapi.json`) | `mvn -pl backend verify` (l'escriu `OpenApiSpecSqliteIT`) |
+| Regenerar tipus TS (`frontend/src/api/schema.d.ts`) | `cd frontend && npm run gen:api` |
+
+`docs/openapi.json` i `frontend/src/api/schema.d.ts` són fitxers generats que es commitejen; la CI falla si queden desfasats (`git diff` després de regenerar).
 
 Abans d'obrir un PR: `mvn -B verify` verd (inclou `ApplicationModules.verify()` i tests amb Postgres i SQLite) i lint/typecheck del frontend verds.
 

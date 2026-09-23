@@ -64,7 +64,7 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 
 ## Fase 4 — Clients Android i escriptori
 
-- [ ] Client TypeScript generat des d'OpenAPI, compartit per web / Capacitor / Tauri
+- [x] Client TypeScript generat des d'OpenAPI, compartit per web / Capacitor / Tauri: especificació a `docs/openapi.json` (regenerada per `OpenApiSpecSqliteIT`), tipus a `frontend/src/api/schema.d.ts` (`npm run gen:api`), client `openapi-fetch` a `src/api/typed.ts`; pàgines migrades progressivament
 - [ ] Capacitor → APK Android (push natiu, compartir text a la llista, widget bàsic)
 - [ ] Tauri → escriptori Linux / Windows / macOS
 - [ ] (Opcional) client Kotlin generat si es fa app nativa

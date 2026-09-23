@@ -11,6 +11,7 @@ import type { EventClickArg, EventContentArg } from '@fullcalendar/core'
 import caLocale from '@fullcalendar/core/locales/ca'
 import esLocale from '@fullcalendar/core/locales/es'
 import { api } from '../api/client'
+import { client, unwrap } from '../api/typed'
 import { useHousehold } from '../context/HouseholdContext'
 import { Modal } from '../components/Modal'
 
@@ -30,15 +31,6 @@ type CalEvent = {
   recurrenceUntil?: string | null
   source?: 'LOCAL' | 'ICS'
   subscriptionId?: string | null
-}
-
-type Subscription = {
-  id: string
-  name: string
-  url: string
-  color?: string | null
-  lastSyncedAt?: string | null
-  lastError?: string | null
 }
 
 type EventForm = {
@@ -92,9 +84,11 @@ export function Calendar() {
     enabled: !!household,
   })
 
+  const subsPath = '/api/v1/households/{householdId}/calendar/subscriptions'
+  const subPath = '/api/v1/households/{householdId}/calendar/subscriptions/{subscriptionId}'
   const subscriptions = useQuery({
     queryKey: ['calendar-subscriptions', household?.id],
-    queryFn: () => api<Subscription[]>(`/households/${household!.id}/calendar/subscriptions`),
+    queryFn: () => unwrap(client.GET(subsPath, { params: { path: { householdId: household!.id } } })),
     enabled: !!household,
   })
 
@@ -102,19 +96,21 @@ export function Calendar() {
   const invalidateSubs = () => queryClient.invalidateQueries({ queryKey: ['calendar-subscriptions'] })
 
   const addSubscription = useMutation({
-    mutationFn: () => api<Subscription>(`/households/${household!.id}/calendar/subscriptions`, {
-      method: 'POST', body: JSON.stringify({ name: subName, url: subUrl, color: subColor }),
-    }),
+    mutationFn: () => unwrap(client.POST(subsPath, {
+      params: { path: { householdId: household!.id } },
+      body: { name: subName, url: subUrl, color: subColor },
+    })),
     onSuccess: async () => { setSubName(''); setSubUrl(''); await invalidateSubs(); await invalidate() },
   })
   const syncSubscription = useMutation({
-    mutationFn: (id: string) =>
-      api<Subscription>(`/households/${household!.id}/calendar/subscriptions/${id}/sync`, { method: 'POST' }),
+    mutationFn: (subscriptionId: string) => unwrap(client.POST(
+      '/api/v1/households/{householdId}/calendar/subscriptions/{subscriptionId}/sync',
+      { params: { path: { householdId: household!.id, subscriptionId } } })),
     onSuccess: async () => { await invalidateSubs(); await invalidate() },
   })
   const deleteSubscription = useMutation({
-    mutationFn: (id: string) =>
-      api(`/households/${household!.id}/calendar/subscriptions/${id}`, { method: 'DELETE' }),
+    mutationFn: (subscriptionId: string) =>
+      unwrap(client.DELETE(subPath, { params: { path: { householdId: household!.id, subscriptionId } } })),
     onSuccess: async () => { await invalidateSubs(); await invalidate() },
   })
   const importIcs = useMutation({
@@ -414,10 +410,10 @@ export function Calendar() {
                 </span>
                 {s.lastError && <span className="meta">{t('calendar.subscriptions.lastError')}: {s.lastError}</span>}
                 <button type="button" className="link" disabled={syncSubscription.isPending}
-                        onClick={() => syncSubscription.mutate(s.id)}>{t('calendar.subscriptions.sync')}</button>
+                        onClick={() => syncSubscription.mutate(s.id!)}>{t('calendar.subscriptions.sync')}</button>
                 <button type="button" className="link" onClick={() => {
                   if (window.confirm(t('calendar.subscriptions.confirmDelete', { name: s.name })))
-                    deleteSubscription.mutate(s.id)
+                    deleteSubscription.mutate(s.id!)
                 }}>{t('calendar.subscriptions.delete')}</button>
               </li>
             ))}
