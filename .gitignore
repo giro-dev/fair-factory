@@ -6,3 +6,6 @@ __pycache__/
 data/cache/
 *.egg-info/
 dist/
+data/
+site/transparencia.sqlite
+site/summary.json
