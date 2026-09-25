@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fair-factory · Transparència Siero / Astúries</title>
+<style>
+  :root { font-family: system-ui, sans-serif; color: #1c1c1c; }
+  body { margin: 0 auto; max-width: 1100px; padding: 1.5rem; }
+  h1 { margin: 0 0 .25rem; } .muted { color: #666; font-size: .9rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: .75rem 1rem; }
+  .card b { display: block; font-size: 1.6rem; }
+  section { margin-top: 2rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border-bottom: 1px solid #eee; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  textarea { width: 100%; min-height: 6rem; font-family: monospace; }
+  button { padding: .4rem .9rem; }
+  .error { color: #b00020; }
+  .bar { background: #d9e8ff; height: .8rem; }
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <h1>fair-factory</h1>
+  <p class="muted">Dades públiques dels portals de transparència (Ayuntamiento de Siero / Principado de Asturias), carregades directament des de
+  <code>transparencia.sqlite</code> al navegador amb sql.js i Vue. <span v-if="generat">Darrera ingesta: {{ generat }}.</span></p>
+
+  <div v-if="loading">Carregant base de dades…</div>
+  <p v-else-if="error" class="error">{{ error }}</p>
+
+  <template v-else>
+    <div class="cards">
+      <div class="card" v-for="c in cards" :key="c.label"><b>{{ fmt(c.n) }}</b>{{ c.label }}</div>
+    </div>
+
+    <section v-for="s in sections" :key="s.title">
+      <h2>{{ s.title }}</h2>
+      <result-table :result="s.result"></result-table>
+    </section>
+
+    <section>
+      <h2>Consulta SQL</h2>
+      <p class="muted">Taules: administracio, font, ingest_run, contracte, subvencio, dataset, document. Vistes: v_contractes_per_any, v_top_adjudicataris, v_subvencions_per_any.</p>
+      <textarea v-model="sql"></textarea>
+      <p>
+        <button @click="runQuery">Executa</button>
+        <a href="transparencia.sqlite" download>Descarrega la base de dades</a>
+      </p>
+      <p v-if="queryError" class="error">{{ queryError }}</p>
+      <result-table v-else :result="queryResult" :links="true"></result-table>
+    </section>
+  </template>
+</div>
+
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script>
+const { createApp } = Vue;
+const formatter = new Intl.NumberFormat("ca-ES", { maximumFractionDigits: 2 });
+
+const ResultTable = {
+  props: {
+    result: { type: Object, default: null },   // { columns, values } de sql.js
+    links: { type: Boolean, default: false },
+  },
+  computed: {
+    numeric() {
+      if (!this.result) return [];
+      const { values } = this.result;
+      return this.result.columns.map((_, i) => values.every(r => r[i] === null || typeof r[i] === "number"));
+    },
+  },
+  methods: {
+    cell(v, i) {
+      if (v === null) return "";
+      return typeof v === "number" ? formatter.format(v) : String(v);
+    },
+  },
+  template: `
+    <p v-if="!result || !result.values.length" class="muted">Sense dades.</p>
+    <table v-else>
+      <thead><tr>
+        <th v-for="(c, i) in result.columns" :key="i" :class="{ num: numeric[i] }">{{ c }}</th>
+      </tr></thead>
+      <tbody>
+        <tr v-for="(row, r) in result.values" :key="r">
+          <td v-for="(v, i) in row" :key="i" :class="{ num: numeric[i] }">
+            <a v-if="links && result.columns[i] === 'url' && v" :href="v" target="_blank" rel="noopener">enllaç</a>
+            <template v-else>{{ cell(v, i) }}</template>
+          </td>
+        </tr>
+      </tbody>
+    </table>`,
+};
+
+createApp({
+  components: { ResultTable },
+  data() {
+    return {
+      loading: true,
+      error: null,
+      db: null,
+      generat: null,
+      cards: [],
+      sections: [],
+      sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
+FROM contracte WHERE font = 'siero_transparencia'
+GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
+      queryResult: null,
+      queryError: null,
+    };
+  },
+  async mounted() {
+    try {
+      const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
+      const resp = await fetch("transparencia.sqlite");
+      if (!resp.ok) throw new Error(`No s'ha pogut carregar transparencia.sqlite (${resp.status})`);
+      this.db = new SQL.Database(new Uint8Array(await resp.arrayBuffer()));
+      this.loadDashboard();
+      this.runQuery();
+    } catch (e) {
+      this.error = e.message;
+    } finally {
+      this.loading = false;
+    }
+  },
+  methods: {
+    fmt: n => formatter.format(n),
+    q(sql) {
+      try {
+        const res = this.db.exec(sql);
+        return res.length ? res[0] : null;   // { columns, values }
+      } catch {
+        return null;
+      }
+    },
+    loadDashboard() {
+      this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values[0][0];
+
+      this.cards = [
+        ["contracte", "Contractes"],
+        ["subvencio", "Subvencions"],
+        ["dataset", "Datasets"],
+        ["document", "Documents"],
+      ].map(([t, label]) => ({ label, n: this.q(`SELECT COUNT(*) AS n FROM ${t}`).values[0][0] }));
+
+      this.sections = [
+        { title: "Contractes per any i administració",
+          result: this.q("SELECT * FROM v_contractes_per_any ORDER BY any DESC, administracio") },
+        { title: "Principals adjudicataris",
+          result: this.q("SELECT * FROM v_top_adjudicataris ORDER BY total DESC LIMIT 25") },
+        { title: "Subvencions per any",
+          result: this.q("SELECT * FROM v_subvencions_per_any ORDER BY any DESC, administracio") },
+        { title: "Darreres ingestes",
+          result: this.q("SELECT font, inici, fi, estat, registres, missatge FROM ingest_run ORDER BY id DESC LIMIT 15") },
+      ];
+    },
+    runQuery() {
+      this.queryError = null;
+      try {
+        const res = this.db.exec(this.sql);
+        this.queryResult = res.length ? res[0] : null;
+      } catch (e) {
+        this.queryResult = null;
+        this.queryError = e.message;
+      }
+    },
+  },
+}).mount("#app");
+</script>
+<style>[v-cloak] { display: none; }</style>
+</body>
+</html>
