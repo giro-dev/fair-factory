@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fair-factory · Transparència Siero / Astúries</title>
+<style>
+  :root { font-family: system-ui, sans-serif; color: #1c1c1c; }
+  body { margin: 0 auto; max-width: 1100px; padding: 1.5rem; }
+  h1 { margin: 0 0 .25rem; } .muted { color: #666; font-size: .9rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: .75rem 1rem; }
+  .card b { display: block; font-size: 1.6rem; }
+  section { margin-top: 2rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  th, td { border-bottom: 1px solid #eee; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  textarea { width: 100%; min-height: 6rem; font-family: monospace; }
+  button { padding: .4rem .9rem; }
+  .error { color: #b00020; }
+  .bar { background: #d9e8ff; height: .8rem; }
+</style>
+</head>
+<body>
+<h1>fair-factory</h1>
+<p class="muted">Dades públiques dels portals de transparència (Ayuntamiento de Siero / Principado de Asturias), carregades directament des de
+<code>transparencia.sqlite</code> al navegador amb sql.js. <span id="generat"></span></p>
+
+<div id="status">Carregant base de dades…</div>
+<div class="cards" id="cards"></div>
+
+<section>
+  <h2>Contractes per any i administració</h2>
+  <div id="contractes-any"></div>
+</section>
+
+<section>
+  <h2>Principals adjudicataris</h2>
+  <div id="top-adj"></div>
+</section>
+
+<section>
+  <h2>Subvencions per any</h2>
+  <div id="subv-any"></div>
+</section>
+
+<section>
+  <h2>Darreres ingestes</h2>
+  <div id="ingestes"></div>
+</section>
+
+<section>
+  <h2>Consulta SQL</h2>
+  <p class="muted">Taules: administracio, font, ingest_run, contracte, subvencio, dataset, document. Vistes: v_contractes_per_any, v_top_adjudicataris, v_subvencions_per_any.</p>
+  <textarea id="sql">SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
+FROM contracte WHERE font = 'siero_transparencia'
+GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;</textarea>
+  <p><button id="run">Executa</button> <a id="download" href="transparencia.sqlite" download>Descarrega la base de dades</a></p>
+  <div id="sql-out"></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script>
+const fmt = new Intl.NumberFormat("ca-ES", { maximumFractionDigits: 2 });
+
+function table(res, opts = {}) {
+  if (!res || !res.length) return "<p class='muted'>Sense dades.</p>";
+  const { columns, values } = res[0];
+  const numeric = columns.map((_, i) => values.every(r => r[i] === null || typeof r[i] === "number"));
+  let html = "<table><thead><tr>" + columns.map((c, i) => `<th class="${numeric[i] ? "num" : ""}">${c}</th>`).join("") + "</tr></thead><tbody>";
+  for (const row of values) {
+    html += "<tr>" + row.map((v, i) => {
+      if (v === null) return "<td></td>";
+      if (opts.links && columns[i] === "url") return `<td><a href="${v}" target="_blank" rel="noopener">enllaç</a></td>`;
+      return `<td class="${numeric[i] ? "num" : ""}">${typeof v === "number" ? fmt.format(v) : String(v)}</td>`;
+    }).join("") + "</tr>";
+  }
+  return html + "</tbody></table>";
+}
+
+function q(db, sql) { try { return db.exec(sql); } catch (e) { return null; } }
+
+async function main() {
+  const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
+  const resp = await fetch("transparencia.sqlite");
+  if (!resp.ok) throw new Error(`No s'ha pogut carregar transparencia.sqlite (${resp.status})`);
+  const db = new SQL.Database(new Uint8Array(await resp.arrayBuffer()));
+  document.getElementById("status").remove();
+
+  const gen = q(db, "SELECT MAX(fi) FROM ingest_run");
+  if (gen && gen[0].values[0][0]) document.getElementById("generat").textContent = `Darrera ingesta: ${gen[0].values[0][0]}.`;
+
+  const cards = document.getElementById("cards");
+  for (const [t, label] of [["contracte", "Contractes"], ["subvencio", "Subvencions"], ["dataset", "Datasets"], ["document", "Documents"]]) {
+    const n = q(db, `SELECT COUNT(*) FROM ${t}`)[0].values[0][0];
+    cards.insertAdjacentHTML("beforeend", `<div class="card"><b>${fmt.format(n)}</b>${label}</div>`);
+  }
+
+  document.getElementById("contractes-any").innerHTML = table(q(db, "SELECT * FROM v_contractes_per_any ORDER BY any DESC, administracio"));
+  document.getElementById("top-adj").innerHTML = table(q(db, "SELECT * FROM v_top_adjudicataris LIMIT 25"));
+  document.getElementById("subv-any").innerHTML = table(q(db, "SELECT * FROM v_subvencions_per_any ORDER BY any DESC, administracio"));
+  document.getElementById("ingestes").innerHTML = table(q(db,
+    "SELECT font, inici, fi, estat, registres, missatge FROM ingest_run ORDER BY id DESC LIMIT 15"));
+
+  const out = document.getElementById("sql-out");
+  document.getElementById("run").onclick = () => {
+    try { out.innerHTML = table(db.exec(document.getElementById("sql").value), { links: true }); }
+    catch (e) { out.innerHTML = `<p class="error">${e.message}</p>`; }
+  };
+  document.getElementById("run").click();
+}
+
+main().catch(e => { document.getElementById("status").innerHTML = `<p class="error">${e.message}</p>`; });
+</script>
+</body>
+</html>
