@@ -25,6 +25,9 @@ fair-factory = "fairfactory.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+fairfactory = ["*.sql"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
