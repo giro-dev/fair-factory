@@ -41,8 +41,7 @@ class ExempleConnector(Connector):
     nom = "Ajuntament de X — Pressupost"
     url = "https://..."
 
-    def ingest(self) -> int:
-        ...
+    def ingest(self) -> int: ...
 ~~~
 
 Afegir una font nova hauria d'implicar principalment:
