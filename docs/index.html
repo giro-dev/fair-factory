@@ -8,10 +8,18 @@
   :root { font-family: system-ui, sans-serif; color: #1c1c1c; }
   body { margin: 0 auto; max-width: 1100px; padding: 1.5rem; }
   h1 { margin: 0 0 .25rem; } .muted { color: #666; font-size: .9rem; }
+  .topbar { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+  .topbar .spacer { flex: 1; }
+  select, button { padding: .35rem .6rem; font: inherit; }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
   .card { border: 1px solid #ddd; border-radius: 8px; padding: .75rem 1rem; }
   .card b { display: block; font-size: 1.6rem; }
-  section { margin-top: 2rem; }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #ddd; margin: 1.5rem 0 0; flex-wrap: wrap; }
+  .tabs button { border: 0; background: none; padding: .6rem 1rem; font-size: 1rem; cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px; color: #555; }
+  .tabs button.active { border-bottom-color: #3366cc; color: #1c1c1c; font-weight: 600; }
+  .tabs button:hover { color: #000; }
+  section { margin-top: 1.5rem; }
   .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem 1.5rem; margin: 1rem 0; }
   .chart { position: relative; height: 280px; }
   .chart h3 { font-size: .95rem; margin: 0 0 .4rem; color: #333; }
@@ -19,62 +27,138 @@
   table { border-collapse: collapse; width: 100%; font-size: .9rem; }
   th, td { border-bottom: 1px solid #eee; padding: .35rem .5rem; text-align: left; vertical-align: top; }
   td.num, th.num { text-align: right; white-space: nowrap; }
-  textarea { width: 100%; min-height: 6rem; font-family: monospace; }
-  button { padding: .4rem .9rem; }
+  textarea { width: 100%; min-height: 7rem; font-family: monospace; box-sizing: border-box; }
   .error { color: #b00020; }
+  /* pestanya SQL */
+  .sqlwrap { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 1.5rem; }
+  .schema details { border: 1px solid #e5e5e5; border-radius: 6px; margin-bottom: .4rem; }
+  .schema summary { cursor: pointer; padding: .4rem .6rem; list-style: none; display: flex; justify-content: space-between; }
+  .schema summary::-webkit-details-marker { display: none; }
+  .schema summary:hover { background: #f6f8fc; }
+  .schema .tbl-name { font-weight: 600; }
+  .schema .badge { color: #888; font-size: .8rem; }
+  .schema .view .tbl-name { color: #7a4fa3; font-style: italic; }
+  .schema ul { list-style: none; margin: 0; padding: .3rem .6rem .5rem 1.2rem; font-size: .82rem; color: #444; }
+  .schema li { padding: .1rem 0; }
+  .schema .pk { color: #b07000; font-weight: 600; }
+  .schema .coltype { color: #999; font-size: .78rem; }
+  .presets button { margin: 0 .4rem .4rem 0; font-size: .85rem; }
+  @media (max-width: 800px) { .sqlwrap { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <div id="app" v-cloak>
-  <h1>fair-factory</h1>
-  <p class="muted">Dades públiques dels portals de transparència (Ayuntamiento de Siero / Principado de Asturias), carregades directament des de
-  <code>transparencia.sqlite</code> al navegador amb sql.js i Vue. <span v-if="generat">Darrera ingesta: {{ generat }}.</span></p>
+  <div class="topbar">
+    <div>
+      <h1>fair-factory</h1>
+      <p class="muted">Dades públiques dels portals de transparència (Ayuntamiento de Siero / Principado de Asturias),
+      carregades des de <code>transparencia.sqlite</code> al navegador amb sql.js i Vue.
+      <span v-if="generat">Darrera ingesta: {{ generat }}.</span></p>
+    </div>
+    <div class="spacer"></div>
+    <label v-if="admins.length" class="muted">Administració
+      <select v-model="admin">
+        <option value="">Totes</option>
+        <optgroup v-for="(list, com) in adminsByComunitat" :key="com" :label="com">
+          <option v-for="a in list" :key="a" :value="a">{{ a }}</option>
+        </optgroup>
+      </select>
+    </label>
+  </div>
 
   <div v-if="loading">Carregant base de dades…</div>
   <p v-else-if="error" class="error">{{ error }}</p>
 
   <template v-else>
-    <div class="cards">
-      <div class="card" v-for="c in cards" :key="c.label"><b>{{ fmt(c.n) }}</b>{{ c.label }}</div>
-    </div>
+    <nav class="tabs">
+      <button v-for="t in tabs" :key="t.id" :class="{ active: tab === t.id }" @click="tab = t.id">
+        {{ t.label }}
+      </button>
+    </nav>
 
-    <section v-if="xifres.charts.length">
-      <h2>Siero en xifres</h2>
-      <p class="muted">Indicadors de l'Observatorio Socioeconómico (portalestadistico.com), agrupats per unitat.</p>
+    <template v-if="tab === 'resum'">
+      <div class="cards">
+        <div class="card" v-for="c in cards" :key="c.label"><b>{{ fmt(c.n) }}</b>{{ c.label }}</div>
+      </div>
+      <div class="charts">
+        <bar-chart v-for="(ch, i) in resumCharts" :key="i + '|' + admin" :config="ch"></bar-chart>
+      </div>
+      <section>
+        <h2>Darreres ingestes</h2>
+        <result-table :result="q('SELECT font, inici, fi, estat, registres, missatge FROM ingest_run ORDER BY id DESC LIMIT 15')"></result-table>
+      </section>
+    </template>
+
+    <template v-if="tab === 'contractes'">
+      <div class="charts">
+        <bar-chart v-for="(ch, i) in contracteCharts" :key="i + '|' + admin" :config="ch"></bar-chart>
+      </div>
+      <section v-for="s in contracteSections" :key="s.title">
+        <h2>{{ s.title }}</h2>
+        <result-table :result="s.result"></result-table>
+      </section>
+    </template>
+
+    <template v-if="tab === 'subvencions'">
+      <div class="charts">
+        <bar-chart v-if="subvencioChart" :key="'subv|' + admin" :config="subvencioChart"></bar-chart>
+      </div>
+      <section v-for="s in subvencioSections" :key="s.title">
+        <h2>{{ s.title }}</h2>
+        <result-table :result="s.result"></result-table>
+      </section>
+    </template>
+
+    <template v-if="tab === 'indicadors'">
+      <p class="muted">Observatorio Socioeconómico «Siero en cifras» (portalestadistico.com). Una gràfica per unitat.</p>
       <div class="charts">
         <bar-chart v-for="(ch, i) in xifres.charts" :key="i" :config="ch"></bar-chart>
       </div>
-    </section>
+      <section>
+        <h2>Tots els indicadors</h2>
+        <result-table :result="q('SELECT seccio, nom, valor, variacio_anual, periode, font_dada FROM indicador ORDER BY seccio, id')"></result-table>
+      </section>
+    </template>
 
-    <section>
-      <h2>Contractació</h2>
-      <div class="charts">
-        <bar-chart v-for="(ch, i) in contracteCharts" :key="i" :config="ch"></bar-chart>
+    <template v-if="tab === 'documents'">
+      <section v-for="s in documentSections" :key="s.title">
+        <h2>{{ s.title }}</h2>
+        <result-table :result="s.result" :links="true"></result-table>
+      </section>
+    </template>
+
+    <template v-if="tab === 'sql'">
+      <div class="sqlwrap">
+        <aside class="schema">
+          <h2>Model de la BD</h2>
+          <p class="muted">Clica una taula per veure les columnes.</p>
+          <details v-for="t in schema" :key="t.name" :class="{ view: t.type === 'view' }">
+            <summary>
+              <span class="tbl-name">{{ t.name }}</span>
+              <span class="badge">{{ t.type === 'view' ? 'vista' : fmt(t.count) + ' files' }}</span>
+            </summary>
+            <ul>
+              <li v-for="c in t.cols" :key="c[0]" :class="{ pk: c[2] }">
+                {{ c[0] }} <span class="coltype">{{ c[1] }}</span>
+              </li>
+            </ul>
+          </details>
+        </aside>
+        <div>
+          <h2>Consulta SQL</h2>
+          <div class="presets">
+            <button v-for="p in presets" :key="p.label" @click="sql = p.sql; runQuery()">{{ p.label }}</button>
+          </div>
+          <textarea v-model="sql" @keydown.ctrl.enter="runQuery"></textarea>
+          <p>
+            <button @click="runQuery">Executa (Ctrl+Enter)</button>
+            <a href="transparencia.sqlite.gz" download>Descarrega la base de dades (gzip)</a>
+          </p>
+          <p v-if="queryError" class="error">{{ queryError }}</p>
+          <result-table v-else :result="queryResult" :links="true"></result-table>
+        </div>
       </div>
-    </section>
-
-    <section v-if="subvencioChart">
-      <h2>Subvencions</h2>
-      <div class="charts"><bar-chart :config="subvencioChart"></bar-chart></div>
-    </section>
-
-    <section v-for="s in sections" :key="s.title">
-      <h2>{{ s.title }}</h2>
-      <result-table :result="s.result" :links="!!s.links"></result-table>
-    </section>
-
-    <section>
-      <h2>Consulta SQL</h2>
-      <p class="muted">Taules: administracio, font, ingest_run, contracte, subvencio, dataset, indicador, document.
-      Vistes: v_contractes_per_any, v_top_adjudicataris, v_subvencions_per_any.</p>
-      <textarea v-model="sql"></textarea>
-      <p>
-        <button @click="runQuery">Executa</button>
-        <a href="transparencia.sqlite.gz" download>Descarrega la base de dades (gzip)</a>
-      </p>
-      <p v-if="queryError" class="error">{{ queryError }}</p>
-      <result-table v-else :result="queryResult" :links="true"></result-table>
-    </section>
+    </template>
   </template>
 </div>
 
@@ -169,22 +253,105 @@ createApp({
       error: null,
       db: null,
       generat: null,
+      tab: "resum",
+      admin: "",
+      admins: [],
       cards: [],
-      sections: [],
-      xifres: { charts: [] },
-      contracteCharts: [],
-      subvencioChart: null,
+      schema: [],
+      // resultats crus de les consultes (es filtren per administració en els computed)
+      raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [],
+             vContractes: null, vTop: null, vSubv: null, tablon: null, docsPerFont: null,
+             topBeneficiaris: null },
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
 GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
+      presets: [
+        { label: "Top adjudicataris", sql:
+          "SELECT * FROM v_top_adjudicataris ORDER BY total DESC LIMIT 25;" },
+        { label: "Subvencions per any", sql:
+          "SELECT * FROM v_subvencions_per_any ORDER BY any DESC, administracio;" },
+        { label: "Contractes grans", sql:
+          `SELECT data_adjudicacio, organ, titol, adjudicatari_nom, import_adjudicacio
+FROM contracte WHERE import_adjudicacio > 50000
+ORDER BY import_adjudicacio DESC LIMIT 50;` },
+        { label: "Indicadors de Siero", sql:
+          "SELECT seccio, nom, valor, variacio_anual, periode FROM indicador ORDER BY seccio;" },
+        { label: "Tabló d'anuncis", sql:
+          `SELECT json_extract(raw,'$.data_publicacio') data, titol,
+                  json_extract(raw,'$.expedient') expedient, url
+FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
+      ],
       queryResult: null,
       queryError: null,
     };
   },
+  computed: {
+    tabs() {
+      return [
+        { id: "resum", label: "Resum" },
+        { id: "contractes", label: "Contractació" },
+        { id: "subvencions", label: "Subvencions" },
+        { id: "indicadors", label: "Indicadors" },
+        { id: "documents", label: "Documents" },
+        { id: "sql", label: "SQL" },
+      ];
+    },
+    adminsByComunitat() {
+      const groups = {};
+      for (const [nom, com] of this.admins) (groups[com || "Altres"] ??= []).push(nom);
+      return groups;
+    },
+    xifres() {
+      // una gràfica per unitat amb >1 indicador
+      const byUnit = {};
+      for (const [nom, v, u, seccio] of this.raw.ind) (byUnit[u] ??= []).push([nom, seccio, v]);
+      const charts = Object.entries(byUnit)
+        .filter(([, items]) => items.length > 1 && items.length <= 15)
+        .map(([unit, items]) =>
+          groupedBar(`Indicadors en ${unit}`, items.sort((a, b) => b[2] - a[2]),
+                     { horizontal: true, eur: unit.startsWith("€") }));
+      return { charts };
+    },
+    resumCharts() {
+      const out = [
+        groupedBar("Contractes per any", this.filterAdmin(this.raw.perAny)),
+        groupedBar("Subvencions per any (import)", this.filterAdmin(this.raw.subv), { eur: true }),
+      ];
+      return out;
+    },
+    contracteCharts() {
+      return [
+        groupedBar("Contractes per any", this.filterAdmin(this.raw.perAny)),
+        groupedBar("Import adjudicat per any", this.filterAdmin(this.raw.importAny), { eur: true }),
+        groupedBar("Top adjudicataris per import", this.filterAdmin(this.raw.topAdj), { horizontal: true, eur: true }),
+      ];
+    },
+    subvencioChart() {
+      const rows = this.filterAdmin(this.raw.subv);
+      return rows.length ? groupedBar("Subvencions concedides per any", rows, { eur: true }) : null;
+    },
+    contracteSections() {
+      return [
+        { title: "Contractes per any i administració", result: this.filterAdmin(this.raw.vContractes) },
+        { title: "Principals adjudicataris", result: this.filterAdmin(this.raw.vTop) },
+      ];
+    },
+    subvencioSections() {
+      return [
+        { title: "Subvencions per any", result: this.filterAdmin(this.raw.vSubv) },
+        { title: "Principals beneficiaris", result: this.filterAdmin(this.raw.topBeneficiaris) },
+      ];
+    },
+    documentSections() {
+      return [
+        { title: "Tabló d'anuncis de la seu electrònica", result: this.raw.tablon },
+        { title: "Documents per font", result: this.filterAdmin(this.raw.docsPerFont) },
+      ];
+    },
+  },
   async mounted() {
     try {
       const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
-
       this.db = new SQL.Database(await this.fetchDb());
       this.loadDashboard();
       this.runQuery();
@@ -218,8 +385,21 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
       }
     },
     rows(sql) { return this.q(sql)?.values ?? []; },
+    filterAdmin(resultOrRows) {
+      // accepta {columns, values} (filtra per la columna 'administracio') o files [_, admin, _]
+      if (!this.admin || !resultOrRows) return resultOrRows;
+      if (Array.isArray(resultOrRows)) {
+        return resultOrRows.filter(r => r[1] === this.admin || r[1] === null);
+      }
+      const i = resultOrRows.columns.indexOf("administracio");
+      if (i < 0) return resultOrRows;
+      return { columns: resultOrRows.columns,
+               values: resultOrRows.values.filter(r => r[i] === this.admin) };
+    },
     loadDashboard() {
       this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values[0][0];
+
+      this.admins = this.rows("SELECT nom, comunitat FROM administracio ORDER BY comunitat, nivell");
 
       this.cards = [
         ["contracte", "Contractes"],
@@ -227,62 +407,54 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
         ["dataset", "Datasets"],
         ["indicador", "Indicadors"],
         ["document", "Documents"],
-      ].map(([t, label]) => ({ label, n: this.q(`SELECT COUNT(*) AS n FROM ${t}`).values[0][0] }));
+      ].map(([t, label]) => ({
+        label,
+        n: this.q(`SELECT COUNT(*) AS n FROM ${t}`).values[0][0],
+      }));
 
-      // --- Siero en xifres: una gràfica per unitat amb >1 indicador ---
-      const ind = this.rows(
-        "SELECT nom, valor_num, unitat, seccio FROM indicador WHERE valor_num IS NOT NULL"
-      );
-      const byUnit = {};
-      for (const [nom, v, u, seccio] of ind) (byUnit[u] ??= []).push([nom, seccio, v]);
-      this.xifres.charts = Object.entries(byUnit)
-        .filter(([, items]) => items.length > 1 && items.length <= 15)
-        .map(([unit, items]) =>
-          groupedBar(`Indicadors en ${unit}`, items.sort((a, b) => b[2] - a[2]), { horizontal: true, eur: unit.startsWith("€") })
-        );
+      this.raw.ind = this.rows(
+        "SELECT nom, valor_num, unitat, seccio FROM indicador WHERE valor_num IS NOT NULL");
+      this.raw.perAny = this.rows(
+        "SELECT any, administracio, n FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any");
+      this.raw.importAny = this.rows(
+        "SELECT any, administracio, total FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any");
+      this.raw.topAdj = this.rows(
+        "SELECT adjudicatari, administracio, total FROM v_top_adjudicataris ORDER BY total DESC LIMIT 40"
+      ).map(([nom, admin_, total]) => [nom.length > 40 ? nom.slice(0, 40) + "…" : nom, admin_, total]);
+      this.raw.subv = this.rows(
+        "SELECT any, administracio, total FROM v_subvencions_per_any WHERE any IS NOT NULL ORDER BY any");
+      this.raw.vContractes = this.q(
+        "SELECT * FROM v_contractes_per_any ORDER BY any DESC, administracio");
+      this.raw.vTop = this.q(
+        "SELECT * FROM v_top_adjudicataris ORDER BY total DESC LIMIT 25");
+      this.raw.vSubv = this.q(
+        "SELECT * FROM v_subvencions_per_any ORDER BY any DESC, administracio");
+      this.raw.topBeneficiaris = this.q(
+        `SELECT a.nom AS administracio, s.beneficiari, s.beneficiari_nif,
+                COUNT(*) n, ROUND(SUM(s.import), 2) total
+         FROM subvencio s LEFT JOIN administracio a ON a.id = s.administracio_id
+         GROUP BY administracio, COALESCE(s.beneficiari_nif, s.beneficiari)
+         ORDER BY total DESC LIMIT 25`);
+      this.raw.tablon = this.q(
+        `SELECT json_extract(raw,'$.data_publicacio') data, titol,
+                json_extract(raw,'$.expedient') expedient,
+                json_extract(raw,'$.procediment') procediment, url
+         FROM document WHERE font = 'siero_sede' ORDER BY data DESC LIMIT 30`);
+      this.raw.docsPerFont = this.q(
+        `SELECT a.nom AS administracio, d.font, d.categoria, COUNT(*) n
+         FROM document d LEFT JOIN administracio a ON a.id = d.administracio_id
+         GROUP BY administracio, font, categoria ORDER BY administracio, n DESC`);
 
-      // --- Contractes ---
-      const perAny = this.rows(
-        "SELECT any, administracio, n FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any"
-      );
-      const importAny = this.rows(
-        "SELECT any, administracio, total FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any"
-      );
-      const topAdj = this.rows(
-        "SELECT adjudicatari, clau, total FROM v_top_adjudicataris ORDER BY total DESC LIMIT 10"
-      ).map(([nom, , total]) => [nom.length > 40 ? nom.slice(0, 40) + "…" : nom, "Adjudicatari", total]);
-      this.contracteCharts = [
-        groupedBar("Contractes per any", perAny),
-        groupedBar("Import adjudicat per any", importAny, { eur: true }),
-        groupedBar("Top adjudicataris per import", topAdj, { horizontal: true, eur: true }),
-      ];
-
-      // --- Subvencions ---
-      const subv = this.rows(
-        "SELECT any, administracio, total FROM v_subvencions_per_any WHERE any IS NOT NULL ORDER BY any"
-      );
-      this.subvencioChart = subv.length ? groupedBar("Subvencions concedides per any", subv, { eur: true }) : null;
-
-      this.sections = [
-        { title: "Indicadors de Siero",
-          result: this.q(
-            "SELECT seccio, nom, valor, variacio_anual, periode, font_dada FROM indicador ORDER BY seccio, id") },
-        { title: "Tabló d'anuncis de la seu electrònica",
-          result: this.q(
-            `SELECT json_extract(raw,'$.data_publicacio') data, titol,
-                    json_extract(raw,'$.expedient') expedient,
-                    json_extract(raw,'$.procediment') procediment, url
-             FROM document WHERE font = 'siero_sede' ORDER BY data DESC LIMIT 30`),
-          links: true },
-        { title: "Contractes per any i administració",
-          result: this.q("SELECT * FROM v_contractes_per_any ORDER BY any DESC, administracio") },
-        { title: "Principals adjudicataris",
-          result: this.q("SELECT * FROM v_top_adjudicataris ORDER BY total DESC LIMIT 25") },
-        { title: "Subvencions per any",
-          result: this.q("SELECT * FROM v_subvencions_per_any ORDER BY any DESC, administracio") },
-        { title: "Darreres ingestes",
-          result: this.q("SELECT font, inici, fi, estat, registres, missatge FROM ingest_run ORDER BY id DESC LIMIT 15") },
-      ];
+      this.schema = this.rows(
+        `SELECT type, name FROM sqlite_master
+         WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'
+         ORDER BY CASE type WHEN 'table' THEN 0 ELSE 1 END, name`
+      ).map(([type, name]) => ({
+        type,
+        name,
+        count: type === "table" ? this.q(`SELECT COUNT(*) FROM "${name}"`).values[0][0] : null,
+        cols: this.rows(`SELECT name, type, pk FROM pragma_table_info('${name}')`),
+      }));
     },
     runQuery() {
       this.queryError = null;
