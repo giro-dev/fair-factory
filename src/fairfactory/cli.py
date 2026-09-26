@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from fairfactory.connectors import CONNECTORS
-from fairfactory.db import DEFAULT_DB, connect, init_db
+from fairfactory.db import DEFAULT_DB, connect, init_db, merge_into
 from fairfactory.http import Client
 
 log = logging.getLogger("fairfactory")
@@ -31,8 +31,11 @@ def cmd_ingest(args) -> int:
         kwargs = {}
         if name == "pcsp":
             kwargs["max_pages"] = args.pcsp_pages
-        if name == "bdns" and args.since:
-            kwargs["since"] = args.since
+        if name == "bdns":
+            if args.since:
+                kwargs["since"] = args.since
+            if args.bdns_admin:
+                kwargs["admins"] = [a.strip() for a in args.bdns_admin.split(",") if a.strip()]
         connector = cls(conn, client, limit=args.limit, **kwargs)
         try:
             connector.run()
@@ -59,6 +62,7 @@ def cmd_stats(args) -> int:
         "subvencio",
         "dataset",
         "indicador",
+        "pressupost",
         "document",
     ):
         stats[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -73,6 +77,22 @@ def cmd_stats(args) -> int:
     return 0
 
 
+def cmd_merge(args) -> int:
+    """Merge partial ingest DBs (per-admin jobs) into a single DB."""
+    out = Path(args.out)
+    if out.exists() and not args.keep:
+        out.unlink()
+    conn = connect(out)
+    init_db(conn)
+    for src in args.sources:
+        log.info("fusionant %s", src)
+        merge_into(conn, src)
+    conn.execute("VACUUM")
+    conn.close()
+    print(f"Base de dades fusionada a {out}")
+    return 0
+
+
 def cmd_export(args) -> int:
     """Write a small JSON summary next to the DB (used by the static site)."""
     conn = connect(args.db)
@@ -81,7 +101,7 @@ def cmd_export(args) -> int:
         "generat": conn.execute("SELECT MAX(fi) FROM ingest_run").fetchone()[0],
         "taules": {
             t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-            for t in ("contracte", "subvencio", "dataset", "indicador", "document")
+            for t in ("contracte", "subvencio", "dataset", "indicador", "pressupost", "document")
         },
         "fonts": [dict(r) for r in conn.execute("SELECT codi, nom, url, llicencia FROM font")],
         "ingestes": [
@@ -123,11 +143,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ing.add_argument("--since", help="BDNS: només concessions des de dd/mm/aaaa")
     ing.add_argument(
+        "--bdns-admin",
+        metavar="ADMINS",
+        help="BDNS: només aquestes administracions, separades per comes (per a jobs separats)",
+    )
+    ing.add_argument(
         "--keep-going", action="store_true", help="surt amb codi 0 encara que alguna font falli"
     )
     ing.set_defaults(func=cmd_ingest)
 
     sub.add_parser("stats", help="recomptes i darreres ingestes").set_defaults(func=cmd_stats)
+
+    mer = sub.add_parser("merge", help="fusiona BDs parcials (jobs per administració)")
+    mer.add_argument("sources", nargs="+", metavar="SQLITE", help="BDs parcials a fusionar")
+    mer.add_argument("--out", required=True, help="BD de destí")
+    mer.add_argument(
+        "--keep", action="store_true", help="conserva la BD de destí existent (fusiona a sobre)"
+    )
+    mer.set_defaults(func=cmd_merge)
 
     exp = sub.add_parser("export-summary", help="escriu un resum JSON per al web estàtic")
     exp.add_argument("--out", default="data/summary.json")

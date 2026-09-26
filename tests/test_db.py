@@ -12,7 +12,10 @@ def conn():
 
 def test_init_seeds_administracions(conn):
     assert administracio_id(conn, "siero") != administracio_id(conn, "asturias")
-    assert conn.execute("SELECT COUNT(*) FROM administracio").fetchone()[0] == 2
+    assert administracio_id(conn, "figueres") != administracio_id(conn, "catalunya")
+    assert conn.execute("SELECT COUNT(*) FROM administracio").fetchone()[0] == 5
+    row = conn.execute("SELECT comunitat FROM administracio WHERE codi = 'figueres'").fetchone()
+    assert row["comunitat"] == "Catalunya"
 
 
 def test_upsert_is_idempotent(conn):

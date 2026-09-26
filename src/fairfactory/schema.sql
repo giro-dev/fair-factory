@@ -117,6 +117,27 @@ CREATE TABLE IF NOT EXISTS indicador (
 );
 CREATE INDEX IF NOT EXISTS idx_indicador_seccio ON indicador(seccio);
 
+CREATE TABLE IF NOT EXISTS pressupost (
+    id                       INTEGER PRIMARY KEY,
+    font                     TEXT NOT NULL REFERENCES font(codi),
+    id_extern                TEXT NOT NULL,
+    administracio_id         INTEGER REFERENCES administracio(id),
+    exercici                 TEXT,
+    periode                  TEXT,
+    capitol                  TEXT,
+    capitol_codi             TEXT,
+    credit_inicial           REAL,
+    pressupost_definitiu     REAL,
+    autoritzat               REAL,
+    obligacions_reconegudes  REAL,
+    obligacions_pagades      REAL,
+    url                      TEXT,
+    raw                      TEXT,
+    actualitzat              TEXT NOT NULL,
+    UNIQUE (font, id_extern)
+);
+CREATE INDEX IF NOT EXISTS idx_pressupost_exercici ON pressupost(exercici);
+
 CREATE TABLE IF NOT EXISTS document (
     id                INTEGER PRIMARY KEY,
     font              TEXT NOT NULL REFERENCES font(codi),
@@ -149,6 +170,16 @@ SELECT a.nom AS administracio,
 FROM contracte c LEFT JOIN administracio a ON a.id = c.administracio_id
 WHERE c.adjudicatari_nom IS NOT NULL
 GROUP BY 1, 2;
+
+CREATE VIEW IF NOT EXISTS v_pressupost_per_exercici AS
+SELECT a.nom AS administracio,
+       p.exercici,
+       p.capitol,
+       ROUND(SUM(p.pressupost_definitiu), 2) AS definitiu,
+       ROUND(SUM(p.obligacions_reconegudes), 2) AS reconegudes,
+       ROUND(SUM(p.obligacions_pagades), 2) AS pagades
+FROM pressupost p LEFT JOIN administracio a ON a.id = p.administracio_id
+GROUP BY 1, 2, 3;
 
 CREATE VIEW IF NOT EXISTS v_subvencions_per_any AS
 SELECT a.nom AS administracio,

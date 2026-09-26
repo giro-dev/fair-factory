@@ -16,9 +16,18 @@ API = "https://www.infosubvenciones.es/bdnstrans/api"
 PAGE_SIZE = 500
 
 # ids d'òrgan a la BDNS (GET /organos?vpd=GE&idAdmon=L|A)
+# - idAdmon "L": provincia + (muni = tots els fills del node | organ = nom exacte)
+# - idAdmon "A": comunitat = tots els òrgans fills del node de la CA
 ORGANS = {
     "siero": {"idAdmon": "L", "provincia": "ASTURIAS", "organ": "AYUNTAMIENTO DE SIERO"},
     "asturias": {"idAdmon": "A", "comunitat": "PRINCIPADO DE ASTURIAS"},
+    "figueres": {"idAdmon": "L", "provincia": "GIRONA", "organ": "AYUNTAMIENTO DE FIGUERES"},
+    "diputacio_girona": {
+        "idAdmon": "L",
+        "provincia": "GIRONA",
+        "muni": "DIPUTACIÓN PROV. DE GIRONA",
+    },
+    "catalunya": {"idAdmon": "A", "comunitat": "CATALUÑA"},
 }
 
 
@@ -28,9 +37,10 @@ class BDNSConnector(Connector):
     url = "https://www.infosubvenciones.es/bdnstrans/GE/es/inicio"
     llicencia = "https://www.infosubvenciones.es/bdnstrans/GE/es/avisolegal"
 
-    def __init__(self, *args, since: str | None = None, **kwargs):
+    def __init__(self, *args, since: str | None = None, admins: list[str] | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.since = since  # dd/mm/yyyy
+        self.admins = admins  # filtra ORGANS (p. ex. jobs separats per administració)
 
     def organ_ids(self, admin: str) -> list[int]:
         cfg = ORGANS[admin]
@@ -43,8 +53,10 @@ class BDNSConnector(Connector):
                 if prov["descripcion"] != cfg["provincia"]:
                     continue
                 for muni in prov.get("children", []):
+                    if "muni" in cfg and muni["descripcion"] == cfg["muni"]:
+                        ids.extend(org["id"] for org in muni.get("children", []))
                     for org in muni.get("children", []):
-                        if org["descripcion"] == cfg["organ"]:
+                        if org["descripcion"] == cfg.get("organ"):
                             ids.append(org["id"])
         else:
             for ca in tree:
@@ -54,7 +66,7 @@ class BDNSConnector(Connector):
 
     def ingest(self) -> int:
         total = 0
-        for admin in ORGANS:
+        for admin in self.admins or ORGANS:
             ids = self.organ_ids(admin)
             if not ids:
                 log.warning("bdns: cap òrgan trobat per %s", admin)

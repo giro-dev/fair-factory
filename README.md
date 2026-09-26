@@ -15,6 +15,13 @@ navegador amb sql.js i Vue, i permet consultes SQL lliures).
 | `asturias_transparencia`| Portal de transparència del Principat (HTML)      | `document`   |
 | `siero_sede`            | Sede electrònica de Siero – tabló d'anuncis       | `document`   |
 | `siero_cifras`          | "Siero en cifras" – observatori socioeconòmic     | `indicador`  |
+| `figueres_ckan`         | Figueres – dades obertes (CKAN AOC, CODI_ENS)     | `document`   |
+| `figueres_contractes`   | Figueres – licitacions en tràmit (taula HTML)     | `contracte`  |
+| `diputacio_girona`      | Diputació de Girona – pressuposts (PDFs)          | `document`   |
+| `catalunya_socrata`     | Generalitat – execució pressupostària (Socrata)   | `pressupost` |
+
+Els connectors `bdns` i `pcsp` també cobreixen les administracions catalanes
+(Figueres, Diputació de Girona i Generalitat).
 
 Tot es guarda amb `font` + `id_extern` com a clau natural (upsert idempotent), `url` d'origen i
 el registre original a `raw` quan hi ha JSON.
@@ -29,6 +36,8 @@ fair-factory ingest                            # totes les fonts
 fair-factory ingest bdns siero_transparencia --limit 500
 fair-factory ingest pcsp --pcsp-pages 1        # cada pàgina del feed pesa ~17 MB
 fair-factory ingest bdns --since 01/01/2024
+fair-factory ingest bdns --bdns-admin siero,asturias   # filtra òrgans BDNS
+fair-factory merge --out data/final.sqlite part-a.sqlite part-b.sqlite
 fair-factory stats
 fair-factory export-summary --out docs/summary.json
 ```
@@ -39,7 +48,11 @@ peticions). Cada execució queda registrada a `ingest_run`.
 ## Web (GitHub Pages)
 
 El repositori és la font de dades: el workflow `.github/workflows/ingest-and-publish.yml`
-(setmanal o manual) executa la ingesta, comprimeix la base de dades a
+(setmanal o manual) executa la ingesta **en paral·lel per administració** — un job matrix per a
+Astúries, un per a Catalunya i un per a les fonts compartides (`datos_gob`, `pcsp`); així els
+timeouts d'una font no alenteixen les altres. Cada job genera `part-<grup>.sqlite` com a
+artefacte i el job `publish` les fusiona (`fair-factory merge`, per `codi`/`id_extern`,
+els ids primaris poden diferir entre parcials), comprimeix la base de dades a
 `docs/transparencia.sqlite.gz` (la BD supera el límit de 100 MB de GitHub, així que es publica
 comprimida), genera `docs/summary.json` i **commiteja els dos fitxers al repositori**. GitHub
 Pages serveix la carpeta `docs/` de `main` tal qual; `docs/index.html` baixa el `.gz`, el

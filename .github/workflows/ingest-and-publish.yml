@@ -10,14 +10,58 @@ on:
         default: "3"
 
 permissions:
-  contents: write   # la pipeline commiteja docs/transparencia.sqlite i docs/summary.json
+  contents: write   # la pipeline commiteja docs/transparencia.sqlite.gz i docs/summary.json
 
 concurrency:
   group: ingest
   cancel-in-progress: false
 
 jobs:
+  # Un job per grup d'administració: els timeouts d'una font no alenteixen
+  # les altres, i cada job produeix una sqlite parcial com a artefacte.
   ingest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - grup: asturias
+            fonts: >-
+              bdns siero_transparencia asturias_transparencia
+              siero_sede siero_cifras
+            extra_args: "--bdns-admin siero,asturias"
+          - grup: catalunya
+            fonts: >-
+              bdns figueres_ckan figueres_contractes
+              diputacio_girona catalunya_socrata
+            extra_args: "--bdns-admin figueres,diputacio_girona,catalunya"
+          - grup: compartit
+            fonts: "datos_gob pcsp"
+            extra_args: ""
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install .
+      - name: Ingesta (${{ matrix.grup }})
+        run: |
+          fair-factory ingest --keep-going \
+            --db "data/part-${{ matrix.grup }}.sqlite" \
+            --pcsp-pages "${{ github.event.inputs.pcsp_pages || 3 }}" \
+            ${{ matrix.extra_args }} ${{ matrix.fonts }}
+          fair-factory --db "data/part-${{ matrix.grup }}.sqlite" stats
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sqlite-${{ matrix.grup }}
+          path: data/part-${{ matrix.grup }}.sqlite
+          if-no-files-found: warn
+          retention-days: 3
+
+  publish:
+    needs: ingest
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,11 +69,15 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install .
-      - name: Ingesta
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sqlite-*
+          path: parts
+      - name: Fusió de les BDs parcials
         run: |
-          fair-factory ingest --keep-going --pcsp-pages "${{ github.event.inputs.pcsp_pages || 3 }}"
-          fair-factory stats
-          fair-factory export-summary --out docs/summary.json
+          fair-factory merge --out data/transparencia.sqlite parts/*/part-*.sqlite
+          fair-factory --db data/transparencia.sqlite stats
+          fair-factory --db data/transparencia.sqlite export-summary --out docs/summary.json
           # GitHub rebutja fitxers >100 MB: la sqlite es publica comprimida
           gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
       - name: Persisteix la sqlite al repositori
