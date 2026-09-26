@@ -11,8 +11,8 @@ from typing import Any
 DEFAULT_DB = Path("data/transparencia.sqlite")
 
 ADMINISTRACIONS = [
-    ("siero", "Ayuntamiento de Siero", "local", "https://www.ayto-siero.es"),
-    ("asturias", "Principado de Asturias", "autonomic", "https://www.asturias.es"),
+    ("siero", "Ayuntamiento de Siero", "local", "Asturias", "https://www.ayto-siero.es"),
+    ("asturias", "Principado de Asturias", "autonomic", "Asturias", "https://www.asturias.es"),
 ]
 
 
@@ -32,8 +32,14 @@ def connect(path: Path | str = DEFAULT_DB) -> sqlite3.Connection:
 def init_db(conn: sqlite3.Connection) -> None:
     schema = resources.files("fairfactory").joinpath("schema.sql").read_text(encoding="utf-8")
     conn.executescript(schema)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(administracio)")}
+    if "comunitat" not in cols:
+        conn.execute("ALTER TABLE administracio ADD COLUMN comunitat TEXT")
     conn.executemany(
-        "INSERT OR IGNORE INTO administracio (codi, nom, nivell, url) VALUES (?, ?, ?, ?)",
+        """INSERT INTO administracio (codi, nom, nivell, comunitat, url)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(codi) DO UPDATE SET nom = excluded.nom, nivell = excluded.nivell,
+               comunitat = excluded.comunitat, url = excluded.url""",
         ADMINISTRACIONS,
     )
     conn.commit()

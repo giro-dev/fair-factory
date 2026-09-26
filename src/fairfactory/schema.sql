@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS administracio (
     codi      TEXT NOT NULL UNIQUE,
     nom       TEXT NOT NULL,
     nivell    TEXT NOT NULL CHECK (nivell IN ('local', 'autonomic', 'estatal')),
+    comunitat TEXT,
     url       TEXT
 );
 
