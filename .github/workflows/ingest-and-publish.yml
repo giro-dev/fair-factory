@@ -47,8 +47,9 @@ jobs:
       - run: pip install .
       - name: Ingesta (${{ matrix.grup }})
         run: |
-          fair-factory ingest --keep-going \
-            --db "data/part-${{ matrix.grup }}.sqlite" \
+          # --db és opció global: ha d'anar abans del subcomandament
+          fair-factory --db "data/part-${{ matrix.grup }}.sqlite" \
+            ingest --keep-going \
             --pcsp-pages "${{ github.event.inputs.pcsp_pages || 3 }}" \
             ${{ matrix.extra_args }} ${{ matrix.fonts }}
           fair-factory --db "data/part-${{ matrix.grup }}.sqlite" stats
