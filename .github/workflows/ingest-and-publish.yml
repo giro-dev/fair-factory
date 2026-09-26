@@ -30,12 +30,13 @@ jobs:
           fair-factory ingest --keep-going --pcsp-pages "${{ github.event.inputs.pcsp_pages || 3 }}"
           fair-factory stats
           fair-factory export-summary --out docs/summary.json
-          cp data/transparencia.sqlite docs/transparencia.sqlite
+          # GitHub rebutja fitxers >100 MB: la sqlite es publica comprimida
+          gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
       - name: Persisteix la sqlite al repositori
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/transparencia.sqlite docs/summary.json
+          git add docs/transparencia.sqlite.gz docs/summary.json
           if git diff --cached --quiet; then
             echo "Cap canvi en les dades; res a commitejar."
           else

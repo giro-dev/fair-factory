@@ -1,0 +1,120 @@
+{
+  "generat": "2026-09-25T23:15:00+00:00",
+  "taules": {
+    "contracte": 3381,
+    "subvencio": 127987,
+    "dataset": 518,
+    "indicador": 27,
+    "document": 437
+  },
+  "fonts": [
+    {
+      "codi": "siero_transparencia",
+      "nom": "Ayuntamiento de Siero — Portal de Transparencia",
+      "url": "https://www.ayto-siero.es/portal-de-transparencia/",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "bdns",
+      "nom": "Base de Datos Nacional de Subvenciones",
+      "url": "https://www.infosubvenciones.es/bdnstrans/GE/es/inicio",
+      "llicencia": "https://www.infosubvenciones.es/bdnstrans/GE/es/avisolegal"
+    },
+    {
+      "codi": "pcsp",
+      "nom": "Plataforma de Contratación del Sector Público (sindicación)",
+      "url": "https://contrataciondelestado.es",
+      "llicencia": "https://contrataciondelestado.es/wps/portal/avisolegal"
+    },
+    {
+      "codi": "datos_gob",
+      "nom": "datos.gob.es — Catálogo de datos abiertos",
+      "url": "https://datos.gob.es",
+      "llicencia": "https://datos.gob.es/es/aviso-legal"
+    },
+    {
+      "codi": "asturias_transparencia",
+      "nom": "Principado de Asturias — Portal de Transparencia",
+      "url": "https://transparencia.asturias.es",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "siero_sede",
+      "nom": "Ayuntamiento de Siero — Sede Electrónica (tablón de anuncios)",
+      "url": "https://siero.sedelectronica.es/board",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "siero_cifras",
+      "nom": "Siero en cifras — Observatorio Socioeconómico (portalestadistico.com)",
+      "url": "https://www.ayto-siero.es/siero-en-cifras/",
+      "llicencia": "Informació pública sectorial — font citada a cada indicador"
+    }
+  ],
+  "ingestes": [
+    {
+      "font": "asturias_transparencia",
+      "inici": "2026-09-25T23:14:51+00:00",
+      "fi": "2026-09-25T23:15:00+00:00",
+      "estat": "ok",
+      "registres": 17,
+      "missatge": null
+    },
+    {
+      "font": "siero_cifras",
+      "inici": "2026-09-25T23:14:25+00:00",
+      "fi": "2026-09-25T23:14:30+00:00",
+      "estat": "ok",
+      "registres": 27,
+      "missatge": null
+    },
+    {
+      "font": "siero_sede",
+      "inici": "2026-09-25T23:14:24+00:00",
+      "fi": "2026-09-25T23:14:25+00:00",
+      "estat": "ok",
+      "registres": 10,
+      "missatge": null
+    },
+    {
+      "font": "asturias_transparencia",
+      "inici": "2026-09-25T23:14:20+00:00",
+      "fi": "2026-09-25T23:14:24+00:00",
+      "estat": "ok",
+      "registres": 1,
+      "missatge": null
+    },
+    {
+      "font": "siero_transparencia",
+      "inici": "2026-09-25T23:13:37+00:00",
+      "fi": "2026-09-25T23:14:20+00:00",
+      "estat": "ok",
+      "registres": 3772,
+      "missatge": null
+    },
+    {
+      "font": "pcsp",
+      "inici": "2026-09-25T23:13:26+00:00",
+      "fi": "2026-09-25T23:13:37+00:00",
+      "estat": "ok",
+      "registres": 30,
+      "missatge": null
+    },
+    {
+      "font": "datos_gob",
+      "inici": "2026-09-25T23:13:16+00:00",
+      "fi": "2026-09-25T23:13:26+00:00",
+      "estat": "ok",
+      "registres": 518,
+      "missatge": null
+    },
+    {
+      "font": "bdns",
+      "inici": "2026-09-25T23:08:46+00:00",
+      "fi": "2026-09-25T23:13:16+00:00",
+      "estat": "ok",
+      "registres": 127987,
+      "missatge": null
+    }
+  ]
+}

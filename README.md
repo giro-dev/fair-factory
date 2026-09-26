@@ -13,6 +13,8 @@ navegador amb sql.js i Vue, i permet consultes SQL lliures).
 | `pcsp`                  | Plataforma de Contratación – feed ATOM/CODICE     | `contracte`  |
 | `siero_transparencia`   | Portal de transparència de Siero (HTML + PDFs)    | `document`, `contracte` (contractes menors) |
 | `asturias_transparencia`| Portal de transparència del Principat (HTML)      | `document`   |
+| `siero_sede`            | Sede electrònica de Siero – tabló d'anuncis       | `document`   |
+| `siero_cifras`          | "Siero en cifras" – observatori socioeconòmic     | `indicador`  |
 
 Tot es guarda amb `font` + `id_extern` com a clau natural (upsert idempotent), `url` d'origen i
 el registre original a `raw` quan hi ha JSON.
@@ -37,12 +39,13 @@ peticions). Cada execució queda registrada a `ingest_run`.
 ## Web (GitHub Pages)
 
 El repositori és la font de dades: el workflow `.github/workflows/ingest-and-publish.yml`
-(setmanal o manual) executa la ingesta, copia la base de dades a `docs/transparencia.sqlite`,
-genera `docs/summary.json` i **commiteja els dos fitxers al repositori**. GitHub Pages serveix la
-carpeta `docs/` de `main` tal qual; `docs/index.html` carrega `transparencia.sqlite` al navegador
-amb sql.js (sempre en mode de només lectura — la consulta és a memòria, el fitxer del repositori
-no es modifica mai). No cal cap artefacte ni pas de desplegament: cada commit de la pipeline
-actualitza la web.
+(setmanal o manual) executa la ingesta, comprimeix la base de dades a
+`docs/transparencia.sqlite.gz` (la BD supera el límit de 100 MB de GitHub, així que es publica
+comprimida), genera `docs/summary.json` i **commiteja els dos fitxers al repositori**. GitHub
+Pages serveix la carpeta `docs/` de `main` tal qual; `docs/index.html` baixa el `.gz`, el
+descomprimeix al navegador (`DecompressionStream`) i el carrega amb sql.js (sempre en mode de
+només lectura — la consulta és a memòria, el fitxer del repositori no es modifica mai). No cal
+cap artefacte ni pas de desplegament: cada commit de la pipeline actualitza la web.
 
 Cal activar Pages amb origen **«Deploy from a branch» → `main` → `/docs`** a la configuració del
 repositori (una sola vegada).
@@ -50,7 +53,8 @@ repositori (una sola vegada).
 Per provar-ho en local:
 
 ```bash
-cp data/transparencia.sqlite docs/ && python -m http.server -d docs 8000
+gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
+python -m http.server -d docs 8000
 ```
 
 ## Desenvolupament

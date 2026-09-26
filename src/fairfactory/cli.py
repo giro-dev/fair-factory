@@ -58,6 +58,7 @@ def cmd_stats(args) -> int:
         "contracte",
         "subvencio",
         "dataset",
+        "indicador",
         "document",
     ):
         stats[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
@@ -80,7 +81,7 @@ def cmd_export(args) -> int:
         "generat": conn.execute("SELECT MAX(fi) FROM ingest_run").fetchone()[0],
         "taules": {
             t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-            for t in ("contracte", "subvencio", "dataset", "document")
+            for t in ("contracte", "subvencio", "dataset", "indicador", "document")
         },
         "fonts": [dict(r) for r in conn.execute("SELECT codi, nom, url, llicencia FROM font")],
         "ingestes": [
