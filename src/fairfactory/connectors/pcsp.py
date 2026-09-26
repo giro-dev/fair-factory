@@ -178,6 +178,8 @@ def classify(row: dict) -> str | None:
         return "figueres"
     if "girona" in organ and ("diputaci" in organ or "provincial" in organ):
         return "diputacio_girona"
+    if "ajuntament de girona" in organ or "ayuntamiento de girona" in organ:
+        return "girona"
     if "generalitat" in organ:
         return "catalunya"
     # Astúries
@@ -204,7 +206,7 @@ class PCSPConnector(Connector):
         pages = 0
         admin_ids = {
             codi: administracio_id(self.conn, codi)
-            for codi in ("siero", "asturias", "figueres", "diputacio_girona", "catalunya")
+            for codi in ("siero", "asturias", "figueres", "girona", "diputacio_girona", "catalunya")
         }
         while url and pages < self.max_pages:
             resp = self.client.get(url, cache=url != FEED)

@@ -17,6 +17,7 @@ navegador amb sql.js i Vue, i permet consultes SQL lliures).
 | `siero_cifras`          | "Siero en cifras" – observatori socioeconòmic     | `indicador`  |
 | `figueres_ckan`         | Figueres – dades obertes (CKAN AOC, CODI_ENS)     | `document`   |
 | `figueres_contractes`   | Figueres – licitacions en tràmit (taula HTML)     | `contracte`  |
+| `aoc_contractes`        | AOC – dataset agregat PSCP (ine10/àmbit per admin) | `contracte`  |
 | `diputacio_girona`      | Diputació de Girona – pressuposts (PDFs)          | `document`   |
 | `catalunya_socrata`     | Generalitat – execució pressupostària (Socrata)   | `pressupost` |
 

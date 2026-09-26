@@ -1,6 +1,14 @@
 import pytest
 
-from fairfactory.db import IngestRun, administracio_id, connect, ensure_font, init_db, upsert
+from fairfactory.db import (
+    IngestRun,
+    administracio_id,
+    administracio_ids,
+    connect,
+    ensure_font,
+    init_db,
+    upsert,
+)
 
 
 @pytest.fixture
@@ -13,9 +21,17 @@ def conn():
 def test_init_seeds_administracions(conn):
     assert administracio_id(conn, "siero") != administracio_id(conn, "asturias")
     assert administracio_id(conn, "figueres") != administracio_id(conn, "catalunya")
-    assert conn.execute("SELECT COUNT(*) FROM administracio").fetchone()[0] == 5
+    assert conn.execute("SELECT COUNT(*) FROM administracio").fetchone()[0] == 6
     row = conn.execute("SELECT comunitat FROM administracio WHERE codi = 'figueres'").fetchone()
     assert row["comunitat"] == "Catalunya"
+
+
+def test_administracio_identificadors(conn):
+    ids = administracio_ids(conn, "figueres")
+    assert ids["ine10"] == ["1706690004", "9914065004"]
+    assert ids["dir3"] == "L01170669"
+    assert administracio_ids(conn, "catalunya")["aoc_ambit"].startswith("Departaments")
+    assert administracio_ids(conn, "siero") == {}
 
 
 def test_upsert_is_idempotent(conn):

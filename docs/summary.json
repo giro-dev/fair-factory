@@ -1,8 +1,8 @@
 {
-  "generat": "2026-09-26T11:19:23+00:00",
+  "generat": "2026-09-26T17:54:23+00:00",
   "taules": {
-    "contracte": 3397,
-    "subvencio": 548548,
+    "contracte": 21481,
+    "subvencio": 550261,
     "dataset": 518,
     "indicador": 27,
     "pressupost": 46,
@@ -74,9 +74,31 @@
       "nom": "Generalitat de Catalunya — Execució pressupostària (Socrata)",
       "url": "https://analisi.transparenciacatalunya.cat/d/ajns-4mi7",
       "llicencia": "Dades obertes Generalitat de Catalunya (IODL)"
+    },
+    {
+      "codi": "aoc_contractes",
+      "nom": "Consorci AOC — Contractes publicats (dataset agregat CKAN)",
+      "url": "https://dadesobertes.seu-e.cat/dataset/css-rc-contractes-pscp",
+      "llicencia": "IOpen Data (AOC)"
     }
   ],
   "ingestes": [
+    {
+      "font": "bdns",
+      "inici": "2026-09-26T17:54:18+00:00",
+      "fi": "2026-09-26T17:54:23+00:00",
+      "estat": "ok",
+      "registres": 1713,
+      "missatge": null
+    },
+    {
+      "font": "aoc_contractes",
+      "inici": "2026-09-26T17:53:41+00:00",
+      "fi": "2026-09-26T17:54:06+00:00",
+      "estat": "ok",
+      "registres": 18084,
+      "missatge": null
+    },
     {
       "font": "pcsp",
       "inici": "2026-09-26T11:16:41+00:00",
