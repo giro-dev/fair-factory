@@ -78,7 +78,9 @@ jobs:
           fair-factory merge --out data/transparencia.sqlite parts/*/part-*.sqlite
           fair-factory --db data/transparencia.sqlite stats
           fair-factory --db data/transparencia.sqlite export-summary --out docs/summary.json
-          # GitHub rebutja fitxers >100 MB: la sqlite es publica comprimida
+          # artefacte publicat «slim»: raw de subvencio buidat (duplica les
+          # columnes) per mantenir la BD sota els límits de GitHub i de la web
+          fair-factory --db data/transparencia.sqlite slim
           gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
       - name: Persisteix la sqlite al repositori
         run: |
