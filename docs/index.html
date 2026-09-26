@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>fair-factory · Transparència Siero / Astúries</title>
+<title>fair-factory · Auditoria ciutadana de la despesa pública</title>
 <style>
   :root { font-family: system-ui, sans-serif; color: #1c1c1c; }
   body { margin: 0 auto; max-width: 1100px; padding: 1.5rem; }
@@ -43,6 +43,8 @@
   .schema .pk { color: #b07000; font-weight: 600; }
   .schema .coltype { color: #999; font-size: .78rem; }
   .presets button { margin: 0 .4rem .4rem 0; font-size: .85rem; }
+  .colab li { margin: .5rem 0; }
+  section a { color: #3366cc; }
   @media (max-width: 800px) { .sqlwrap { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -51,11 +53,13 @@
   <div class="topbar">
     <div>
       <h1>fair-factory</h1>
-      <p class="muted">Dades públiques dels portals de transparència (Ayuntamiento de Siero / Principado de Asturias),
-      carregades des de <code>transparencia.sqlite</code> al navegador amb sql.js i Vue.
+      <p class="muted">Auditoria ciutadana de la despesa pública: contractes, subvencions,
+      pressupostos i documents de portals oficials (Astúries i Catalunya, per ara),
+      consultables aquí sense necessitat de programar.
       <span v-if="generat">Darrera ingesta: {{ generat }}.</span></p>
     </div>
     <div class="spacer"></div>
+    <a class="muted" href="https://github.com/giro-dev/fair-factory" target="_blank" rel="noopener">GitHub ↗</a>
     <label v-if="admins.length" class="muted">Administració
       <select v-model="admin">
         <option value="">Totes</option>
@@ -169,6 +173,52 @@
         </div>
       </div>
     </template>
+
+    <template v-if="tab === 'info'">
+      <section>
+        <h2>Què és fair-factory</h2>
+        <p>
+          Auditoria ciutadana automatitzada de la despesa pública. El projecte ingesta
+          periòdicament portals oficials de transparència, contractació, subvencions i dades
+          obertes, normalitza els registres en una única base de dades SQLite i els publica
+          aquí perquè qualsevol persona els pugui explorar — amb o sense SQL.
+        </p>
+        <p>
+          Cada registre conserva la font, l'enllaç al document original i, quan n'hi ha, el
+          payload original a <code>raw</code>. La ingesta és idempotent, educada amb els
+          servidors públics (1 petició/segon amb reintents) i queda registrada a
+          <code>ingest_run</code> per poder auditar-la.
+        </p>
+      </section>
+      <section>
+        <h2>Administracions cobertes</h2>
+        <result-table :result="raw.adminsList"></result-table>
+      </section>
+      <section>
+        <h2>Fonts de dades</h2>
+        <result-table :result="raw.fonts" :links="true"></result-table>
+      </section>
+      <section>
+        <h2>Com col·laborar</h2>
+        <ul class="colab">
+          <li><b>Reporta errors o incoherències</b> en les dades obrint una
+            <a href="https://github.com/giro-dev/fair-factory/issues" target="_blank" rel="noopener">issue</a>
+            al repositori.</li>
+          <li><b>Proposa noves fonts o administracions</b>: portals de transparència, seus
+            electròniques o catàlegs de dades obertes que hauríem d'ingerir.</li>
+          <li><b>Contribueix connectors</b>: cada font és un mòdul a
+            <code>src/fairfactory/connectors/</code> amb parser testejat i upserts idempotents.
+            El README documenta el patró.</li>
+          <li><b>Reutilitza les dades</b>: descarrega la base de dades completa des de la
+            pestanya SQL (gzip). Respecta la llicència de cada font (taula
+            <code>font</code>) i cita l'origen.</li>
+        </ul>
+        <p class="muted">
+          Projecte de codi obert ·
+          <a href="https://github.com/giro-dev/fair-factory" target="_blank" rel="noopener">github.com/giro-dev/fair-factory</a>
+        </p>
+      </section>
+    </template>
   </template>
 </div>
 
@@ -207,7 +257,7 @@ const ResultTable = {
       <tbody>
         <tr v-for="(row, r) in result.values" :key="r">
           <td v-for="(v, i) in row" :key="i" :class="{ num: numeric[i] }">
-            <a v-if="links && result.columns[i] === 'url' && v" :href="v" target="_blank" rel="noopener">enllaç</a>
+            <a v-if="links && result.columns[i].startsWith('url') && String(v).startsWith('http')" :href="v" target="_blank" rel="noopener">enllaç</a>
             <template v-else>{{ cell(v, i) }}</template>
           </td>
         </tr>
@@ -272,7 +322,7 @@ createApp({
       raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [],
              vContractes: null, vTop: null, vSubv: null, tablon: null, docsPerFont: null,
              topBeneficiaris: null, vPressupost: null, execucio: [],
-             vFluxTotal: null, vFraccionament: null },
+             vFluxTotal: null, vFraccionament: null, fonts: null, adminsList: null },
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
 GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
@@ -306,6 +356,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         { id: "indicadors", label: "Indicadors" },
         { id: "documents", label: "Documents" },
         { id: "sql", label: "SQL" },
+        { id: "info", label: "Informació" },
       ];
     },
     adminsByComunitat() {
@@ -496,6 +547,10 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
                 ROUND(SUM(obligacions_reconegudes),2), ROUND(SUM(obligacions_pagades),2)
          FROM pressupost p LEFT JOIN administracio a ON a.id = p.administracio_id
          GROUP BY exercici, administracio_id ORDER BY exercici`);
+      this.raw.fonts = this.q(
+        "SELECT codi, nom, url, llicencia AS url_llicencia FROM font ORDER BY codi");
+      this.raw.adminsList = this.q(
+        "SELECT codi, nom, nivell, comunitat, url FROM administracio ORDER BY comunitat, nivell");
       this.raw.docsPerFont = this.q(
         `SELECT a.nom AS administracio, d.font, d.categoria, COUNT(*) n
          FROM document d LEFT JOIN administracio a ON a.id = d.administracio_id

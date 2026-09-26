@@ -1,8 +1,14 @@
 # fair-factory
 
-Ingesta de dades de portals de transparència (Ayuntamiento de Siero / Principado de Asturias) cap a
-SQLite, publicada com a web estàtic a GitHub Pages (la pàgina carrega `transparencia.sqlite` al
-navegador amb sql.js i Vue, i permet consultes SQL lliures).
+Auditoria ciutadana de la despesa pública: ingesta periòdica de portals oficials de
+transparència, contractació, subvencions i dades obertes cap a una base de dades SQLite
+normalitzada, publicada com a web estàtic a GitHub Pages. La pàgina carrega
+`transparencia.sqlite.gz` al navegador amb sql.js i Vue — gràfiques, taules filtrables per
+administració i consultes SQL lliures sobre el model.
+
+Administracions cobertes actualment: **Ayuntamiento de Siero**, **Principado de Asturias**,
+**Ajuntament de Figueres**, **Ajuntament de Girona**, **Diputació de Girona** i
+**Generalitat de Catalunya**.
 
 ## Fonts
 
@@ -71,6 +77,18 @@ Per provar-ho en local:
 gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
 python -m http.server -d docs 8000
 ```
+
+## Com col·laborar
+
+- **Reporta errors o incoherències** en les dades obrint una
+  [issue](https://github.com/giro-dev/fair-factory/issues).
+- **Proposa noves fonts o administracions**: un connector nou és un mòdul a
+  `src/fairfactory/connectors/` (subclasse de `Connector` amb `ingest()`), més una entrada a
+  `ADMINISTRACIONS` (`db.py`) si és una administració nova — els `identificadors` (ine10, dir3…)
+  permeten filtrar fonts multi-ens sense tocar codi.
+- **Contribueix codi**: `ruff check . && ruff format . && pytest` han de passar.
+- **Reutilitza les dades**: `docs/transparencia.sqlite.gz` és la BD completa publicada;
+  respecta la llicència de cada font (taula `font`) i cita l'origen.
 
 ## Desenvolupament
 
