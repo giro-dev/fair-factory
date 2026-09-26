@@ -31,9 +31,9 @@ jobs:
             extra_args: "--bdns-admin siero,asturias"
           - grup: catalunya
             fonts: >-
-              bdns figueres_ckan figueres_contractes
+              bdns aoc_contractes figueres_ckan figueres_contractes
               diputacio_girona catalunya_socrata
-            extra_args: "--bdns-admin figueres,diputacio_girona,catalunya"
+            extra_args: "--bdns-admin figueres,girona,diputacio_girona,catalunya"
           - grup: compartit
             fonts: "datos_gob pcsp"
             extra_args: ""

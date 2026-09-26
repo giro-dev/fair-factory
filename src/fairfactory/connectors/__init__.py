@@ -1,3 +1,4 @@
+from fairfactory.connectors.aoc import AocContractesConnector
 from fairfactory.connectors.asturias import AsturiasConnector
 from fairfactory.connectors.base import Connector
 from fairfactory.connectors.bdns import BDNSConnector
@@ -27,6 +28,7 @@ CONNECTORS: dict[str, type[Connector]] = {
         FigueresContractesConnector,
         DiputacioGironaConnector,
         CatalunyaSocrataConnector,
+        AocContractesConnector,
     )
 }
 

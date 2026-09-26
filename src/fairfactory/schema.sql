@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS administracio (
     nom       TEXT NOT NULL,
     nivell    TEXT NOT NULL CHECK (nivell IN ('local', 'autonomic', 'estatal')),
     comunitat TEXT,
-    url       TEXT
+    url       TEXT,
+    identificadors TEXT    -- JSON: ine10, dir3, aoc_ambit, ...
 );
 
 CREATE TABLE IF NOT EXISTS font (

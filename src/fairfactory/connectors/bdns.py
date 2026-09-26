@@ -22,6 +22,7 @@ ORGANS = {
     "siero": {"idAdmon": "L", "provincia": "ASTURIAS", "organ": "AYUNTAMIENTO DE SIERO"},
     "asturias": {"idAdmon": "A", "comunitat": "PRINCIPADO DE ASTURIAS"},
     "figueres": {"idAdmon": "L", "provincia": "GIRONA", "organ": "AYUNTAMIENTO DE FIGUERES"},
+    "girona": {"idAdmon": "L", "provincia": "GIRONA", "organ": "AYUNTAMIENTO DE GIRONA"},
     "diputacio_girona": {
         "idAdmon": "L",
         "provincia": "GIRONA",

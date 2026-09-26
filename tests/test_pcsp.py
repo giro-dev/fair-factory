@@ -71,6 +71,6 @@ def test_classify_catalunya():
     assert classify({"organ": "Ajuntament de Figueres"}) == "figueres"
     assert classify({"organ": "Diputación Provincial de Girona"}) == "diputacio_girona"
     assert classify({"organ": "Generalitat de Catalunya - Dept. Educació"}) == "catalunya"
+    assert classify({"organ": "Ajuntament de Girona"}) == "girona"
     # altres ens catalans no s'adjudiquen a cap admin seguida
     assert classify({"organ": "Ayuntamiento de Barcelona", "_nuts": "ES511"}) is None
-    assert classify({"organ": "Ayuntamiento de Girona", "_nuts": "ES512"}) is None

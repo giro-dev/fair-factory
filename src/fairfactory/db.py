@@ -10,18 +10,58 @@ from typing import Any
 
 DEFAULT_DB = Path("data/transparencia.sqlite")
 
+# (codi, nom, nivell, comunitat, url, identificadors-per-font)
+# identificadors: ine10 = codi INE10 AOC, dir3, aoc_ambit = valor NOM_AMBIT del
+# dataset agregat AOC (la Generalitat no té un sol ine10 propi).
 ADMINISTRACIONS = [
-    ("siero", "Ayuntamiento de Siero", "local", "Asturias", "https://www.ayto-siero.es"),
-    ("asturias", "Principado de Asturias", "autonomic", "Asturias", "https://www.asturias.es"),
-    ("figueres", "Ajuntament de Figueres", "local", "Catalunya", "https://www.figueres.cat"),
+    (
+        "siero",
+        "Ayuntamiento de Siero",
+        "local",
+        "Asturias",
+        "https://www.ayto-siero.es",
+        {},
+    ),
+    (
+        "asturias",
+        "Principado de Asturias",
+        "autonomic",
+        "Asturias",
+        "https://www.asturias.es",
+        {},
+    ),
+    (
+        "figueres",
+        "Ajuntament de Figueres",
+        "local",
+        "Catalunya",
+        "https://www.figueres.cat",
+        {"ine10": ["1706690004", "9914065004"], "dir3": "L01170669"},  # + Figueres de Serveis SA
+    ),
+    (
+        "girona",
+        "Ajuntament de Girona",
+        "local",
+        "Catalunya",
+        "https://ajuntament.girona.cat",
+        {"ine10": "1707920002", "dir3": "L01170792"},
+    ),
     (
         "diputacio_girona",
         "Diputació de Girona",
         "local",
         "Catalunya",
         "https://www.ddgi.cat",
+        {"ine10": "8001760009"},
     ),
-    ("catalunya", "Generalitat de Catalunya", "autonomic", "Catalunya", "https://gencat.cat"),
+    (
+        "catalunya",
+        "Generalitat de Catalunya",
+        "autonomic",
+        "Catalunya",
+        "https://gencat.cat",
+        {"aoc_ambit": "Departaments i sector públic de la Generalitat de Catalunya"},
+    ),
 ]
 
 
@@ -42,16 +82,31 @@ def init_db(conn: sqlite3.Connection) -> None:
     schema = resources.files("fairfactory").joinpath("schema.sql").read_text(encoding="utf-8")
     conn.executescript(schema)
     cols = {r[1] for r in conn.execute("PRAGMA table_info(administracio)")}
-    if "comunitat" not in cols:
-        conn.execute("ALTER TABLE administracio ADD COLUMN comunitat TEXT")
+    for col in ("comunitat", "identificadors"):
+        if col not in cols:
+            conn.execute(f"ALTER TABLE administracio ADD COLUMN {col} TEXT")
     conn.executemany(
-        """INSERT INTO administracio (codi, nom, nivell, comunitat, url)
-           VALUES (?, ?, ?, ?, ?)
+        """INSERT INTO administracio (codi, nom, nivell, comunitat, url, identificadors)
+           VALUES (?, ?, ?, ?, ?, ?)
            ON CONFLICT(codi) DO UPDATE SET nom = excluded.nom, nivell = excluded.nivell,
-               comunitat = excluded.comunitat, url = excluded.url""",
-        ADMINISTRACIONS,
+               comunitat = excluded.comunitat, url = excluded.url,
+               identificadors = excluded.identificadors""",
+        [
+            (a[0], a[1], a[2], a[3], a[4], json.dumps(a[5]) if a[5] else None)
+            for a in ADMINISTRACIONS
+        ],
     )
     conn.commit()
+
+
+def administracio_ids(conn: sqlite3.Connection, codi: str) -> dict:
+    """Identificadors per-font d'una administració (ine10, dir3, aoc_ambit...)."""
+    row = conn.execute(
+        "SELECT identificadors FROM administracio WHERE codi = ?", (codi,)
+    ).fetchone()
+    if row is None or not row["identificadors"]:
+        return {}
+    return json.loads(row["identificadors"])
 
 
 def administracio_id(conn: sqlite3.Connection, codi: str) -> int:
@@ -100,12 +155,15 @@ def merge_into(conn: sqlite3.Connection, src_path: Path | str) -> None:
     """
     src = sqlite3.connect(src_path)
     src.row_factory = sqlite3.Row
-    for r in src.execute("SELECT codi, nom, nivell, comunitat, url FROM administracio"):
+    for r in src.execute(
+        "SELECT codi, nom, nivell, comunitat, url, identificadors FROM administracio"
+    ):
         conn.execute(
-            """INSERT INTO administracio (codi, nom, nivell, comunitat, url)
-               VALUES (?, ?, ?, ?, ?)
+            """INSERT INTO administracio (codi, nom, nivell, comunitat, url, identificadors)
+               VALUES (?, ?, ?, ?, ?, ?)
                ON CONFLICT(codi) DO UPDATE SET nom = excluded.nom, nivell = excluded.nivell,
-                   comunitat = excluded.comunitat, url = excluded.url""",
+                   comunitat = excluded.comunitat, url = excluded.url,
+                   identificadors = excluded.identificadors""",
             tuple(r),
         )
     for r in src.execute("SELECT codi, nom, url, llicencia FROM font"):
