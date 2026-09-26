@@ -1,11 +1,12 @@
 {
-  "generat": "2026-09-25T23:15:00+00:00",
+  "generat": "2026-09-26T11:19:23+00:00",
   "taules": {
-    "contracte": 3381,
-    "subvencio": 127987,
+    "contracte": 3397,
+    "subvencio": 548548,
     "dataset": 518,
     "indicador": 27,
-    "document": 437
+    "pressupost": 46,
+    "document": 1163
   },
   "fonts": [
     {
@@ -49,9 +50,81 @@
       "nom": "Siero en cifras — Observatorio Socioeconómico (portalestadistico.com)",
       "url": "https://www.ayto-siero.es/siero-en-cifras/",
       "llicencia": "Informació pública sectorial — font citada a cada indicador"
+    },
+    {
+      "codi": "figueres_ckan",
+      "nom": "Ajuntament de Figueres — Dades Obertes (CKAN AOC)",
+      "url": "https://dadesobertes.seu-e.cat",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "figueres_contractes",
+      "nom": "Ajuntament de Figueres — Licitacions (perfil de contractant)",
+      "url": "https://seu-e.cat/ca/web/figueres/govern-obert-i-transparencia/contractes-convenis-i-subvencions/relacio-de-contractes/licitacions-en-tramit-perfil-de-contractant",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "diputacio_girona",
+      "nom": "Diputació de Girona — Pressuposts (seu electrònica)",
+      "url": "https://www.ddgi.cat/web/nivell/530/s-0/pressupost",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+    },
+    {
+      "codi": "catalunya_socrata",
+      "nom": "Generalitat de Catalunya — Execució pressupostària (Socrata)",
+      "url": "https://analisi.transparenciacatalunya.cat/d/ajns-4mi7",
+      "llicencia": "Dades obertes Generalitat de Catalunya (IODL)"
     }
   ],
   "ingestes": [
+    {
+      "font": "pcsp",
+      "inici": "2026-09-26T11:16:41+00:00",
+      "fi": "2026-09-26T11:19:23+00:00",
+      "estat": "ok",
+      "registres": 36,
+      "missatge": null
+    },
+    {
+      "font": "bdns",
+      "inici": "2026-09-26T09:38:32+00:00",
+      "fi": null,
+      "estat": "running",
+      "registres": 0,
+      "missatge": null
+    },
+    {
+      "font": "catalunya_socrata",
+      "inici": "2026-09-26T09:37:02+00:00",
+      "fi": "2026-09-26T09:37:57+00:00",
+      "estat": "ok",
+      "registres": 46,
+      "missatge": null
+    },
+    {
+      "font": "diputacio_girona",
+      "inici": "2026-09-26T09:37:01+00:00",
+      "fi": "2026-09-26T09:37:02+00:00",
+      "estat": "ok",
+      "registres": 30,
+      "missatge": null
+    },
+    {
+      "font": "figueres_contractes",
+      "inici": "2026-09-26T09:36:59+00:00",
+      "fi": "2026-09-26T09:37:01+00:00",
+      "estat": "ok",
+      "registres": 10,
+      "missatge": null
+    },
+    {
+      "font": "figueres_ckan",
+      "inici": "2026-09-26T09:36:42+00:00",
+      "fi": "2026-09-26T09:36:59+00:00",
+      "estat": "ok",
+      "registres": 696,
+      "missatge": null
+    },
     {
       "font": "asturias_transparencia",
       "inici": "2026-09-25T23:14:51+00:00",

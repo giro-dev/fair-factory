@@ -166,12 +166,22 @@ def parse_entry(entry: ET.Element) -> dict | None:
 
 
 def classify(row: dict) -> str | None:
-    """Return 'siero', 'asturias' or None if the entry is not from Asturias."""
+    """Return the administracio codi ('siero', 'asturias', 'figueres',
+    'diputacio_girona', 'catalunya') or None if the entry is out of scope."""
+    organ = (row.get("organ") or "").lower()
     haystack = " ".join(
         filter(None, [row.get("organ"), row.get("_city"), row.get("_region")])
     ).lower()
     nuts = row.get("_nuts") or ""
-    if any(k in (row.get("organ") or "").lower() for k in SIERO_KEYWORDS):
+    # Catalunya: només per nom d'òrgan (el NUTS ES51 cobriria tota la CA)
+    if "figueres" in organ:
+        return "figueres"
+    if "girona" in organ and ("diputaci" in organ or "provincial" in organ):
+        return "diputacio_girona"
+    if "generalitat" in organ:
+        return "catalunya"
+    # Astúries
+    if any(k in organ for k in SIERO_KEYWORDS):
         return "siero"
     if nuts.startswith(ASTURIAS_NUTS) or any(k in haystack for k in ASTURIAS_KEYWORDS):
         return "asturias"
@@ -192,7 +202,10 @@ class PCSPConnector(Connector):
         url: str | None = FEED
         written = 0
         pages = 0
-        admin_ids = {codi: administracio_id(self.conn, codi) for codi in ("siero", "asturias")}
+        admin_ids = {
+            codi: administracio_id(self.conn, codi)
+            for codi in ("siero", "asturias", "figueres", "diputacio_girona", "catalunya")
+        }
         while url and pages < self.max_pages:
             resp = self.client.get(url, cache=url != FEED)
             root = ET.fromstring(resp.content)

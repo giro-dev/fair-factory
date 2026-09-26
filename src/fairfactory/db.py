@@ -13,6 +13,15 @@ DEFAULT_DB = Path("data/transparencia.sqlite")
 ADMINISTRACIONS = [
     ("siero", "Ayuntamiento de Siero", "local", "Asturias", "https://www.ayto-siero.es"),
     ("asturias", "Principado de Asturias", "autonomic", "Asturias", "https://www.asturias.es"),
+    ("figueres", "Ajuntament de Figueres", "local", "Catalunya", "https://www.figueres.cat"),
+    (
+        "diputacio_girona",
+        "Diputació de Girona",
+        "local",
+        "Catalunya",
+        "https://www.ddgi.cat",
+    ),
+    ("catalunya", "Generalitat de Catalunya", "autonomic", "Catalunya", "https://gencat.cat"),
 ]
 
 
@@ -78,6 +87,56 @@ def upsert(conn: sqlite3.Connection, table: str, rows: Iterable[Mapping[str, Any
         conn.execute(sql, [data[c] for c in cols])
         n += 1
     return n
+
+
+DATA_TABLES = ("contracte", "subvencio", "dataset", "indicador", "pressupost", "document")
+
+
+def merge_into(conn: sqlite3.Connection, src_path: Path | str) -> None:
+    """Merge a partial ingest DB into `conn`, keyed by natural keys.
+
+    Rows are identified by `codi` (administracio, font) and (font, id_extern)
+    for data tables, so primary keys may differ between partial DBs.
+    """
+    src = sqlite3.connect(src_path)
+    src.row_factory = sqlite3.Row
+    for r in src.execute("SELECT codi, nom, nivell, comunitat, url FROM administracio"):
+        conn.execute(
+            """INSERT INTO administracio (codi, nom, nivell, comunitat, url)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(codi) DO UPDATE SET nom = excluded.nom, nivell = excluded.nivell,
+                   comunitat = excluded.comunitat, url = excluded.url""",
+            tuple(r),
+        )
+    for r in src.execute("SELECT codi, nom, url, llicencia FROM font"):
+        ensure_font(conn, r["codi"], r["nom"], r["url"], r["llicencia"])
+    conn.commit()
+
+    amap = {r["codi"]: r["id"] for r in conn.execute("SELECT id, codi FROM administracio")}
+    admin_map = {
+        r["id"]: amap[r["codi"]]
+        for r in src.execute("SELECT id, codi FROM administracio")
+        if r["codi"] in amap
+    }
+    for r in src.execute("SELECT font, inici, fi, estat, registres, missatge FROM ingest_run"):
+        conn.execute(
+            "INSERT INTO ingest_run (font, inici, fi, estat, registres, missatge) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            tuple(r),
+        )
+    conn.commit()
+
+    for table in DATA_TABLES:
+        cols = [c[1] for c in src.execute(f"PRAGMA table_info({table})") if c[1] != "id"]
+        if not cols:
+            continue
+        for r in src.execute(f"SELECT {', '.join(cols)} FROM {table}"):
+            row = dict(r)
+            if row.get("administracio_id") is not None:
+                row["administracio_id"] = admin_map.get(row["administracio_id"])
+            upsert(conn, table, [row])
+        conn.commit()
+    src.close()
 
 
 class IngestRun:

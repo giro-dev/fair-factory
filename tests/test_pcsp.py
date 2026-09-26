@@ -65,3 +65,12 @@ def test_parse_entry_and_classify():
 def test_classify_out_of_scope():
     assert classify({"organ": "Ayuntamiento de Madrid", "_nuts": "ES300"}) is None
     assert classify({"organ": "Consejería X", "_nuts": "ES120"}) == "asturias"
+
+
+def test_classify_catalunya():
+    assert classify({"organ": "Ajuntament de Figueres"}) == "figueres"
+    assert classify({"organ": "Diputación Provincial de Girona"}) == "diputacio_girona"
+    assert classify({"organ": "Generalitat de Catalunya - Dept. Educació"}) == "catalunya"
+    # altres ens catalans no s'adjudiquen a cap admin seguida
+    assert classify({"organ": "Ayuntamiento de Barcelona", "_nuts": "ES511"}) is None
+    assert classify({"organ": "Ayuntamiento de Girona", "_nuts": "ES512"}) is None

@@ -109,6 +109,16 @@
       </section>
     </template>
 
+    <template v-if="tab === 'pressupostos'">
+      <div class="charts">
+        <bar-chart v-for="(ch, i) in pressupostCharts" :key="i + '|' + admin" :config="ch"></bar-chart>
+      </div>
+      <section>
+        <h2>Execució pressupostària per exercici i capítol</h2>
+        <result-table :result="filterAdmin(raw.vPressupost)"></result-table>
+      </section>
+    </template>
+
     <template v-if="tab === 'indicadors'">
       <p class="muted">Observatorio Socioeconómico «Siero en cifras» (portalestadistico.com). Una gràfica per unitat.</p>
       <div class="charts">
@@ -261,7 +271,7 @@ createApp({
       // resultats crus de les consultes (es filtren per administració en els computed)
       raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [],
              vContractes: null, vTop: null, vSubv: null, tablon: null, docsPerFont: null,
-             topBeneficiaris: null },
+             topBeneficiaris: null, vPressupost: null, execucio: [] },
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
 GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
@@ -291,6 +301,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         { id: "resum", label: "Resum" },
         { id: "contractes", label: "Contractació" },
         { id: "subvencions", label: "Subvencions" },
+        { id: "pressupostos", label: "Pressupostos" },
         { id: "indicadors", label: "Indicadors" },
         { id: "documents", label: "Documents" },
         { id: "sql", label: "SQL" },
@@ -329,6 +340,26 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
     subvencioChart() {
       const rows = this.filterAdmin(this.raw.subv);
       return rows.length ? groupedBar("Subvencions concedides per any", rows, { eur: true }) : null;
+    },
+    pressupostCharts() {
+      // execució per exercici: una sèrie per mètrica
+      const rows = this.filterAdmin(this.raw.execucio);
+      const flat = [];
+      for (const [ex, admin_, def, rec, pag] of rows) {
+        flat.push([ex, "Pressupost definitiu", def]);
+        flat.push([ex, "Obligacions reconegudes", rec]);
+        flat.push([ex, "Obligacions pagades", pag]);
+      }
+      const capRows = (this.filterAdmin(this.raw.vPressupost)?.values ?? [])
+        .map(([admin_, ex, capitol, def]) => [`${capitol} (${ex})`, admin_, def])
+        .sort((a, b) => b[2] - a[2])
+        .slice(0, 15);
+      return [
+        groupedBar("Execució pressupostària per exercici", flat, { eur: true }),
+        ...(capRows.length
+          ? [groupedBar("Definitiu per capítol i exercici (top 15)", capRows, { horizontal: true, eur: true })]
+          : []),
+      ];
     },
     contracteSections() {
       return [
@@ -406,6 +437,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         ["subvencio", "Subvencions"],
         ["dataset", "Datasets"],
         ["indicador", "Indicadors"],
+        ["pressupost", "Pressupostos"],
         ["document", "Documents"],
       ].map(([t, label]) => ({
         label,
@@ -440,6 +472,13 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
                 json_extract(raw,'$.expedient') expedient,
                 json_extract(raw,'$.procediment') procediment, url
          FROM document WHERE font = 'siero_sede' ORDER BY data DESC LIMIT 30`);
+      this.raw.vPressupost = this.q(
+        "SELECT * FROM v_pressupost_per_exercici ORDER BY exercici DESC, definitiu DESC");
+      this.raw.execucio = this.rows(
+        `SELECT exercici, a.nom, ROUND(SUM(pressupost_definitiu),2),
+                ROUND(SUM(obligacions_reconegudes),2), ROUND(SUM(obligacions_pagades),2)
+         FROM pressupost p LEFT JOIN administracio a ON a.id = p.administracio_id
+         GROUP BY exercici, administracio_id ORDER BY exercici`);
       this.raw.docsPerFont = this.q(
         `SELECT a.nom AS administracio, d.font, d.categoria, COUNT(*) n
          FROM document d LEFT JOIN administracio a ON a.id = d.administracio_id
