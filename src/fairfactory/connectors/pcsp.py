@@ -146,7 +146,10 @@ def parse_entry(entry: ET.Element) -> dict | None:
         "data_adjudicacio": _text(result, "cbc:AwardDate") if result is not None else None,
         "adjudicatari_nom": awardee_name,
         "adjudicatari_nif": awardee_nif,
-        "num_ofertes": int(_text(result, "cbc:ReceivedTenderQuantity") or 0) or None
+        # conserva el 0 legítim (contracte sense ofertes, senyal de baixa concurrència)
+        "num_ofertes": (
+            int(q) if (q := _text(result, "cbc:ReceivedTenderQuantity")) not in (None, "") else None
+        )
         if result is not None
         else None,
         "cpv": ",".join(
@@ -182,11 +185,20 @@ def classify(row: dict) -> str | None:
         return "girona"
     if "generalitat" in organ:
         return "catalunya"
-    # Astúries
+    # Astúries: idem — ES12 és el NUTS2 de tota la CA; adscriure contractes
+    # d'ajuntaments de Gijón/Oviedo al Principat contamina les estadístiques
     if any(k in organ for k in SIERO_KEYWORDS):
         return "siero"
-    if nuts.startswith(ASTURIAS_NUTS) or any(k in haystack for k in ASTURIAS_KEYWORDS):
+    if ("asturias" in organ or "asturiana" in organ) and not any(
+        k in organ for k in ("ayuntamiento", "ayto", "municipio", "concejo", "vecinos")
+    ):
         return "asturias"
+    if nuts.startswith(ASTURIAS_NUTS):
+        # òrgans regionals (consejerías, agències, empreses públiques del Principat)
+        if any(k in organ for k in ("consejer", "principado", "sociedad pública", "agencia")):
+            return "asturias"
+        if any(k in haystack for k in SIERO_KEYWORDS):
+            return "siero"
     return None
 
 
@@ -196,14 +208,19 @@ class PCSPConnector(Connector):
     url = "https://contrataciondelestado.es"
     llicencia = "https://contrataciondelestado.es/wps/portal/avisolegal"
 
-    def __init__(self, *args, max_pages: int = 3, **kwargs):
+    def __init__(self, *args, max_pages: int = 20, **kwargs):
         super().__init__(*args, **kwargs)
-        self.max_pages = max_pages
+        self.max_pages = max_pages  # sostre de seguretat; la parada real és el checkpoint
 
     def ingest(self) -> int:
         url: str | None = FEED
         written = 0
         pages = 0
+        # punt de represa: atura quan el feed arriba a entrades anteriors a la
+        # darrera ingesta amb èxit (el feed va ordenat per <updated> desc)
+        last_ok = self.conn.execute(
+            "SELECT MAX(fi) FROM ingest_run WHERE font = ? AND estat = 'ok'", (self.codi,)
+        ).fetchone()[0]
         admin_ids = {
             codi: administracio_id(self.conn, codi)
             for codi in ("siero", "asturias", "figueres", "girona", "diputacio_girona", "catalunya")
@@ -212,7 +229,10 @@ class PCSPConnector(Connector):
             resp = self.client.get(url, cache=url != FEED)
             root = ET.fromstring(resp.content)
             rows = []
+            updateds = []
             for entry in root.findall("a:entry", NS):
+                if upd := _text(entry, "a:updated"):
+                    updateds.append(upd)
                 row = parse_entry(entry)
                 if row is None:
                     continue
@@ -226,11 +246,12 @@ class PCSPConnector(Connector):
             written += upsert(self.conn, "contracte", rows)
             self.conn.commit()
             pages += 1
-            log.info(
-                "pcsp pàgina %d: %d entrades d'Astúries (%d acumulades)", pages, len(rows), written
-            )
+            log.info("pcsp pàgina %d: %d entrades (%d acumulades)", pages, len(rows), written)
             nxt = root.find("a:link[@rel='next']", NS)
             url = nxt.get("href") if nxt is not None else None
+            if last_ok and updateds and max(updateds) < last_ok:
+                log.info("pcsp: checkpoint assolit (entrades anteriors a %s)", last_ok)
+                break
             if self.limit and written >= self.limit:
                 break
         return written

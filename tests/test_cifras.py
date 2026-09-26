@@ -71,7 +71,7 @@ def test_parse_indicators():
     assert pob["any"] == 2025
     assert pob["font_dada"] == "INE, Censo"
     assert "población residente" in pob["descripcio"]
-    assert pob["id_extern"] == "1. Demografía|Población total"
+    assert pob["id_extern"] == "1. Demografía|Población total|2025"  # any a la clau
     assert edat["valor_num"] == 46.7
     assert edat["unitat"] == "años"
     assert atur["seccio"] == "2. Mercado de Trabajo"

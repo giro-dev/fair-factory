@@ -32,6 +32,9 @@ def parse_es_number(text: str | None) -> float | None:
         return None
     if "," in t:
         t = t.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"-?\d{1,3}(\.\d{3})+", t):
+        # "2.626" són milers, no decimals (però "63428.0" és decimal)
+        t = t.replace(".", "")
     try:
         return float(t)
     except ValueError:

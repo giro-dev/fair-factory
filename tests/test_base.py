@@ -5,6 +5,9 @@ def test_parse_es_number():
     assert parse_es_number("2.626,30") == 2626.30
     assert parse_es_number("-15,00") == -15.0
     assert parse_es_number("1234.5") == 1234.5
+    assert parse_es_number("2.626") == 2626.0  # separador de milers, no decimal
+    assert parse_es_number("52.997") == 52997.0
+    assert parse_es_number("63428.0") == 63428.0  # 4 dígits abans del punt: decimal
     assert parse_es_number("") is None
     assert parse_es_number(None) is None
 

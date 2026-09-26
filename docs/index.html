@@ -271,7 +271,8 @@ createApp({
       // resultats crus de les consultes (es filtren per administració en els computed)
       raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [],
              vContractes: null, vTop: null, vSubv: null, tablon: null, docsPerFont: null,
-             topBeneficiaris: null, vPressupost: null, execucio: [] },
+             topBeneficiaris: null, vPressupost: null, execucio: [],
+             vFluxTotal: null, vFraccionament: null },
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
 GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
@@ -365,12 +366,16 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
       return [
         { title: "Contractes per any i administració", result: this.filterAdmin(this.raw.vContractes) },
         { title: "Principals adjudicataris", result: this.filterAdmin(this.raw.vTop) },
+        { title: "Possible fraccionament de contracte (≥3 contractes/trimestre, ≥15k€)",
+          result: this.filterAdmin(this.raw.vFraccionament) },
       ];
     },
     subvencioSections() {
       return [
         { title: "Subvencions per any", result: this.filterAdmin(this.raw.vSubv) },
         { title: "Principals beneficiaris", result: this.filterAdmin(this.raw.topBeneficiaris) },
+        { title: "Flux públic total per NIF (contractes + subvencions)",
+          result: this.filterAdmin(this.raw.vFluxTotal) },
       ];
     },
     documentSections() {
@@ -395,17 +400,19 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
   methods: {
     fmt: n => formatter.format(n),
     async fetchDb() {
-      // La BD supera el límit de 100 MB de GitHub: es publica comprimida.
-      try {
-        const r = await fetch("transparencia.sqlite.gz");
-        if (r.ok) {
-          const ds = new DecompressionStream("gzip");
-          return new Uint8Array(await new Response(r.body.pipeThrough(ds)).arrayBuffer());
-        }
-      } catch { /* fallback a la versió sense comprimir */ }
-      const r = await fetch("transparencia.sqlite");
-      if (!r.ok) throw new Error(`No s'ha pogut carregar la base de dades (${r.status})`);
-      return new Uint8Array(await r.arrayBuffer());
+      // La BD es publica comprimida (límit 100 MB de GitHub); el .sqlite nu
+      // només existeix en proves locals
+      const r = await fetch("transparencia.sqlite.gz");
+      if (r.ok && "DecompressionStream" in window) {
+        const ds = new DecompressionStream("gzip");
+        return new Uint8Array(await new Response(r.body.pipeThrough(ds)).arrayBuffer());
+      }
+      const r2 = await fetch("transparencia.sqlite");
+      if (r2.ok) return new Uint8Array(await r2.arrayBuffer());
+      if (r.ok && !("DecompressionStream" in window))
+        throw new Error(
+          "Aquest navegador no suporta DecompressionStream (cal Chrome, Firefox o Safari 16.4+)");
+      throw new Error("No s'ha pogut carregar la base de dades (404)");
     },
     q(sql) {
       try {
@@ -428,7 +435,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
                values: resultOrRows.values.filter(r => r[i] === this.admin) };
     },
     loadDashboard() {
-      this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values[0][0];
+      this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values?.[0]?.[0];
 
       this.admins = this.rows("SELECT nom, comunitat FROM administracio ORDER BY comunitat, nivell");
 
@@ -441,7 +448,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         ["document", "Documents"],
       ].map(([t, label]) => ({
         label,
-        n: this.q(`SELECT COUNT(*) AS n FROM ${t}`).values[0][0],
+        n: this.q(`SELECT COUNT(*) AS n FROM ${t}`)?.values?.[0]?.[0] ?? 0,
       }));
 
       this.raw.ind = this.rows(
@@ -472,6 +479,16 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
                 json_extract(raw,'$.expedient') expedient,
                 json_extract(raw,'$.procediment') procediment, url
          FROM document WHERE font = 'siero_sede' ORDER BY data DESC LIMIT 30`);
+      // top-50 per administració (la vista pot tenir desenes de milers de NIFs)
+      this.raw.vFluxTotal = this.q(
+        `SELECT administracio, nif, nom, n_contractes, import_contractes,
+                n_subvencions, import_subvencions, total FROM (
+           SELECT *, ROW_NUMBER() OVER
+             (PARTITION BY administracio ORDER BY total DESC) rn
+           FROM v_flux_public_per_nif)
+         WHERE rn <= 50 ORDER BY administracio, total DESC`);
+      this.raw.vFraccionament = this.q(
+        "SELECT * FROM v_fraccionament_sospitos LIMIT 500");
       this.raw.vPressupost = this.q(
         "SELECT * FROM v_pressupost_per_exercici ORDER BY exercici DESC, definitiu DESC");
       this.raw.execucio = this.rows(
@@ -491,7 +508,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
       ).map(([type, name]) => ({
         type,
         name,
-        count: type === "table" ? this.q(`SELECT COUNT(*) FROM "${name}"`).values[0][0] : null,
+        count: type === "table" ? this.q(`SELECT COUNT(*) FROM "${name}"`)?.values?.[0]?.[0] ?? 0 : null,
         cols: this.rows(`SELECT name, type, pk FROM pragma_table_info('${name}')`),
       }));
     },

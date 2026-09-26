@@ -74,3 +74,9 @@ def test_classify_catalunya():
     assert classify({"organ": "Ajuntament de Girona"}) == "girona"
     # altres ens catalans no s'adjudiquen a cap admin seguida
     assert classify({"organ": "Ayuntamiento de Barcelona", "_nuts": "ES511"}) is None
+    # ES12 és el NUTS2 de tota Astúries: els ajuntaments locals no són el Principat
+    assert classify({"organ": "Ayuntamiento de Gijón", "_nuts": "ES120"}) is None
+    assert classify({"organ": "Ayuntamiento de Oviedo", "_nuts": "ES121"}) is None
+    # però les conselleries i organismes regionals sí
+    assert classify({"organ": "Consejería de Sanidad", "_nuts": "ES120"}) == "asturias"
+    assert classify({"organ": "Agencia Asturiana de Vivienda"}) == "asturias"
