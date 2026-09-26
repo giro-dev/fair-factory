@@ -33,6 +33,11 @@ class AsturiasConnector(Connector):
     url = BASE
 
     def ingest(self) -> int:
+        # pre-flight: el portal bloqueja sovint el rang d'IPs dels runners de
+        # CI (timeout de connexió). Sense probe cada pàgina fa 4 reintents ×
+        # 60 s → ~10 minut perduts; amb probe el connector falla en segons.
+        if not self.client.probe(BASE):
+            raise RuntimeError(f"portal inabastable des d'aquest host: {BASE}")
         aid = administracio_id(self.conn, "asturias")
         docs: dict[str, dict] = {}
         for categoria, url in PAGES.items():

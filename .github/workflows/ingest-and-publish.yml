@@ -55,6 +55,17 @@ jobs:
           fair-factory --db "data/part-${{ matrix.grup }}.sqlite" stats
       # senyal visible si alguna font del job ha fallat (--keep-going sempre
       # retorna 0); l'artefacte es puja igualment amb les fonts bones
+      - name: Diagnòstic connectivitat Astúries
+        if: matrix.grup == 'asturias' && always()
+        run: |
+          echo "=== DNS ==="
+          getent ahosts transparencia.asturias.es || true
+          echo "=== IPv4 ==="
+          curl -4 -sS -o /dev/null --connect-timeout 10 -w "%{http_code}" \
+            https://transparencia.asturias.es/ || echo "timeout IPv4"
+          echo "=== IPv6 ==="
+          curl -6 -sS -o /dev/null --connect-timeout 10 -w "%{http_code}" \
+            https://transparencia.asturias.es/ || echo "sense IPv6"
       - name: Fonts en error
         if: always()
         run: |
