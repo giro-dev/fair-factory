@@ -52,7 +52,8 @@ El repositori és la font de dades: el workflow `.github/workflows/ingest-and-pu
 Astúries, un per a Catalunya i un per a les fonts compartides (`datos_gob`, `pcsp`); així els
 timeouts d'una font no alenteixen les altres. Cada job genera `part-<grup>.sqlite` com a
 artefacte i el job `publish` les fusiona (`fair-factory merge`, per `codi`/`id_extern`,
-els ids primaris poden diferir entre parcials), comprimeix la base de dades a
+els ids primaris poden diferir entre parcials), buida `subvencio.raw` a l'artefacte
+publicat (`fair-factory slim` — duplica els camps ja normalitzats a columnes) i la comprimeix a
 `docs/transparencia.sqlite.gz` (la BD supera el límit de 100 MB de GitHub, així que es publica
 comprimida), genera `docs/summary.json` i **commiteja els dos fitxers al repositori**. GitHub
 Pages serveix la carpeta `docs/` de `main` tal qual; `docs/index.html` baixa el `.gz`, el

@@ -93,6 +93,21 @@ def cmd_merge(args) -> int:
     return 0
 
 
+def cmd_slim(args) -> int:
+    """Strip bulky `raw` payloads so the published DB stays small.
+
+    `raw` duplicates fields already normalized into columns; the canonical
+    runner DB keeps it — this only slims the artifact shipped to the web.
+    """
+    conn = connect(args.db)
+    n = conn.execute("UPDATE subvencio SET raw = NULL WHERE raw IS NOT NULL").rowcount
+    conn.commit()
+    conn.execute("VACUUM")
+    conn.close()
+    print(f"subvencio.raw buidat en {n} registres")
+    return 0
+
+
 def cmd_export(args) -> int:
     """Write a small JSON summary next to the DB (used by the static site)."""
     conn = connect(args.db)
@@ -161,6 +176,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--keep", action="store_true", help="conserva la BD de destí existent (fusiona a sobre)"
     )
     mer.set_defaults(func=cmd_merge)
+
+    sub.add_parser(
+        "slim", help="buida subvencio.raw (artefacte de publicació més lleuger)"
+    ).set_defaults(func=cmd_slim)
 
     exp = sub.add_parser("export-summary", help="escriu un resum JSON per al web estàtic")
     exp.add_argument("--out", default="data/summary.json")
