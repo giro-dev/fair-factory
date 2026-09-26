@@ -153,6 +153,8 @@ def parse_contratos_menores(pdf_bytes: bytes) -> list[dict]:
 
 class SieroConnector(Connector):
     codi = "siero_transparencia"
+    grups = ("asturias",)
+    taules = ("document", "contracte")
     nom = "Ayuntamiento de Siero — Portal de Transparencia"
     url = PAGES["transparencia"]
 

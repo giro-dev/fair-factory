@@ -73,6 +73,8 @@ def parse_board(html: str, page_url: str = BOARD) -> list[dict]:
 
 class SedeSieroConnector(Connector):
     codi = "siero_sede"
+    grups = ("asturias",)
+    taules = ("document",)
     nom = "Ayuntamiento de Siero — Sede Electrónica (tablón de anuncios)"
     url = BOARD
 

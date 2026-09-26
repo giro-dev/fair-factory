@@ -27,6 +27,8 @@ PAGES = {
 
 class AsturiasConnector(Connector):
     codi = "asturias_transparencia"
+    grups = ("asturias",)
+    taules = ("document",)
     nom = "Principado de Asturias — Portal de Transparencia"
     url = BASE
 

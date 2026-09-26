@@ -51,6 +51,8 @@ def extract_documents(html: str, page_url: str, categoria: str) -> list[dict]:
 
 class DiputacioGironaConnector(Connector):
     codi = "diputacio_girona"
+    grups = ("catalunya",)
+    taules = ("document",)
     nom = "Diputació de Girona — Pressuposts (seu electrònica)"
     url = PAGES["pressupost"]
 

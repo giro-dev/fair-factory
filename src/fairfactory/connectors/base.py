@@ -53,12 +53,29 @@ def parse_es_date(text: str | None) -> str | None:
 
 
 class Connector(ABC):
-    """A connector pulls data from one source and upserts it into the SQLite database."""
+    """A connector pulls data from one source and upserts it into the SQLite database.
+
+    Contracte mínim d'un connector:
+
+    - `codi`, `nom`, `url`: metadades de la font (a la taula `font`)
+    - `grups`: job(s) del workflow d'ingesta on s'executa
+      ("asturias" | "catalunya" | "compartit")
+    - `taules`: taules de dades on escriu (contracte, subvencio, document...)
+    - `cli_options`: opcions pròpies de la CLI — tuples
+      `(flag, kwargs_per_add_argument, nom_del_paràmetre_d_init)`.
+      El CLI les registra automàticament i passa el valor a `__init__`;
+      afegir un connector nou NO requereix tocar `cli.py`.
+    - `ingest()`: baixa i upsert (idempotent per `font`+`id_extern`); retorna
+      el nombre de files escrites.
+    """
 
     codi: str
     nom: str
     url: str
     llicencia: str = "Reutilització d'informació del sector públic (Llei 37/2007)"
+    grups: tuple[str, ...] = ("compartit",)
+    taules: tuple[str, ...] = ()
+    cli_options: tuple = ()
 
     def __init__(
         self, conn: sqlite3.Connection, client: Client | None = None, limit: int | None = None

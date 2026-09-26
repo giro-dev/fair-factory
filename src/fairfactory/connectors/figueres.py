@@ -59,6 +59,8 @@ def record_to_document(resource_id: str, categoria: str, rec: dict) -> dict:
 
 class FigueresCkanConnector(Connector):
     codi = "figueres_ckan"
+    grups = ("catalunya",)
+    taules = ("document",)
     nom = "Ajuntament de Figueres — Dades Obertes (CKAN AOC)"
     url = "https://dadesobertes.seu-e.cat"
 
@@ -166,6 +168,8 @@ def parse_licitacions(html: str, page_url: str = LICITACIONS) -> list[dict]:
 
 class FigueresContractesConnector(Connector):
     codi = "figueres_contractes"
+    grups = ("catalunya",)
+    taules = ("contracte",)
     nom = "Ajuntament de Figueres — Licitacions (perfil de contractant)"
     url = LICITACIONS
 

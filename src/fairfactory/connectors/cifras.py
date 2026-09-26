@@ -121,6 +121,8 @@ def parse_indicators(html: str, url: str) -> list[dict]:
 
 class SieroCifrasConnector(Connector):
     codi = "siero_cifras"
+    grups = ("asturias",)
+    taules = ("indicador",)
     nom = "Siero en cifras — Observatorio Socioeconómico (portalestadistico.com)"
     url = LANDING
     llicencia = "Informació pública sectorial — font citada a cada indicador"

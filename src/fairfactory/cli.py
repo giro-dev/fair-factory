@@ -28,14 +28,13 @@ def cmd_ingest(args) -> int:
     failed = []
     for name in names:
         cls = CONNECTORS[name]
+        # cada connector declara les seves opcions a `cli_options`; aquí es
+        # passen els valors parsejats sense lògica específica per connector
         kwargs = {}
-        if name == "pcsp":
-            kwargs["max_pages"] = args.pcsp_pages
-        if name == "bdns":
-            if args.since:
-                kwargs["since"] = args.since
-            if args.bdns_admin:
-                kwargs["admins"] = [a.strip() for a in args.bdns_admin.split(",") if a.strip()]
+        for flag, _add_kwargs, param in cls.cli_options:
+            val = getattr(args, flag.lstrip("-").replace("-", "_"), None)
+            if val is not None:
+                kwargs[param] = val
         connector = cls(conn, client, limit=args.limit, **kwargs)
         try:
             connector.run()
@@ -108,6 +107,13 @@ def cmd_slim(args) -> int:
     return 0
 
 
+def cmd_groups(args) -> int:
+    """Show the connector -> workflow-group mapping (ingest matrix)."""
+    for cls in CONNECTORS.values():
+        print(f"{cls.codi:25} grups={','.join(cls.grups):25} taules={','.join(cls.taules)}")
+    return 0
+
+
 def cmd_export(args) -> int:
     """Write a small JSON summary next to the DB (used by the static site)."""
     conn = connect(args.db)
@@ -150,24 +156,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ing.add_argument("--limit", type=int, help="màxim de registres per font (proves)")
     ing.add_argument("--delay", type=float, default=1.0, help="segons entre peticions")
-    ing.add_argument(
-        "--pcsp-pages",
-        type=int,
-        default=3,
-        help="pàgines del feed ATOM de la PCSP a recórrer (~17 MB cadascuna)",
-    )
-    ing.add_argument("--since", help="BDNS: només concessions des de dd/mm/aaaa")
-    ing.add_argument(
-        "--bdns-admin",
-        metavar="ADMINS",
-        help="BDNS: només aquestes administracions, separades per comes (per a jobs separats)",
-    )
+    # opcions específiques de cada connector, declarades a `cli_options`
+    for cls in CONNECTORS.values():
+        for flag, add_kwargs, _param in cls.cli_options:
+            ing.add_argument(flag, **add_kwargs)
     ing.add_argument(
         "--keep-going", action="store_true", help="surt amb codi 0 encara que alguna font falli"
     )
     ing.set_defaults(func=cmd_ingest)
 
     sub.add_parser("stats", help="recomptes i darreres ingestes").set_defaults(func=cmd_stats)
+    sub.add_parser("groups", help="connector -> grup del workflow i taules on escriu").set_defaults(
+        func=cmd_groups
+    )
 
     mer = sub.add_parser("merge", help="fusiona BDs parcials (jobs per administració)")
     mer.add_argument("sources", nargs="+", metavar="SQLITE", help="BDs parcials a fusionar")
