@@ -195,8 +195,28 @@
         <result-table :result="raw.adminsList"></result-table>
       </section>
       <section>
-        <h2>Fonts de dades</h2>
+        <h2>Fonts i estat de la ingesta</h2>
+        <p class="muted">Estat de la darrera execució per font: data, resultat
+        (<em>ok</em>/<em>error</em>) i registres escrites. Una font en error no atura la resta.</p>
         <result-table :result="raw.fonts" :links="true"></result-table>
+      </section>
+      <section>
+        <h2>Metodologia i limitacions</h2>
+        <ul class="colab">
+          <li>Les dades provenen exclusivament de <b>portals oficials</b> (APIs, feeds i pàgines
+            web públiques). Cada registre guarda la font i l'enllaç original.</li>
+          <li>La ingesta és <b>idempotent</b> (clau natural <code>font</code> +
+            <code>id_extern</code>) i <b>educada</b>: una petició per segon, reintents amb
+            backoff i respecte a robots.txt i llicències.</li>
+          <li><b>Limitacions conegudes</b>: els portals canvien de format sovint (una font en
+            error es marca a la taula de dalt); els imports no normalitzats entre administracions
+            (IVA inclòs/exclòs segons la font); la BDNS té retard propi en publicar concessions;
+            i els fitxers <code>raw</code> de <code>subvencio</code> no s'inclouen a l'artefacte
+            publicat per mantenir-lo descarregable.</li>
+          <li>Les gràfiques i taules fan agregacions a la volada — si una administració no
+            apareix a una secció, és que aquella font no li cobreix (vegeu «administracions» a
+            la taula de fonts).</li>
+        </ul>
       </section>
       <section>
         <h2>Com col·laborar</h2>
@@ -548,7 +568,26 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
          FROM pressupost p LEFT JOIN administracio a ON a.id = p.administracio_id
          GROUP BY exercici, administracio_id ORDER BY exercici`);
       this.raw.fonts = this.q(
-        "SELECT codi, nom, url, llicencia AS url_llicencia FROM font ORDER BY codi");
+        `SELECT f.codi, f.nom, f.url, f.llicencia AS url_llicencia,
+                cov.administracions, r.fi AS darrera_ingesta, r.estat, r.registres
+         FROM font f
+         LEFT JOIN ingest_run r ON r.id = (
+           SELECT id FROM ingest_run WHERE font = f.codi ORDER BY id DESC LIMIT 1)
+         LEFT JOIN (
+           SELECT font, GROUP_CONCAT(DISTINCT administracio) administracions FROM (
+             SELECT c.font, a.nom administracio FROM contracte c
+               JOIN administracio a ON a.id = c.administracio_id
+             UNION ALL SELECT s.font, a.nom FROM subvencio s
+               JOIN administracio a ON a.id = s.administracio_id
+             UNION ALL SELECT d.font, a.nom FROM document d
+               JOIN administracio a ON a.id = d.administracio_id
+             UNION ALL SELECT i.font, a.nom FROM indicador i
+               JOIN administracio a ON a.id = i.administracio_id
+             UNION ALL SELECT p.font, a.nom FROM pressupost p
+               JOIN administracio a ON a.id = p.administracio_id
+           ) GROUP BY font
+         ) cov ON cov.font = f.codi
+         ORDER BY f.codi`);
       this.raw.adminsList = this.q(
         "SELECT codi, nom, nivell, comunitat, url FROM administracio ORDER BY comunitat, nivell");
       this.raw.docsPerFont = this.q(
