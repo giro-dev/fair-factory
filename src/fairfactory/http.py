@@ -76,3 +76,22 @@ class Client:
     def get_json(self, url: str, **kwargs):
         headers = {"Accept": "application/json", **kwargs.pop("headers", {})}
         return self.get(url, headers=headers, **kwargs).json()
+
+    def probe(self, url: str, timeout: float = 10.0) -> bool:
+        """Comprovació ràpida de connectivitat (una sola petició, sense retries).
+
+        Alguns portals bloquegen el rang d'IPs dels runners de CI i produeixen
+        timeouts de connexió; un probe curt permet fallar en segons en comptes
+        de perdre minuts en reintents per cada pàgina."""
+        try:
+            r = requests.get(
+                url,
+                headers={"User-Agent": USER_AGENT},
+                timeout=(timeout, timeout),
+                stream=True,
+            )
+            r.close()
+            return r.status_code < 500
+        except requests.RequestException as e:
+            log.warning("probe %s: %s", url, e)
+            return False
