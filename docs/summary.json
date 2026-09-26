@@ -8,78 +8,299 @@
     "pressupost": 46,
     "document": 1163
   },
+  "administracions": [
+    {
+      "codi": "siero",
+      "nom": "Ayuntamiento de Siero",
+      "nivell": "local",
+      "comunitat": "Asturias",
+      "url": "https://www.ayto-siero.es"
+    },
+    {
+      "codi": "asturias",
+      "nom": "Principado de Asturias",
+      "nivell": "autonomic",
+      "comunitat": "Asturias",
+      "url": "https://www.asturias.es"
+    },
+    {
+      "codi": "figueres",
+      "nom": "Ajuntament de Figueres",
+      "nivell": "local",
+      "comunitat": "Catalunya",
+      "url": "https://www.figueres.cat"
+    },
+    {
+      "codi": "diputacio_girona",
+      "nom": "Diputació de Girona",
+      "nivell": "local",
+      "comunitat": "Catalunya",
+      "url": "https://www.ddgi.cat"
+    },
+    {
+      "codi": "catalunya",
+      "nom": "Generalitat de Catalunya",
+      "nivell": "autonomic",
+      "comunitat": "Catalunya",
+      "url": "https://gencat.cat"
+    },
+    {
+      "codi": "girona",
+      "nom": "Ajuntament de Girona",
+      "nivell": "local",
+      "comunitat": "Catalunya",
+      "url": "https://ajuntament.girona.cat"
+    }
+  ],
   "fonts": [
     {
-      "codi": "siero_transparencia",
-      "nom": "Ayuntamiento de Siero — Portal de Transparencia",
-      "url": "https://www.ayto-siero.es/portal-de-transparencia/",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
-    },
-    {
-      "codi": "bdns",
-      "nom": "Base de Datos Nacional de Subvenciones",
-      "url": "https://www.infosubvenciones.es/bdnstrans/GE/es/inicio",
-      "llicencia": "https://www.infosubvenciones.es/bdnstrans/GE/es/avisolegal"
-    },
-    {
-      "codi": "pcsp",
-      "nom": "Plataforma de Contratación del Sector Público (sindicación)",
-      "url": "https://contrataciondelestado.es",
-      "llicencia": "https://contrataciondelestado.es/wps/portal/avisolegal"
-    },
-    {
-      "codi": "datos_gob",
-      "nom": "datos.gob.es — Catálogo de datos abiertos",
-      "url": "https://datos.gob.es",
-      "llicencia": "https://datos.gob.es/es/aviso-legal"
+      "codi": "aoc_contractes",
+      "nom": "Consorci AOC — Contractes publicats (dataset agregat CKAN)",
+      "url": "https://dadesobertes.seu-e.cat/dataset/css-rc-contractes-pscp",
+      "llicencia": "IOpen Data (AOC)",
+      "taules": [
+        "contracte"
+      ],
+      "administracions": [
+        "Ajuntament de Figueres",
+        "Ajuntament de Girona",
+        "Diputació de Girona",
+        "Generalitat de Catalunya"
+      ],
+      "total_registres": 18084,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T17:53:41+00:00",
+        "fi": "2026-09-26T17:54:06+00:00",
+        "estat": "ok",
+        "registres": 18084,
+        "missatge": null
+      }
     },
     {
       "codi": "asturias_transparencia",
       "nom": "Principado de Asturias — Portal de Transparencia",
       "url": "https://transparencia.asturias.es",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "document"
+      ],
+      "administracions": [
+        "Principado de Asturias"
+      ],
+      "total_registres": 17,
+      "darrera_ingesta": {
+        "inici": "2026-09-25T23:14:51+00:00",
+        "fi": "2026-09-25T23:15:00+00:00",
+        "estat": "ok",
+        "registres": 17,
+        "missatge": null
+      }
     },
     {
-      "codi": "siero_sede",
-      "nom": "Ayuntamiento de Siero — Sede Electrónica (tablón de anuncios)",
-      "url": "https://siero.sedelectronica.es/board",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
-    },
-    {
-      "codi": "siero_cifras",
-      "nom": "Siero en cifras — Observatorio Socioeconómico (portalestadistico.com)",
-      "url": "https://www.ayto-siero.es/siero-en-cifras/",
-      "llicencia": "Informació pública sectorial — font citada a cada indicador"
-    },
-    {
-      "codi": "figueres_ckan",
-      "nom": "Ajuntament de Figueres — Dades Obertes (CKAN AOC)",
-      "url": "https://dadesobertes.seu-e.cat",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
-    },
-    {
-      "codi": "figueres_contractes",
-      "nom": "Ajuntament de Figueres — Licitacions (perfil de contractant)",
-      "url": "https://seu-e.cat/ca/web/figueres/govern-obert-i-transparencia/contractes-convenis-i-subvencions/relacio-de-contractes/licitacions-en-tramit-perfil-de-contractant",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
-    },
-    {
-      "codi": "diputacio_girona",
-      "nom": "Diputació de Girona — Pressuposts (seu electrònica)",
-      "url": "https://www.ddgi.cat/web/nivell/530/s-0/pressupost",
-      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)"
+      "codi": "bdns",
+      "nom": "Base de Datos Nacional de Subvenciones",
+      "url": "https://www.infosubvenciones.es/bdnstrans/GE/es/inicio",
+      "llicencia": "https://www.infosubvenciones.es/bdnstrans/GE/es/avisolegal",
+      "taules": [
+        "subvencio"
+      ],
+      "administracions": [
+        "Ajuntament de Girona",
+        "Ayuntamiento de Siero",
+        "Diputació de Girona",
+        "Generalitat de Catalunya",
+        "Principado de Asturias"
+      ],
+      "total_registres": 550261,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T17:54:18+00:00",
+        "fi": "2026-09-26T17:54:23+00:00",
+        "estat": "ok",
+        "registres": 1713,
+        "missatge": null
+      }
     },
     {
       "codi": "catalunya_socrata",
       "nom": "Generalitat de Catalunya — Execució pressupostària (Socrata)",
       "url": "https://analisi.transparenciacatalunya.cat/d/ajns-4mi7",
-      "llicencia": "Dades obertes Generalitat de Catalunya (IODL)"
+      "llicencia": "Dades obertes Generalitat de Catalunya (IODL)",
+      "taules": [
+        "pressupost"
+      ],
+      "administracions": [
+        "Generalitat de Catalunya"
+      ],
+      "total_registres": 46,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T09:37:02+00:00",
+        "fi": "2026-09-26T09:37:57+00:00",
+        "estat": "ok",
+        "registres": 46,
+        "missatge": null
+      }
     },
     {
-      "codi": "aoc_contractes",
-      "nom": "Consorci AOC — Contractes publicats (dataset agregat CKAN)",
-      "url": "https://dadesobertes.seu-e.cat/dataset/css-rc-contractes-pscp",
-      "llicencia": "IOpen Data (AOC)"
+      "codi": "datos_gob",
+      "nom": "datos.gob.es — Catálogo de datos abiertos",
+      "url": "https://datos.gob.es",
+      "llicencia": "https://datos.gob.es/es/aviso-legal",
+      "taules": [
+        "dataset"
+      ],
+      "administracions": [
+        "Principado de Asturias"
+      ],
+      "total_registres": 518,
+      "darrera_ingesta": {
+        "inici": "2026-09-25T23:13:16+00:00",
+        "fi": "2026-09-25T23:13:26+00:00",
+        "estat": "ok",
+        "registres": 518,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "diputacio_girona",
+      "nom": "Diputació de Girona — Pressuposts (seu electrònica)",
+      "url": "https://www.ddgi.cat/web/nivell/530/s-0/pressupost",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "document"
+      ],
+      "administracions": [
+        "Diputació de Girona"
+      ],
+      "total_registres": 30,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T09:37:01+00:00",
+        "fi": "2026-09-26T09:37:02+00:00",
+        "estat": "ok",
+        "registres": 30,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "figueres_ckan",
+      "nom": "Ajuntament de Figueres — Dades Obertes (CKAN AOC)",
+      "url": "https://dadesobertes.seu-e.cat",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "document"
+      ],
+      "administracions": [
+        "Ajuntament de Figueres"
+      ],
+      "total_registres": 696,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T09:36:42+00:00",
+        "fi": "2026-09-26T09:36:59+00:00",
+        "estat": "ok",
+        "registres": 696,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "figueres_contractes",
+      "nom": "Ajuntament de Figueres — Licitacions (perfil de contractant)",
+      "url": "https://seu-e.cat/ca/web/figueres/govern-obert-i-transparencia/contractes-convenis-i-subvencions/relacio-de-contractes/licitacions-en-tramit-perfil-de-contractant",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "contracte"
+      ],
+      "administracions": [
+        "Ajuntament de Figueres"
+      ],
+      "total_registres": 10,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T09:36:59+00:00",
+        "fi": "2026-09-26T09:37:01+00:00",
+        "estat": "ok",
+        "registres": 10,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "pcsp",
+      "nom": "Plataforma de Contratación del Sector Público (sindicación)",
+      "url": "https://contrataciondelestado.es",
+      "llicencia": "https://contrataciondelestado.es/wps/portal/avisolegal",
+      "taules": [
+        "contracte"
+      ],
+      "administracions": [
+        "Generalitat de Catalunya",
+        "Principado de Asturias"
+      ],
+      "total_registres": 36,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T11:16:41+00:00",
+        "fi": "2026-09-26T11:19:23+00:00",
+        "estat": "ok",
+        "registres": 36,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "siero_cifras",
+      "nom": "Siero en cifras — Observatorio Socioeconómico (portalestadistico.com)",
+      "url": "https://www.ayto-siero.es/siero-en-cifras/",
+      "llicencia": "Informació pública sectorial — font citada a cada indicador",
+      "taules": [
+        "indicador"
+      ],
+      "administracions": [
+        "Ayuntamiento de Siero"
+      ],
+      "total_registres": 27,
+      "darrera_ingesta": {
+        "inici": "2026-09-26T19:59:58+00:00",
+        "fi": "2026-09-26T20:00:04+00:00",
+        "estat": "ok",
+        "registres": 27,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "siero_sede",
+      "nom": "Ayuntamiento de Siero — Sede Electrónica (tablón de anuncios)",
+      "url": "https://siero.sedelectronica.es/board",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "document"
+      ],
+      "administracions": [
+        "Ayuntamiento de Siero"
+      ],
+      "total_registres": 10,
+      "darrera_ingesta": {
+        "inici": "2026-09-25T23:14:24+00:00",
+        "fi": "2026-09-25T23:14:25+00:00",
+        "estat": "ok",
+        "registres": 10,
+        "missatge": null
+      }
+    },
+    {
+      "codi": "siero_transparencia",
+      "nom": "Ayuntamiento de Siero — Portal de Transparencia",
+      "url": "https://www.ayto-siero.es/portal-de-transparencia/",
+      "llicencia": "Reutilització d'informació del sector públic (Llei 37/2007)",
+      "taules": [
+        "contracte",
+        "document"
+      ],
+      "administracions": [
+        "Ayuntamiento de Siero"
+      ],
+      "total_registres": 3761,
+      "darrera_ingesta": {
+        "inici": "2026-09-25T23:13:37+00:00",
+        "fi": "2026-09-25T23:14:20+00:00",
+        "estat": "ok",
+        "registres": 3772,
+        "missatge": null
+      }
     }
   ],
   "ingestes": [

@@ -116,15 +116,50 @@ def cmd_groups(args) -> int:
 
 def cmd_export(args) -> int:
     """Write a small JSON summary next to the DB (used by the static site)."""
+    from fairfactory.db import DATA_TABLES
+
     conn = connect(args.db)
     init_db(conn)
+    admin_names = {r["id"]: r["nom"] for r in conn.execute("SELECT id, nom FROM administracio")}
+    fonts = []
+    for r in conn.execute("SELECT codi, nom, url, llicencia FROM font ORDER BY codi"):
+        f = dict(r)
+        f["taules"] = set()
+        f["administracions"] = set()
+        total = 0
+        for t in DATA_TABLES:
+            rows = conn.execute(
+                f"SELECT administracio_id, COUNT(*) FROM {t} WHERE font = ? "
+                "GROUP BY administracio_id",
+                (f["codi"],),
+            ).fetchall()
+            if rows:
+                f["taules"].add(t)
+            for aid, cnt in rows:
+                f["administracions"].add(aid)
+                total += cnt
+        f["taules"] = sorted(f["taules"])
+        f["administracions"] = sorted(
+            admin_names[a] for a in f["administracions"] if a in admin_names
+        )
+        f["total_registres"] = total
+        run = conn.execute(
+            "SELECT inici, fi, estat, registres, missatge FROM ingest_run "
+            "WHERE font = ? ORDER BY id DESC LIMIT 1",
+            (f["codi"],),
+        ).fetchone()
+        f["darrera_ingesta"] = dict(run) if run else None
+        fonts.append(f)
     out = {
         "generat": conn.execute("SELECT MAX(fi) FROM ingest_run").fetchone()[0],
-        "taules": {
-            t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-            for t in ("contracte", "subvencio", "dataset", "indicador", "pressupost", "document")
-        },
-        "fonts": [dict(r) for r in conn.execute("SELECT codi, nom, url, llicencia FROM font")],
+        "taules": {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in DATA_TABLES},
+        "administracions": [
+            dict(r)
+            for r in conn.execute(
+                "SELECT codi, nom, nivell, comunitat, url FROM administracio ORDER BY comunitat"
+            )
+        ],
+        "fonts": fonts,
         "ingestes": [
             dict(r)
             for r in conn.execute(
