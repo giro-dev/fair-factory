@@ -13,9 +13,14 @@ log = logging.getLogger(__name__)
 BASE = "https://transparencia.asturias.es"
 PAGES = {
     "portada": f"{BASE}/",
-    "presupuestos": f"{BASE}/economica/presupuestos-y-cuentas-anuales",
-    "contratacion": f"{BASE}/economica/contratacion-y-perfil-del-contratante",
-    "subvenciones": f"{BASE}/economica/subvenciones-y-ayudas",
+    "economica": f"{BASE}/economica",
+    "presupuestos": f"{BASE}/economica/presupuestos-cuentas",
+    "contratacion": f"{BASE}/economica/contratacion",
+    "subvenciones": f"{BASE}/economica/subvenciones-convocadas-y-concedidas",
+    "convenios": f"{BASE}/economica/convenios",
+    "pago_proveedores": f"{BASE}/economica/pago-proveedores",
+    "endeudamiento": f"{BASE}/economica/endeudamiento",
+    "indicadores": f"{BASE}/economica/indicadores-economicos",
     "estadisticas": f"{BASE}/estadisticas-asturias",
 }
 

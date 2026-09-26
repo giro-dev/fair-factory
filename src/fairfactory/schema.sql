@@ -94,6 +94,28 @@ CREATE TABLE IF NOT EXISTS dataset (
     UNIQUE (font, id_extern)
 );
 
+CREATE TABLE IF NOT EXISTS indicador (
+    id                INTEGER PRIMARY KEY,
+    font              TEXT NOT NULL REFERENCES font(codi),
+    id_extern         TEXT NOT NULL,
+    administracio_id  INTEGER REFERENCES administracio(id),
+    seccio            TEXT,
+    nom               TEXT,
+    valor             TEXT,
+    valor_num         REAL,
+    unitat            TEXT,
+    variacio_anual    TEXT,
+    periode           TEXT,
+    any               INTEGER,
+    font_dada         TEXT,
+    descripcio        TEXT,
+    url               TEXT,
+    raw               TEXT,
+    actualitzat       TEXT NOT NULL,
+    UNIQUE (font, id_extern)
+);
+CREATE INDEX IF NOT EXISTS idx_indicador_seccio ON indicador(seccio);
+
 CREATE TABLE IF NOT EXISTS document (
     id                INTEGER PRIMARY KEY,
     font              TEXT NOT NULL REFERENCES font(codi),

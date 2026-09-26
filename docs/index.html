@@ -8,17 +8,20 @@
   :root { font-family: system-ui, sans-serif; color: #1c1c1c; }
   body { margin: 0 auto; max-width: 1100px; padding: 1.5rem; }
   h1 { margin: 0 0 .25rem; } .muted { color: #666; font-size: .9rem; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
   .card { border: 1px solid #ddd; border-radius: 8px; padding: .75rem 1rem; }
   .card b { display: block; font-size: 1.6rem; }
   section { margin-top: 2rem; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem 1.5rem; margin: 1rem 0; }
+  .chart { position: relative; height: 280px; }
+  .chart h3 { font-size: .95rem; margin: 0 0 .4rem; color: #333; }
+  .chart .cv { height: 240px; position: relative; }
   table { border-collapse: collapse; width: 100%; font-size: .9rem; }
   th, td { border-bottom: 1px solid #eee; padding: .35rem .5rem; text-align: left; vertical-align: top; }
   td.num, th.num { text-align: right; white-space: nowrap; }
   textarea { width: 100%; min-height: 6rem; font-family: monospace; }
   button { padding: .4rem .9rem; }
   .error { color: #b00020; }
-  .bar { background: #d9e8ff; height: .8rem; }
 </style>
 </head>
 <body>
@@ -35,18 +38,39 @@
       <div class="card" v-for="c in cards" :key="c.label"><b>{{ fmt(c.n) }}</b>{{ c.label }}</div>
     </div>
 
+    <section v-if="xifres.charts.length">
+      <h2>Siero en xifres</h2>
+      <p class="muted">Indicadors de l'Observatorio Socioeconómico (portalestadistico.com), agrupats per unitat.</p>
+      <div class="charts">
+        <bar-chart v-for="(ch, i) in xifres.charts" :key="i" :config="ch"></bar-chart>
+      </div>
+    </section>
+
+    <section>
+      <h2>Contractació</h2>
+      <div class="charts">
+        <bar-chart v-for="(ch, i) in contracteCharts" :key="i" :config="ch"></bar-chart>
+      </div>
+    </section>
+
+    <section v-if="subvencioChart">
+      <h2>Subvencions</h2>
+      <div class="charts"><bar-chart :config="subvencioChart"></bar-chart></div>
+    </section>
+
     <section v-for="s in sections" :key="s.title">
       <h2>{{ s.title }}</h2>
-      <result-table :result="s.result"></result-table>
+      <result-table :result="s.result" :links="!!s.links"></result-table>
     </section>
 
     <section>
       <h2>Consulta SQL</h2>
-      <p class="muted">Taules: administracio, font, ingest_run, contracte, subvencio, dataset, document. Vistes: v_contractes_per_any, v_top_adjudicataris, v_subvencions_per_any.</p>
+      <p class="muted">Taules: administracio, font, ingest_run, contracte, subvencio, dataset, indicador, document.
+      Vistes: v_contractes_per_any, v_top_adjudicataris, v_subvencions_per_any.</p>
       <textarea v-model="sql"></textarea>
       <p>
         <button @click="runQuery">Executa</button>
-        <a href="transparencia.sqlite" download>Descarrega la base de dades</a>
+        <a href="transparencia.sqlite.gz" download>Descarrega la base de dades (gzip)</a>
       </p>
       <p v-if="queryError" class="error">{{ queryError }}</p>
       <result-table v-else :result="queryResult" :links="true"></result-table>
@@ -56,9 +80,11 @@
 
 <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 const { createApp } = Vue;
 const formatter = new Intl.NumberFormat("ca-ES", { maximumFractionDigits: 2 });
+const PALETTE = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00"];
 
 const ResultTable = {
   props: {
@@ -95,8 +121,48 @@ const ResultTable = {
     </table>`,
 };
 
+const BarChart = {
+  props: { config: { type: Object, required: true } },   // { title, chartConfig }
+  mounted() {
+    this.chart = new Chart(this.$refs.cv.getContext("2d"), this.config.chartConfig);
+  },
+  beforeUnmount() { this.chart?.destroy(); },
+  template: `<div class="chart"><h3>{{ config.title }}</h3><div class="cv"><canvas ref="cv"></canvas></div></div>`,
+};
+
+// rows [{col0..}] -> grouped bar config: labels = distinct rows[][0], datasets per rows[][1]
+function groupedBar(title, rows, { horizontal = false, eur = false } = {}) {
+  const labels = [...new Set(rows.map(r => r[0]))];
+  const series = [...new Set(rows.map(r => r[1]))];
+  const datasets = series.map((s, i) => ({
+    label: s,
+    data: labels.map(l => rows.find(r => r[0] === l && r[1] === s)?.[2] ?? null),
+    backgroundColor: PALETTE[i % PALETTE.length],
+  }));
+  return {
+    title,
+    chartConfig: {
+      type: "bar",
+      data: { labels, datasets },
+      options: {
+        indexAxis: horizontal ? "y" : "x",
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          [horizontal ? "x" : "y"]: {
+            ticks: { callback: v => formatter.format(v) + (eur ? " €" : "") },
+          },
+        },
+        plugins: {
+          legend: { display: series.length > 1 },
+          tooltip: { callbacks: { label: c => `${c.dataset.label ? c.dataset.label + ": " : ""}${formatter.format(c.parsed[horizontal ? "x" : "y"])}${eur ? " €" : ""}` } },
+        },
+      },
+    },
+  };
+}
+
 createApp({
-  components: { ResultTable },
+  components: { ResultTable, BarChart },
   data() {
     return {
       loading: true,
@@ -105,6 +171,9 @@ createApp({
       generat: null,
       cards: [],
       sections: [],
+      xifres: { charts: [] },
+      contracteCharts: [],
+      subvencioChart: null,
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
 GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
@@ -115,9 +184,8 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
   async mounted() {
     try {
       const SQL = await initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` });
-      const resp = await fetch("transparencia.sqlite");
-      if (!resp.ok) throw new Error(`No s'ha pogut carregar transparencia.sqlite (${resp.status})`);
-      this.db = new SQL.Database(new Uint8Array(await resp.arrayBuffer()));
+
+      this.db = new SQL.Database(await this.fetchDb());
       this.loadDashboard();
       this.runQuery();
     } catch (e) {
@@ -128,6 +196,19 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
   },
   methods: {
     fmt: n => formatter.format(n),
+    async fetchDb() {
+      // La BD supera el límit de 100 MB de GitHub: es publica comprimida.
+      try {
+        const r = await fetch("transparencia.sqlite.gz");
+        if (r.ok) {
+          const ds = new DecompressionStream("gzip");
+          return new Uint8Array(await new Response(r.body.pipeThrough(ds)).arrayBuffer());
+        }
+      } catch { /* fallback a la versió sense comprimir */ }
+      const r = await fetch("transparencia.sqlite");
+      if (!r.ok) throw new Error(`No s'ha pogut carregar la base de dades (${r.status})`);
+      return new Uint8Array(await r.arrayBuffer());
+    },
     q(sql) {
       try {
         const res = this.db.exec(sql);
@@ -136,6 +217,7 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
         return null;
       }
     },
+    rows(sql) { return this.q(sql)?.values ?? []; },
     loadDashboard() {
       this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values[0][0];
 
@@ -143,10 +225,55 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
         ["contracte", "Contractes"],
         ["subvencio", "Subvencions"],
         ["dataset", "Datasets"],
+        ["indicador", "Indicadors"],
         ["document", "Documents"],
       ].map(([t, label]) => ({ label, n: this.q(`SELECT COUNT(*) AS n FROM ${t}`).values[0][0] }));
 
+      // --- Siero en xifres: una gràfica per unitat amb >1 indicador ---
+      const ind = this.rows(
+        "SELECT nom, valor_num, unitat, seccio FROM indicador WHERE valor_num IS NOT NULL"
+      );
+      const byUnit = {};
+      for (const [nom, v, u, seccio] of ind) (byUnit[u] ??= []).push([nom, seccio, v]);
+      this.xifres.charts = Object.entries(byUnit)
+        .filter(([, items]) => items.length > 1 && items.length <= 15)
+        .map(([unit, items]) =>
+          groupedBar(`Indicadors en ${unit}`, items.sort((a, b) => b[2] - a[2]), { horizontal: true, eur: unit.startsWith("€") })
+        );
+
+      // --- Contractes ---
+      const perAny = this.rows(
+        "SELECT any, administracio, n FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any"
+      );
+      const importAny = this.rows(
+        "SELECT any, administracio, total FROM v_contractes_per_any WHERE any IS NOT NULL ORDER BY any"
+      );
+      const topAdj = this.rows(
+        "SELECT adjudicatari, clau, total FROM v_top_adjudicataris ORDER BY total DESC LIMIT 10"
+      ).map(([nom, , total]) => [nom.length > 40 ? nom.slice(0, 40) + "…" : nom, "Adjudicatari", total]);
+      this.contracteCharts = [
+        groupedBar("Contractes per any", perAny),
+        groupedBar("Import adjudicat per any", importAny, { eur: true }),
+        groupedBar("Top adjudicataris per import", topAdj, { horizontal: true, eur: true }),
+      ];
+
+      // --- Subvencions ---
+      const subv = this.rows(
+        "SELECT any, administracio, total FROM v_subvencions_per_any WHERE any IS NOT NULL ORDER BY any"
+      );
+      this.subvencioChart = subv.length ? groupedBar("Subvencions concedides per any", subv, { eur: true }) : null;
+
       this.sections = [
+        { title: "Indicadors de Siero",
+          result: this.q(
+            "SELECT seccio, nom, valor, variacio_anual, periode, font_dada FROM indicador ORDER BY seccio, id") },
+        { title: "Tabló d'anuncis de la seu electrònica",
+          result: this.q(
+            `SELECT json_extract(raw,'$.data_publicacio') data, titol,
+                    json_extract(raw,'$.expedient') expedient,
+                    json_extract(raw,'$.procediment') procediment, url
+             FROM document WHERE font = 'siero_sede' ORDER BY data DESC LIMIT 30`),
+          links: true },
         { title: "Contractes per any i administració",
           result: this.q("SELECT * FROM v_contractes_per_any ORDER BY any DESC, administracio") },
         { title: "Principals adjudicataris",

@@ -7,3 +7,6 @@ data/cache/
 *.egg-info/
 dist/
 data/
+build/
+# artefacte local de la web; el repo commiteja docs/transparencia.sqlite.gz
+docs/transparencia.sqlite
