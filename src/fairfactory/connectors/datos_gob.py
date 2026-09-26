@@ -41,6 +41,8 @@ def _list(value) -> list:
 
 class DatosGobConnector(Connector):
     codi = "datos_gob"
+    grups = ("compartit",)
+    taules = ("dataset",)
     nom = "datos.gob.es — Catálogo de datos abiertos"
     url = "https://datos.gob.es"
     llicencia = "https://datos.gob.es/es/aviso-legal"

@@ -85,7 +85,9 @@ python -m http.server -d docs 8000
 - **Proposa noves fonts o administracions**: un connector nou és un mòdul a
   `src/fairfactory/connectors/` (subclasse de `Connector` amb `ingest()`), més una entrada a
   `ADMINISTRACIONS` (`db.py`) si és una administració nova — els `identificadors` (ine10, dir3…)
-  permeten filtrar fonts multi-ens sense tocar codi.
+  permeten filtrar fonts multi-ens sense tocar codi. La classe `Connector` defineix el contracte
+  mínim: `codi`, `nom`, `url`, `grups`, `taules`, `cli_options` (opcions de la CLI autoregistrades)
+  i `ingest()`. `fair-factory groups` mostra la matriu connector → grup.
 - **Contribueix codi**: `ruff check . && ruff format . && pytest` han de passar.
 - **Reutilitza les dades**: `docs/transparencia.sqlite.gz` és la BD completa publicada;
   respecta la llicència de cada font (taula `font`) i cita l'origen.

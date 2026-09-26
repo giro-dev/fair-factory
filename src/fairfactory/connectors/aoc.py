@@ -102,6 +102,8 @@ def record_to_contracte(rec: dict) -> dict:
 
 class AocContractesConnector(Connector):
     codi = "aoc_contractes"
+    grups = ("catalunya",)
+    taules = ("contracte",)
     nom = "Consorci AOC — Contractes publicats (dataset agregat CKAN)"
     url = "https://dadesobertes.seu-e.cat/dataset/css-rc-contractes-pscp"
     llicencia = "IOpen Data (AOC)"

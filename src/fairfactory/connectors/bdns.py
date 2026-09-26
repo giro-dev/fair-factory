@@ -34,6 +34,23 @@ ORGANS = {
 
 class BDNSConnector(Connector):
     codi = "bdns"
+    grups = ("asturias", "catalunya")
+    taules = ("subvencio",)
+    cli_options = (
+        (
+            "--since",
+            {"metavar": "DD/MM/AAAA", "help": "BDNS: només concessions des de dd/mm/aaaa"},
+            "since",
+        ),
+        (
+            "--bdns-admin",
+            {
+                "metavar": "ADMINS",
+                "help": "BDNS: només aquestes administracions, separades per comes",
+            },
+            "admins",
+        ),
+    )
     nom = "Base de Datos Nacional de Subvenciones"
     url = "https://www.infosubvenciones.es/bdnstrans/GE/es/inicio"
     llicencia = "https://www.infosubvenciones.es/bdnstrans/GE/es/avisolegal"
@@ -41,7 +58,11 @@ class BDNSConnector(Connector):
     def __init__(self, *args, since: str | None = None, admins: list[str] | None = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.since = since  # dd/mm/yyyy
-        self.admins = admins  # filtra ORGANS (p. ex. jobs separats per administració)
+        # filtra ORGANS (p. ex. jobs separats per administració); string
+        # separat per comes o llista
+        if isinstance(admins, str):
+            admins = [a.strip() for a in admins.split(",") if a.strip()]
+        self.admins = admins
 
     def organ_ids(self, admin: str) -> list[int]:
         cfg = ORGANS[admin]

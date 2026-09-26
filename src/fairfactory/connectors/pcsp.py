@@ -207,6 +207,19 @@ class PCSPConnector(Connector):
     nom = "Plataforma de Contratación del Sector Público (sindicación)"
     url = "https://contrataciondelestado.es"
     llicencia = "https://contrataciondelestado.es/wps/portal/avisolegal"
+    grups = ("compartit",)
+    taules = ("contracte",)
+    cli_options = (
+        (
+            "--pcsp-pages",
+            {
+                "type": int,
+                "metavar": "N",
+                "help": "pàgines màximes del feed ATOM de la PCSP (~17 MB cadascuna)",
+            },
+            "max_pages",
+        ),
+    )
 
     def __init__(self, *args, max_pages: int = 20, **kwargs):
         super().__init__(*args, **kwargs)

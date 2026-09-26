@@ -29,6 +29,8 @@ def _f(v) -> float | None:
 
 class CatalunyaSocrataConnector(Connector):
     codi = "catalunya_socrata"
+    grups = ("catalunya",)
+    taules = ("pressupost",)
     nom = "Generalitat de Catalunya — Execució pressupostària (Socrata)"
     url = "https://analisi.transparenciacatalunya.cat/d/ajns-4mi7"
     llicencia = "Dades obertes Generalitat de Catalunya (IODL)"

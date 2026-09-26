@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       pcsp_pages:
-        description: "Pàgines del feed ATOM de la PCSP"
-        default: "3"
+        description: "Pàgines màximes del feed ATOM de la PCSP (sostre; el checkpoint atura abans)"
+        default: "20"
 
 permissions:
   contents: write   # la pipeline commiteja docs/transparencia.sqlite.gz i docs/summary.json
