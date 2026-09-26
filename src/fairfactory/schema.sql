@@ -182,6 +182,50 @@ SELECT a.nom AS administracio,
 FROM pressupost p LEFT JOIN administracio a ON a.id = p.administracio_id
 GROUP BY 1, 2, 3;
 
+-- Flux públic total cap a un mateix NIF: contractes + subvencions
+CREATE VIEW IF NOT EXISTS v_flux_public_per_nif AS
+SELECT administracio, nif, nom,
+       SUM(n_contractes)   AS n_contractes,
+       SUM(import_contractes)   AS import_contractes,
+       SUM(n_subvencions)  AS n_subvencions,
+       SUM(import_subvencions)  AS import_subvencions,
+       SUM(import_contractes) + SUM(import_subvencions) AS total
+FROM (
+    SELECT a.nom AS administracio, c.adjudicatari_nif AS nif, c.adjudicatari_nom AS nom,
+           COUNT(*) AS n_contractes, SUM(c.import_adjudicacio) AS import_contractes,
+           0 AS n_subvencions, 0 AS import_subvencions
+    FROM contracte c JOIN administracio a ON a.id = c.administracio_id
+    WHERE c.adjudicatari_nif IS NOT NULL AND c.adjudicatari_nif != ''
+    GROUP BY a.nom, c.adjudicatari_nif
+    UNION ALL
+    SELECT a.nom, s.beneficiari_nif, s.beneficiari,
+           0, 0, COUNT(*), SUM(s.import)
+    FROM subvencio s JOIN administracio a ON a.id = s.administracio_id
+    WHERE s.beneficiari_nif IS NOT NULL AND s.beneficiari_nif != ''
+    GROUP BY a.nom, s.beneficiari_nif
+)
+GROUP BY administracio, nif
+ORDER BY total DESC;
+
+-- Detecció de fraccionament de contracte: diversos contractes del mateix
+-- adjudicatari al mateix òrgan en un trimestre, amb total elevat
+CREATE VIEW IF NOT EXISTS v_fraccionament_sospitos AS
+SELECT a.nom AS administracio,
+       c.organ,
+       c.adjudicatari_nom,
+       c.adjudicatari_nif,
+       substr(c.data_adjudicacio, 1, 4) AS any,
+       (CAST(substr(c.data_adjudicacio, 6, 2) AS INTEGER) + 2) / 3 AS trimestre,
+       COUNT(*) AS n_contractes,
+       ROUND(SUM(c.import_adjudicacio), 2) AS total
+FROM contracte c JOIN administracio a ON a.id = c.administracio_id
+WHERE c.adjudicatari_nif IS NOT NULL
+  AND c.data_adjudicacio IS NOT NULL
+  AND c.import_adjudicacio IS NOT NULL
+GROUP BY a.nom, c.organ, c.adjudicatari_nif, any, trimestre
+HAVING n_contractes >= 3 AND total >= 15000
+ORDER BY total DESC;
+
 CREATE VIEW IF NOT EXISTS v_subvencions_per_any AS
 SELECT a.nom AS administracio,
        substr(s.data_concessio, 1, 4) AS any,

@@ -98,7 +98,11 @@ def parse_indicators(html: str, url: str) -> list[dict]:
         year = YEAR_RE.search(periode or "")
         rows.append(
             {
-                "id_extern": f"{section}|{nom}" if section else nom,
+                # inclou l'any a la clau: conserva l'historial en comptes de
+                # sobreescriure sempre el mateix indicador
+                "id_extern": f"{section}|{nom}|{year.group(0) if year else periode or ''}"
+                if section
+                else f"{nom}|{year.group(0) if year else periode or ''}",
                 "seccio": section,
                 "nom": nom,
                 "valor": valor,

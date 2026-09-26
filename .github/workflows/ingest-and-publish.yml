@@ -53,6 +53,18 @@ jobs:
             --pcsp-pages "${{ github.event.inputs.pcsp_pages || 3 }}" \
             ${{ matrix.extra_args }} ${{ matrix.fonts }}
           fair-factory --db "data/part-${{ matrix.grup }}.sqlite" stats
+      # senyal visible si alguna font del job ha fallat (--keep-going sempre
+      # retorna 0); l'artefacte es puja igualment amb les fonts bones
+      - name: Fonts en error
+        if: always()
+        run: |
+          errors=$(sqlite3 "data/part-${{ matrix.grup }}.sqlite" \
+            "SELECT COUNT(*) FROM ingest_run WHERE estat='error'" 2>/dev/null || echo 1)
+          if [ "$errors" -gt 0 ]; then
+            sqlite3 "data/part-${{ matrix.grup }}.sqlite" \
+              "SELECT font, missatge FROM ingest_run WHERE estat='error'"
+            echo "::warning::${{ matrix.grup }}: $errors fonts han fallat"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -63,6 +75,7 @@ jobs:
 
   publish:
     needs: ingest
+    if: always()   # publica encara que algun job de la matriu hagi fallat
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,7 +89,13 @@ jobs:
           path: parts
       - name: Fusió de les BDs parcials
         run: |
-          fair-factory merge --out data/transparencia.sqlite parts/*/part-*.sqlite
+          shopt -s nullglob
+          parts=(parts/*/part-*.sqlite)
+          if [ ${#parts[@]} -eq 0 ]; then
+            echo "::error::cap job ha produït una sqlite"
+            exit 1
+          fi
+          fair-factory merge --out data/transparencia.sqlite "${parts[@]}"
           fair-factory --db data/transparencia.sqlite stats
           fair-factory --db data/transparencia.sqlite export-summary --out docs/summary.json
           # artefacte publicat «slim»: raw de subvencio buidat (duplica les
