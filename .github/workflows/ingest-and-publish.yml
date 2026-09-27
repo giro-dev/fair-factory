@@ -98,15 +98,16 @@ jobs:
         with:
           pattern: sqlite-*
           path: parts
-      - name: Fusió de les BDs parcials
+      - name: Fusió de les BDs parcials sobre la publicada anterior
         run: |
           shopt -s nullglob
           parts=(parts/*/part-*.sqlite)
-          if [ ${#parts[@]} -eq 0 ]; then
-            echo "::error::cap job ha produït una sqlite"
-            exit 1
+          # la darrera BD publicada com a base: si un job ha fallat (p. ex.
+          # bloqueig d'IP del portal), els seus registres antics es conserven
+          gunzip -c docs/transparencia.sqlite.gz > data/transparencia.sqlite
+          if [ ${#parts[@]} -gt 0 ]; then
+            fair-factory merge --keep --out data/transparencia.sqlite "${parts[@]}"
           fi
-          fair-factory merge --out data/transparencia.sqlite "${parts[@]}"
           fair-factory --db data/transparencia.sqlite stats
           fair-factory --db data/transparencia.sqlite export-summary --out docs/summary.json
           # artefacte publicat «slim»: raw de subvencio buidat (duplica les
