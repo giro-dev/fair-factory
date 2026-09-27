@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/households/{householdId}/recipes/{recipeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["update"];
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/households/{householdId}/menu/slots": {
         parameters: {
             query?: never;
@@ -124,9 +140,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update"];
+        put: operations["update_1"];
         post?: never;
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -140,9 +156,25 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_1"];
+        put: operations["update_2"];
         post?: never;
-        delete: operations["delete_1"];
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assistant/agents/{agentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_3"];
+        post?: never;
+        delete: operations["reset"];
         options?: never;
         head?: never;
         patch?: never;
@@ -270,6 +302,70 @@ export interface paths {
         get: operations["list_1"];
         put?: never;
         post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/households/{householdId}/recipes/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["search"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/households/{householdId}/recipes/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/households/{householdId}/recipes/import/{importId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/households/{householdId}/recipes/import/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["fromUrl"];
         delete?: never;
         options?: never;
         head?: never;
@@ -436,6 +532,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/assistant/agents/{agentId}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/households/{id}/members/{memberId}": {
         parameters: {
             query?: never;
@@ -478,10 +590,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
-        patch: operations["update_2"];
+        patch: operations["update_4"];
         trace?: never;
     };
     "/api/v1/households/{householdId}/calendar/{eventId}": {
@@ -494,10 +606,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
-        patch: operations["update_3"];
+        patch: operations["update_5"];
         trace?: never;
     };
     "/api/v1/notifications/vapid-public-key": {
@@ -539,7 +651,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -559,22 +671,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/households/{householdId}/recipes/{recipeId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_1"];
-        put?: never;
-        post?: never;
-        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -660,6 +756,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/assistant/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["providers_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/assistant/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["agents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/households/{householdId}/recipes/import/{importId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["discard"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -715,6 +859,45 @@ export interface components {
             householdId?: string;
             name?: string;
             items?: components["schemas"]["ShoppingItemDto"][];
+        };
+        CreateRecipe: {
+            name: string;
+            /** Format: int32 */
+            servings?: number;
+            notes?: string;
+            description?: string;
+            steps?: string[];
+            tags?: string[];
+            ingredients?: components["schemas"]["IngredientDto"][];
+            imageMimeType?: string;
+            imageData?: string;
+        };
+        IngredientDto: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: double */
+            quantity?: number;
+            unit?: string;
+            category?: string;
+        };
+        RecipeDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            householdId?: string;
+            name?: string;
+            /** Format: int32 */
+            servings?: number;
+            notes?: string;
+            description?: string;
+            steps?: string[];
+            tags?: string[];
+            imageMimeType?: string;
+            imageData?: string;
+            ingredients?: components["schemas"]["IngredientDto"][];
+            /** Format: date-time */
+            createdAt?: string;
         };
         SetSlot: {
             /** Format: int32 */
@@ -803,6 +986,40 @@ export interface components {
             /** Format: date-time */
             lastRunAt?: string;
         };
+        AgentConfigUpdate: {
+            enabled?: boolean;
+            provider?: string;
+            model?: string;
+            /** Format: double */
+            temperature?: number;
+            /** Format: int32 */
+            maxTokens?: number;
+        };
+        AgentConfigDto: {
+            id?: string;
+            nameKey?: string;
+            descriptionKey?: string;
+            supportsMedia?: boolean;
+            orchestrator?: boolean;
+            enabled?: boolean;
+            provider?: string;
+            model?: string;
+            /** Format: double */
+            temperature?: number;
+            /** Format: int32 */
+            maxTokens?: number;
+            defaults?: components["schemas"]["ModelDefaults"];
+            overridden?: boolean;
+            available?: boolean;
+        };
+        ModelDefaults: {
+            provider?: string;
+            model?: string;
+            /** Format: double */
+            temperature?: number;
+            /** Format: int32 */
+            maxTokens?: number;
+        };
         SetupRequest: {
             householdName: string;
             locale?: string;
@@ -845,44 +1062,57 @@ export interface components {
             category?: string;
             recurring?: boolean;
         };
-        CreateRecipe: {
-            name: string;
-            /** Format: int32 */
-            servings?: number;
-            notes?: string;
-            description?: string;
-            steps?: string[];
-            tags?: string[];
-            ingredients?: components["schemas"]["IngredientDto"][];
-            imageMimeType?: string;
-            imageData?: string;
+        FilterCondition: components["schemas"]["FilterNode"] & {
+            field?: string;
+            /** @enum {string} */
+            operator?: "EQ" | "NE" | "GT" | "GTE" | "LT" | "LTE" | "LIKE" | "IN" | "BETWEEN" | "IS_NULL" | "IS_NOT_NULL" | "JSON_CONTAINS" | "JSON_CONTAINED_BY" | "JSON_EXISTS" | "JSON_EXISTS_ANY" | "JSON_EXISTS_ALL" | "JSON_PATH_EQ" | "JSON_PATH_LIKE" | "JSON_ARRAY_CONTAINS" | "JSON_ARRAY_CONTAINS_ALL" | "JSON_ARRAY_CONTAINS_ANY";
+            value?: unknown;
+            values?: unknown[];
         };
-        IngredientDto: {
+        FilterGroup: components["schemas"]["FilterNode"] & {
+            /** @enum {string} */
+            combinator?: "AND" | "OR";
+            filters?: (components["schemas"]["FilterCondition"] | components["schemas"]["FilterGroup"])[];
+            and?: (components["schemas"]["FilterCondition"] | components["schemas"]["FilterGroup"])[];
+            or?: (components["schemas"]["FilterCondition"] | components["schemas"]["FilterGroup"])[];
+        };
+        FilterNode: unknown;
+        FilterRequest: {
+            filter: components["schemas"]["FilterCondition"] | components["schemas"]["FilterGroup"];
+        };
+        RecipePageDto: {
+            content?: components["schemas"]["RecipeDto"][];
+            /** Format: int64 */
+            totalHits?: number;
+            hasMore?: boolean;
+        };
+        CandidateInfo: {
+            key?: string;
+            title?: string;
+            snippet?: string;
+            structured?: boolean;
+        };
+        ImportSessionInfo: {
             /** Format: uuid */
             id?: string;
-            name?: string;
-            /** Format: double */
-            quantity?: number;
-            unit?: string;
-            category?: string;
+            source?: string;
+            candidates?: components["schemas"]["CandidateInfo"][];
+            aiAvailable?: boolean;
         };
-        RecipeDto: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: uuid */
-            householdId?: string;
-            name?: string;
-            /** Format: int32 */
-            servings?: number;
-            notes?: string;
-            description?: string;
-            steps?: string[];
-            tags?: string[];
-            imageMimeType?: string;
-            imageData?: string;
-            ingredients?: components["schemas"]["IngredientDto"][];
-            /** Format: date-time */
-            createdAt?: string;
+        ConfirmImport: {
+            candidates: string[];
+        };
+        ImportFailure: {
+            key?: string;
+            title?: string;
+            reason?: string;
+        };
+        ImportOutcome: {
+            imported?: components["schemas"]["RecipeDto"][];
+            failures?: components["schemas"]["ImportFailure"][];
+        };
+        UrlImport: {
+            url: string;
         };
         PushKeys: {
             p256dh: string;
@@ -982,6 +1212,13 @@ export interface components {
             conversationId?: string;
             text?: string;
             toolCalls?: string[];
+            delegations?: components["schemas"]["Delegation"][];
+        };
+        Delegation: {
+            agentId?: string;
+            text?: string;
+            /** Format: int64 */
+            latencyMs?: number;
         };
         HouseholdExport: {
             household?: components["schemas"]["HouseholdDto"];
@@ -1003,6 +1240,13 @@ export interface components {
             /** Format: int32 */
             isoWeek?: number;
             slots?: components["schemas"]["MealSlotDto"][];
+        };
+        AgentTestResult: {
+            ok?: boolean;
+            /** Format: int64 */
+            latencyMs?: number;
+            text?: string;
+            error?: string;
         };
         UpdateMember: {
             name?: string;
@@ -1052,10 +1296,19 @@ export interface components {
             descriptionKey?: string;
             supportsMedia?: boolean;
             toolNames?: string[];
+            toolDescription?: string;
+            orchestrator?: boolean;
+            model?: string;
         };
         SseEmitter: {
             /** Format: int64 */
             timeout?: number;
+        };
+        ProviderDto: {
+            provider?: string;
+            available?: boolean;
+            models?: string[];
+            error?: string;
         };
         UnsubscribeRequest: {
             endpoint: string;
@@ -1248,6 +1501,77 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+                recipeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecipeDto"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+                recipeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRecipe"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecipeDto"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+                recipeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     setSlot: {
         parameters: {
             query: {
@@ -1329,7 +1653,7 @@ export interface operations {
             };
         };
     };
-    update: {
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1356,7 +1680,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1377,7 +1701,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1404,7 +1728,7 @@ export interface operations {
             };
         };
     };
-    delete_1: {
+    delete_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1418,6 +1742,52 @@ export interface operations {
         responses: {
             /** @description No Content */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentConfigUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AgentConfigDto"];
+                };
+            };
+        };
+    };
+    reset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1734,6 +2104,121 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["RecipeDto"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                tag?: string;
+                ingredient?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                householdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FilterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RecipePageDto"];
+                };
+            };
+        };
+    };
+    upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImportSessionInfo"];
+                };
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+                importId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmImport"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImportOutcome"];
+                };
+            };
+        };
+    };
+    fromUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UrlImport"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImportSessionInfo"];
                 };
             };
         };
@@ -2103,6 +2588,28 @@ export interface operations {
             };
         };
     };
+    test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AgentTestResult"];
+                };
+            };
+        };
+    };
     deleteMember: {
         parameters: {
             query?: never;
@@ -2199,7 +2706,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2220,7 +2727,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2247,7 +2754,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2268,7 +2775,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2337,7 +2844,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -2378,50 +2885,6 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["ShoppingListDto"];
                 };
-            };
-        };
-    };
-    get_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                householdId: string;
-                recipeId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["RecipeDto"];
-                };
-            };
-        };
-    };
-    delete_4: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                householdId: string;
-                recipeId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };
@@ -2535,6 +2998,69 @@ export interface operations {
                         [key: string]: string;
                     }[];
                 };
+            };
+        };
+    };
+    providers_1: {
+        parameters: {
+            query?: {
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProviderDto"][];
+                };
+            };
+        };
+    };
+    agents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AgentConfigDto"][];
+                };
+            };
+        };
+    };
+    discard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                householdId: string;
+                importId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

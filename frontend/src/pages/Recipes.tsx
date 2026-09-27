@@ -1,47 +1,49 @@
-import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { api } from '../api/client'
+import type { Recipe, RecipePage, RecipeSearchBody } from '../api/types'
 import { useHousehold } from '../context/HouseholdContext'
-import { Modal } from '../components/Modal'
+import { RecipeForm, type RecipePayload } from '../components/RecipeForm'
+import { RecipeImportDialog } from '../components/RecipeImportDialog'
 
-type Ingredient = { id?: string; name: string; quantity?: number; unit?: string; category?: string }
-type Recipe = {
-  id: string
-  name: string
-  servings: number
-  notes?: string
-  description?: string
-  steps?: string[]
-  imageMimeType?: string
-  imageData?: string
-  tags: string[]
-  ingredients: Ingredient[]
+const PAGE_SIZE = 24
+const SORTS = ['name', 'createdAt', 'servings'] as const
+type Sort = (typeof SORTS)[number]
+
+function useDebounced<T>(value: T, delay = 350): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+  return debounced
 }
 
-const emptyIngredient: Ingredient = { name: '', quantity: undefined, unit: '' }
-
-type Image = { mimeType: string; data: string }
-
-function fileToBase64(file: File): Promise<Image> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      const [prefix, data] = result.split(',')
-      const mimeType = prefix.split(':')[1]?.split(';')[0] ?? file.type
-      resolve({ mimeType, data: data ?? '' })
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+function searchBody(query: string): RecipeSearchBody {
+  const q = query.trim()
+  if (!q) return { filter: { and: [] } }
+  return {
+    filter: {
+      or: [
+        { field: 'name', operator: 'LIKE', value: q },
+        { field: 'description', operator: 'LIKE', value: q },
+        { field: 'notes', operator: 'LIKE', value: q },
+      ],
+    },
+  }
 }
 
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
+function RecipeImage({ recipe, className }: { recipe: Recipe; className?: string }) {
+  if (!recipe.imageMimeType || !recipe.imageData) return null
+  return (
+    <img
+      src={`data:${recipe.imageMimeType};base64,${recipe.imageData}`}
+      alt={recipe.name ?? ''}
+      className={className}
+    />
+  )
 }
 
 export function Recipes() {
@@ -49,113 +51,106 @@ export function Recipes() {
   const { household } = useHousehold()
   const queryClient = useQueryClient()
   const [query, setQuery] = useState('')
-  const [view, setView] = useState<'list' | 'grid'>('list')
+  const [ingredient, setIngredient] = useState('')
+  const [tag, setTag] = useState<string | null>(null)
+  const [sort, setSort] = useState<Sort>('name')
+  const [direction, setDirection] = useState<'asc' | 'desc'>('asc')
+  const [view, setView] = useState<'list' | 'grid'>('grid')
   const [isCreating, setIsCreating] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
 
-  const [name, setName] = useState('')
-  const [servings, setServings] = useState(4)
-  const [notes, setNotes] = useState('')
-  const [description, setDescription] = useState('')
-  const [steps, setSteps] = useState<string[]>([''])
-  const [image, setImage] = useState<Image | null>(null)
-  const [ingredients, setIngredients] = useState<Ingredient[]>([{ ...emptyIngredient }])
+  const debouncedQuery = useDebounced(query)
+  const debouncedIngredient = useDebounced(ingredient)
 
+  // Full list only feeds the tag chip suggestions (names/ingredients stay server-filtered).
   const recipes = useQuery({
     queryKey: ['recipes', household?.id],
     queryFn: () => api<Recipe[]>(`/households/${household!.id}/recipes`),
     enabled: !!household,
   })
 
-  const filtered = useMemo(() => {
-    const q = normalize(query.trim())
-    if (!q) return recipes.data ?? []
-    return (recipes.data ?? []).filter((r) => {
-      const hay = [r.name, r.description, r.notes, r.ingredients.map((i) => i.name).join(' ')]
-        .filter(Boolean)
-        .join(' ')
-      return normalize(hay).includes(q)
-    })
-  }, [query, recipes.data])
+  const tags = useMemo(() => {
+    const all = (recipes.data ?? []).flatMap((r) => r.tags ?? [])
+    return [...new Set(all)].sort((a, b) => a.localeCompare(b))
+  }, [recipes.data])
 
-  const openCreate = () => {
-    setName('')
-    setServings(4)
-    setNotes('')
-    setDescription('')
-    setSteps([''])
-    setImage(null)
-    setIngredients([{ ...emptyIngredient }])
-    setIsCreating(true)
-  }
+  const search = useInfiniteQuery({
+    queryKey: [
+      'recipe-search',
+      household?.id,
+      debouncedQuery,
+      debouncedIngredient,
+      tag,
+      sort,
+      direction,
+    ],
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({
+        page: String(pageParam),
+        size: String(PAGE_SIZE),
+        sort,
+        direction,
+      })
+      if (tag) params.set('tag', tag)
+      if (debouncedIngredient.trim()) params.set('ingredient', debouncedIngredient.trim())
+      return api<RecipePage>(`/households/${household!.id}/recipes/search?${params}`, {
+        method: 'POST',
+        body: JSON.stringify(searchBody(debouncedQuery)),
+      })
+    },
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last.hasMore ? pages.length : undefined),
+    enabled: !!household,
+  })
+
+  const results = search.data?.pages.flatMap((p) => p.content ?? []) ?? []
+  const totalHits = search.data?.pages[0]?.totalHits ?? 0
+  const hasActiveFilter =
+    debouncedQuery.trim() !== '' || debouncedIngredient.trim() !== '' || tag !== null
 
   const create = useMutation({
-    mutationFn: () =>
+    mutationFn: (payload: RecipePayload) =>
       api<Recipe>(`/households/${household!.id}/recipes`, {
         method: 'POST',
-        body: JSON.stringify({
-          name,
-          servings,
-          notes: notes || undefined,
-          description: description || undefined,
-          steps: steps.filter((s) => s.trim()),
-          tags: [],
-          ingredients: ingredients.filter((i) => i.name.trim()),
-          imageMimeType: image?.mimeType,
-          imageData: image?.data,
-        }),
+        body: JSON.stringify(payload),
       }),
     onSuccess: async () => {
       setIsCreating(false)
-      openCreate()
-      await queryClient.invalidateQueries({ queryKey: ['recipes'] })
+      await queryClient.invalidateQueries({ queryKey: ['recipe-search', household?.id] })
+      await queryClient.invalidateQueries({ queryKey: ['recipes', household?.id] })
     },
   })
-
-  const remove = useMutation({
-    mutationFn: (recipeId: string) =>
-      api<void>(`/households/${household!.id}/recipes/${recipeId}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['recipes'] }),
-  })
-
-  const updateIngredient = (index: number, patch: Partial<Ingredient>) => {
-    setIngredients(ingredients.map((ing, i) => (i === index ? { ...ing, ...patch } : ing)))
-  }
-
-  const updateStep = (index: number, value: string) => {
-    setSteps(steps.map((s, i) => (i === index ? value : s)))
-  }
-
-  const handleImage = async (file: File | undefined) => {
-    if (!file) {
-      setImage(null)
-      return
-    }
-    setImage(await fileToBase64(file))
-  }
-
-  const RecipeImage = ({ recipe, className }: { recipe: Recipe; className?: string }) => {
-    if (!recipe.imageMimeType || !recipe.imageData) return null
-    return <img src={`data:${recipe.imageMimeType};base64,${recipe.imageData}`} alt={recipe.name} className={className} />
-  }
 
   const RecipeInfo = ({ recipe }: { recipe: Recipe }) => (
     <>
       <h4>{recipe.name}</h4>
-      <span className="meta">{t('recipes.servingsCount', { count: recipe.servings })}</span>
-      {recipe.description && <p className="recipe-description">{recipe.description}</p>}
-      {recipe.steps && recipe.steps.length > 0 && (
-        <ol className="steps-list">
-          {recipe.steps.map((s, i) => <li key={i}>{s}</li>)}
-        </ol>
+      <span className="meta">{t('recipes.servingsCount', { count: recipe.servings ?? 0 })}</span>
+      {recipe.tags && recipe.tags.length > 0 && (
+        <span className="recipe-tag-chips">
+          {recipe.tags.map((recipeTag) => (
+            <span key={recipeTag} className="member-badge">{recipeTag}</span>
+          ))}
+        </span>
       )}
-      <p className="ingredient-list">{recipe.ingredients.map((i) => i.name).join(', ')}</p>
+      {recipe.description && <p className="recipe-description">{recipe.description}</p>}
+      {recipe.ingredients && recipe.ingredients.length > 0 && (
+        <p className="ingredient-list">
+          {recipe.ingredients.map((i) => i.name).filter(Boolean).join(', ')}
+        </p>
+      )}
     </>
   )
 
   return (
     <section className="panel">
       <div className="recipes-toolbar">
-        <h2>{t('recipes.title')}</h2>
+        <div className="recipes-toolbar-header">
+          <h2>{t('recipes.title')}</h2>
+          <span className="meta">{t('recipes.totalCount', { count: totalHits })}</span>
+          <button type="button" className="ghost" onClick={() => setIsImporting(true)}>
+            {t('recipes.importBook')}
+          </button>
+        </div>
         <div className="recipes-search-bar">
           <input
             type="search"
@@ -164,6 +159,34 @@ export function Recipes() {
             placeholder={t('recipes.searchPlaceholder')}
             aria-label={t('recipes.searchPlaceholder')}
           />
+          <input
+            type="search"
+            value={ingredient}
+            onChange={(e) => setIngredient(e.target.value)}
+            placeholder={t('recipes.ingredientPlaceholder')}
+            aria-label={t('recipes.ingredientPlaceholder')}
+            className="ingredient-search"
+          />
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as Sort)}
+            aria-label={t('recipes.sort')}
+          >
+            {SORTS.map((option) => (
+              <option key={option} value={option}>
+                {t(`recipes.sortBy.${option}`)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="ghost sort-direction"
+            aria-label={t('recipes.sortDirection')}
+            title={t('recipes.sortDirection')}
+            onClick={() => setDirection(direction === 'asc' ? 'desc' : 'asc')}
+          >
+            {direction === 'asc' ? '↑' : '↓'}
+          </button>
           <div className="view-toggle" role="group" aria-label={t('recipes.view')}>
             <button
               type="button"
@@ -181,149 +204,85 @@ export function Recipes() {
             </button>
           </div>
         </div>
+        {tags.length > 0 && (
+          <div className="tag-filter-bar" role="group" aria-label={t('recipes.tagFilter')}>
+            {tags.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={`tag-chip${tag === option ? ' active' : ''}`}
+                onClick={() => setTag(tag === option ? null : option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {recipes.isPending && <p>{t('loading')}</p>}
-      {recipes.isError && <p role="alert">{t('error')}</p>}
+      {search.isPending && <p>{t('loading')}</p>}
+      {search.isError && <p role="alert">{t('error')}</p>}
 
       {view === 'grid' ? (
         <div className="recipe-grid">
-          {filtered.map((recipe) => (
-            <div key={recipe.id} className="recipe-card">
+          {results.map((recipe) => (
+            <Link key={recipe.id} to={`/receptes/${recipe.id}`} className="recipe-card">
               <RecipeImage recipe={recipe} className="recipe-card-image" />
               <div className="recipe-card-body">
                 <RecipeInfo recipe={recipe} />
               </div>
-              <button type="button" className="link" onClick={() => remove.mutate(recipe.id)}>✕</button>
-            </div>
+            </Link>
           ))}
         </div>
       ) : (
         <ul className="item-list recipe-list">
-          {filtered.map((recipe) => (
+          {results.map((recipe) => (
             <li key={recipe.id} className="recipe-list-item">
-              <RecipeImage recipe={recipe} className="recipe-list-thumb" />
-              <div className="recipe-list-body">
-                <RecipeInfo recipe={recipe} />
-              </div>
-              <button type="button" className="link" onClick={() => remove.mutate(recipe.id)}>✕</button>
+              <Link to={`/receptes/${recipe.id}`} className="recipe-list-link">
+                <RecipeImage recipe={recipe} className="recipe-list-thumb" />
+                <div className="recipe-list-body">
+                  <RecipeInfo recipe={recipe} />
+                </div>
+              </Link>
             </li>
           ))}
         </ul>
       )}
 
-      {filtered.length === 0 && !recipes.isPending && !recipes.isError && (
-        <p className="meta">{t('recipes.noResults')}</p>
+      {search.hasNextPage && (
+        <div className="footer-actions left">
+          <button type="button" className="ghost" onClick={() => search.fetchNextPage()}>
+            {t('recipes.loadMore')}
+          </button>
+        </div>
       )}
 
-      <button type="button" className="fab" aria-label={t('recipes.newRecipe')} onClick={openCreate}>
+      {results.length === 0 && !search.isPending && !search.isError && (
+        <p className="meta">
+          {hasActiveFilter ? t('recipes.noResults') : t('recipes.empty')}
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="fab"
+        aria-label={t('recipes.newRecipe')}
+        onClick={() => setIsCreating(true)}
+      >
         +
       </button>
 
       {isCreating && (
-        <Modal title={t('recipes.newRecipe')} onClose={() => setIsCreating(false)}>
-          <form
-            className="create-form modal-form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (name.trim()) create.mutate()
-            }}
-          >
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('recipes.namePlaceholder')}
-              required
-              autoFocus
-            />
-            <label className="inline">
-              {t('recipes.servings')}
-              <input
-                type="number"
-                min={1}
-                value={servings}
-                onChange={(e) => setServings(Number(e.target.value))}
-              />
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('recipes.descriptionPlaceholder')}
-              rows={3}
-            />
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t('recipes.notesPlaceholder')}
-              rows={2}
-            />
-            <fieldset>
-              <legend>{t('recipes.steps')}</legend>
-              <ol className="steps-list">
-                {steps.map((step, i) => (
-                  <li key={i}>
-                    <input
-                      value={step}
-                      placeholder={t('recipes.stepPlaceholder', { number: i + 1 })}
-                      onChange={(e) => updateStep(i, e.target.value)}
-                    />
-                  </li>
-                ))}
-              </ol>
-              <button type="button" className="link" onClick={() => setSteps([...steps, ''])}>
-                {t('recipes.addStep')}
-              </button>
-            </fieldset>
-            <fieldset>
-              <legend>{t('recipes.ingredients')}</legend>
-              {ingredients.map((ingredient, i) => (
-                <div key={i} className="ingredient-row">
-                  <input
-                    value={ingredient.name}
-                    placeholder={t('recipes.ingredientName')}
-                    onChange={(e) => updateIngredient(i, { name: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    value={ingredient.quantity ?? ''}
-                    placeholder={t('recipes.quantity')}
-                    onChange={(e) =>
-                      updateIngredient(i, { quantity: e.target.value ? Number(e.target.value) : undefined })
-                    }
-                  />
-                  <input
-                    value={ingredient.unit ?? ''}
-                    placeholder={t('recipes.unit')}
-                    onChange={(e) => updateIngredient(i, { unit: e.target.value })}
-                  />
-                </div>
-              ))}
-              <button
-                type="button"
-                className="link"
-                onClick={() => setIngredients([...ingredients, { ...emptyIngredient }])}
-              >
-                {t('recipes.addIngredient')}
-              </button>
-            </fieldset>
-            <label className="inline file-label">
-              {t('recipes.image')}
-              <input type="file" accept="image/*" onChange={(e) => handleImage(e.target.files?.[0])} />
-            </label>
-            {image && (
-              <img
-                src={`data:${image.mimeType};base64,${image.data}`}
-                alt={t('recipes.preview')}
-                className="recipe-thumb"
-              />
-            )}
-            <div className="footer-actions">
-              <button type="submit" disabled={create.isPending}>
-                {t('recipes.create')}
-              </button>
-            </div>
-          </form>
-        </Modal>
+        <RecipeForm
+          title={t('recipes.newRecipe')}
+          pending={create.isPending}
+          onClose={() => setIsCreating(false)}
+          onSubmit={(payload) => create.mutate(payload)}
+        />
+      )}
+
+      {isImporting && household && (
+        <RecipeImportDialog householdId={household.id} onClose={() => setIsImporting(false)} />
       )}
     </section>
   )

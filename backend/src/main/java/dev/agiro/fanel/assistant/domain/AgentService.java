@@ -3,6 +3,7 @@ package dev.agiro.fanel.assistant.domain;
 import dev.agiro.fanel.assistant.api.AgentRequest;
 import dev.agiro.fanel.assistant.api.AgentResponse;
 import dev.agiro.fanel.assistant.api.AssistantApi;
+import dev.agiro.fanel.assistant.infra.AgentProperties;
 import dev.agiro.fanel.shared.web.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +19,16 @@ public class AgentService implements AssistantApi {
     private static final Logger log = LoggerFactory.getLogger(AgentService.class);
 
     private final AgentRegistry registry;
+    private final AgentProperties properties;
 
-    public AgentService(AgentRegistry registry) {
+    public AgentService(AgentRegistry registry, AgentProperties properties) {
         this.registry = registry;
+        this.properties = properties;
     }
 
     public AgentResponse chat(UUID householdId, UUID memberId, AgentRequest request, Locale locale) {
-        String agentId = request.agentId() != null && !request.agentId().isBlank() ? request.agentId() : "general";
+        String agentId = request.agentId() != null && !request.agentId().isBlank()
+                ? request.agentId() : properties.getOrchestratorId();
         Agent agent = registry.get(agentId)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
         return agent.execute(request, householdId, memberId, locale);

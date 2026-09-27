@@ -11,13 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.content.Media;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.util.MimeType;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+
+import static dev.agiro.fanel.assistant.domain.AgentSupport.householdContext;
+import static dev.agiro.fanel.assistant.domain.AgentSupport.resolveConversationId;
+import static dev.agiro.fanel.assistant.domain.AgentSupport.toMedia;
 
 public class DefaultAgent implements Agent {
     private static final Logger log = LoggerFactory.getLogger(DefaultAgent.class);
@@ -38,15 +39,10 @@ public class DefaultAgent implements Agent {
 
     @Override
     public AgentResponse execute(AgentRequest request, UUID householdId, UUID memberId, Locale locale) {
-        String conversationId = request.conversationId() != null && !request.conversationId().isBlank()
-                ? request.conversationId()
-                : UUID.randomUUID().toString();
+        String conversationId = resolveConversationId(request);
 
         String systemPrompt = promptLoader.load(definition.id(), locale);
-        String context = "\n\nYou are assisting household " + householdId
-                + (memberId != null ? " and member " + memberId : "")
-                + ". When calling tools that require a householdId, always use " + householdId
-                + ". When a tool needs year and week, prefer getCurrentIsoWeek().";
+        String context = householdContext(householdId, memberId);
 
         log.debug("Agent {} executing for household {} with conversationId {}, prompt length {}",
                 definition.id(), householdId, conversationId,
@@ -58,6 +54,7 @@ public class DefaultAgent implements Agent {
             }
         }
 
+        List<Media> media = toMedia(request.attachments());
         var prompt = chatClient.prompt();
         if (systemPrompt != null && !systemPrompt.isBlank()) {
             prompt.system(systemPrompt + context);
@@ -67,12 +64,8 @@ public class DefaultAgent implements Agent {
         String response = prompt
                 .user(user -> {
                     user.text(request.message());
-                    if (request.attachments() != null) {
-                        for (Attachment attachment : request.attachments()) {
-                            byte[] bytes = Base64.getDecoder().decode(attachment.data());
-                            MimeType mimeType = MimeType.valueOf(attachment.mimeType());
-                            user.media(new Media(mimeType, new ByteArrayResource(bytes)));
-                        }
+                    for (Media m : media) {
+                        user.media(m);
                     }
                 })
                 .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
@@ -80,6 +73,7 @@ public class DefaultAgent implements Agent {
                 .content();
 
         log.debug("Agent {} response: {}", definition.id(), response);
-        return new AgentResponse(definition.id(), conversationId, response != null ? response : "", List.of());
+        return new AgentResponse(definition.id(), conversationId, response != null ? response : "",
+                List.of(), List.of());
     }
 }

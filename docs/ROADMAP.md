@@ -57,7 +57,9 @@ Origen: POC "Panel familiar" (menú setmanal 7 dies × 4 àpats, calendari, comp
 
 - [x] `assistant`: tools `@Tool` sobre les APIs públiques dels mòduls (`AssistantTools`: compra, menú, receptes, calendari, tasques)
 - [x] `ChatClient` amb memòria (de moment en memòria, no JDBC); proveïdor per configuració (Ollama / OpenAI / Anthropic), cap actiu per defecte
-- [x] Xat a la UI (`AssistantChat`, selector d'agents)
+- [x] Xat a la UI (`AssistantChat`, conversa única amb l'orquestrador)
+- [x] Orquestrador + subagents com a tools `delegate_to_*` (ADR 0011): l'orquestrador resol amb `AssistantTools` i delega tasques especialitzades; delegacions visibles a `AgentResponse.delegations`
+- [x] Panell d'admin `/assistent` (ADR 0011): configuració de proveïdor/model/temperatura/maxTokens per agent amb overrides persistits (`assistant_agent_config`), recàrrega en calent i descobriment dinàmic de models per proveïdor
 - [ ] **Servidor MCP** a `/mcp` (Streamable HTTP) exposant tools, resources (menú, llista) i prompts; tokens per household amb àmbits
 - [x] `automation`: regles programades setmanals per household (`automation_rule`, scheduler horari amb zona horària de la llar); tipus `MENU_PROPOSAL` (agent `menu-planner` omple els dinars/sopars buits de la setmana vinent) i `SHOPPING_REMINDER` (push amb el compte de pendents via `NotificationRequested`); CRUD a `/api/v1/households/{id}/automation/rules` i pàgina `/automatitzacions`
 - [x] Importació ICS (lectura): subscripcions a URLs externes amb refresc periòdic (`calendar_subscription`, esdeveniments de només lectura `source=ICS`) i pujada puntual de fitxers `.ics` que crea esdeveniments locals editables; CalDAV no fet

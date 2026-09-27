@@ -1,5 +1,8 @@
 package dev.agiro.fanel.recipes.domain;
 
+import dev.agiro.criteriafilter.annotation.CriteriaFilter;
+import dev.agiro.criteriafilter.annotation.FilterField;
+import dev.agiro.criteriafilter.model.Backend;
 import dev.agiro.fanel.shared.domain.UuidEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -21,19 +24,25 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "recipe")
+@CriteriaFilter(backend = Backend.JPA)
 public class Recipe extends UuidEntity {
     @Column(name = "household_id", nullable = false)
     @JdbcTypeCode(SqlTypes.CHAR)
     private UUID householdId;
+    @FilterField
     private String name;
+    @FilterField
     private int servings;
+    @FilterField
     private String notes;
+    @FilterField
     @Column(name = "description", length = 4000)
     private String description;
     @Column(name = "image_mime_type", length = 100)
     private String imageMimeType;
     @Column(name = "image_data", length = 4194304)
     private String imageData;
+    @FilterField
     private Instant createdAt;
 
     @ElementCollection
@@ -65,6 +74,18 @@ public class Recipe extends UuidEntity {
         this.imageMimeType = imageMimeType;
         this.imageData = imageData;
         this.createdAt = Instant.now();
+    }
+
+    public void update(String name, int servings, String notes, String description,
+                       List<String> steps, List<String> tags, String imageMimeType, String imageData) {
+        this.name = name;
+        this.servings = servings;
+        this.notes = notes;
+        this.description = description;
+        this.steps = steps == null ? new ArrayList<>() : new ArrayList<>(steps);
+        this.tags = tags == null ? new ArrayList<>() : new ArrayList<>(tags);
+        this.imageMimeType = imageMimeType;
+        this.imageData = imageData;
     }
 
     public UUID getHouseholdId() { return householdId; }

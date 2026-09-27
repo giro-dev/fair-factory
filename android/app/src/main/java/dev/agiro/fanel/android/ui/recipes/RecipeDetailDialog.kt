@@ -30,66 +30,7 @@ fun RecipeDetailDialog(recipe: RecipeDto, onDismiss: () -> Unit) {
         title = { Text(recipe.name) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                if (recipe.imageMimeType != null && recipe.imageData != null) {
-                    RecipeImage(
-                        recipe = recipe,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-                Text(
-                    stringResource(R.string.recipe_servings, recipe.servings),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                recipe.description?.takeIf { it.isNotBlank() }?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
-                }
-                recipe.notes?.takeIf { it.isNotBlank() }?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.recipe_notes),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
-                }
-                val steps = recipe.steps.orEmpty().filter { it.isNotBlank() }
-                if (steps.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.recipe_steps),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    steps.forEachIndexed { index, step ->
-                        Text(
-                            "${index + 1}. $step",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                }
-                val ingredients = recipe.ingredients.orEmpty()
-                if (ingredients.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        stringResource(R.string.recipe_ingredients),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    ingredients.forEach { ingredient ->
-                        Text(
-                            formatIngredient(ingredient),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                }
+                RecipeDetailContent(recipe)
             }
         },
         confirmButton = {
@@ -98,6 +39,74 @@ fun RecipeDetailDialog(recipe: RecipeDto, onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+/**
+ * Recipe details body (image, servings, description, notes, steps, ingredients).
+ * Does not scroll itself; callers must wrap it in a scrollable container.
+ */
+@Composable
+fun RecipeDetailContent(recipe: RecipeDto) {
+    if (recipe.imageMimeType != null && recipe.imageData != null) {
+        RecipeImage(
+            recipe = recipe,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+    Text(
+        stringResource(R.string.recipe_servings, recipe.servings),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    recipe.description?.takeIf { it.isNotBlank() }?.let {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(it, style = MaterialTheme.typography.bodyMedium)
+    }
+    recipe.notes?.takeIf { it.isNotBlank() }?.let {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.recipe_notes),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(it, style = MaterialTheme.typography.bodyMedium)
+    }
+    val steps = recipe.steps.orEmpty().filter { it.isNotBlank() }
+    if (steps.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.recipe_steps),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        steps.forEachIndexed { index, step ->
+            Text(
+                "${index + 1}. $step",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+    }
+    val ingredients = recipe.ingredients.orEmpty()
+    if (ingredients.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            stringResource(R.string.recipe_ingredients),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        ingredients.forEach { ingredient ->
+            Text(
+                formatIngredient(ingredient),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+    }
 }
 
 private fun formatIngredient(ingredient: IngredientDto): String {

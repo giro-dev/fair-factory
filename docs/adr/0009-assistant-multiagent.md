@@ -2,6 +2,8 @@
 
 **Estat**: Acceptat · **Data**: 2026-09-09
 
+> Parcialment substituït per l'[ADR 0011](0011-orquestrador-i-config-models.md) (punts 3 i 6).
+
 ## Context
 
 L'[ADR 0006](0006-spring-ai-mcp.md) ja fixa Spring AI confinat al mòdul `assistant`, amb tools compartides i proveïdor configurable. La Fase 3 del roadmap afegeix xat, MCP i automatismes. Es vol un assistent **multiagent** on cada agent pugui tenir el model i la API més adequats a la seva funció: agents privats amb IA local (Ollama) per a consultes de la llar, i agents més potents (multimodals, cloud) per a tasques com extreure una recepta a partir d'una imatge.

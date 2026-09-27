@@ -86,6 +86,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.13.1")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-android:0.41.0")
+    implementation("com.mikepenz:multiplatform-markdown-renderer-m3-android:0.41.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("androidx.work:work-testing:2.10.2")

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api/client'
@@ -7,7 +7,19 @@ import { useHousehold } from '../context/HouseholdContext'
 type MealType = 'BREAKFAST' | 'LUNCH' | 'SNACK' | 'DINNER'
 type MealSlot = { id: string; dayOfWeek: number; mealType: MealType; text?: string; recipeId?: string }
 type MealPlan = { id?: string; householdId: string; isoYear: number; isoWeek: number; slots: MealSlot[] }
-type Recipe = { id: string; name: string }
+type Ingredient = { id?: string; name: string; quantity?: number; unit?: string; category?: string }
+type Recipe = {
+  id: string
+  name: string
+  servings: number
+  notes?: string
+  description?: string
+  steps?: string[]
+  tags?: string[]
+  imageMimeType?: string
+  imageData?: string
+  ingredients?: Ingredient[]
+}
 
 const MEAL_TYPES: MealType[] = ['BREAKFAST', 'LUNCH', 'SNACK', 'DINNER']
 
@@ -19,18 +31,81 @@ function isoWeek(date: Date): { year: number; week: number } {
   return { year: d.getUTCFullYear(), week: Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7) }
 }
 
+type SlotDetailProps = {
+  title: string
+  slot: MealSlot
+  recipe?: Recipe
+  onEdit: () => void
+  onClose: () => void
+}
+
+function SlotDetail({ title, slot, recipe, onEdit, onClose }: SlotDetailProps) {
+  const { t } = useTranslation()
+  return (
+    <div className="menu-detail">
+      <div className="menu-detail-header">
+        <h3>{title}</h3>
+        <div className="menu-detail-actions">
+          <button type="button" className="link" onClick={onEdit}>{t('menu.edit')}</button>
+          <button type="button" className="link" onClick={onClose} aria-label={t('menu.close')}>×</button>
+        </div>
+      </div>
+      {recipe && (
+        <>
+          <h4>{recipe.name}</h4>
+          <span className="meta">{t('recipes.servingsCount', { count: recipe.servings })}</span>
+          {recipe.imageMimeType && recipe.imageData && (
+            <img
+              src={`data:${recipe.imageMimeType};base64,${recipe.imageData}`}
+              alt={recipe.name}
+              className="menu-detail-image"
+            />
+          )}
+          {recipe.description && <p className="recipe-description">{recipe.description}</p>}
+          {recipe.steps && recipe.steps.length > 0 && (
+            <ol className="steps-list">
+              {recipe.steps.map((s, i) => <li key={i}>{s}</li>)}
+            </ol>
+          )}
+          {recipe.ingredients && recipe.ingredients.length > 0 && (
+            <p className="ingredient-list">{recipe.ingredients.map((i) => i.name).join(', ')}</p>
+          )}
+          {recipe.notes && (
+            <>
+              <span className="meta">{t('menu.notes')}</span>
+              <p>{recipe.notes}</p>
+            </>
+          )}
+        </>
+      )}
+      {slot.text && (
+        <>
+          {recipe && <span className="meta">{t('menu.notes')}</span>}
+          <p>{slot.text}</p>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function Menu() {
   const { t, i18n } = useTranslation()
   const { household } = useHousehold()
   const queryClient = useQueryClient()
   const [offset, setOffset] = useState(0)
   const [editing, setEditing] = useState<{ day: number; meal: MealType } | null>(null)
+  const [selected, setSelected] = useState<{ day: number; meal: MealType } | null>(null)
   const [text, setText] = useState('')
   const [recipeId, setRecipeId] = useState('')
 
   const base = new Date()
   base.setDate(base.getDate() + offset * 7)
   const { year, week } = isoWeek(base)
+
+  useEffect(() => {
+    setEditing(null)
+    setSelected(null)
+  }, [year, week])
 
   const plan = useQuery({
     queryKey: ['menu', household?.id, year, week],
@@ -64,6 +139,9 @@ export function Menu() {
 
   const recipeName = (id?: string) => recipes.data?.find((r) => r.id === id)?.name
 
+  const selectedSlot = selected ? slotFor(selected.day, selected.meal) : undefined
+  const selectedRecipe = recipes.data?.find((r) => r.id === selectedSlot?.recipeId)
+
   return (
     <section className="panel">
       <div className="panel-header">
@@ -89,13 +167,18 @@ export function Menu() {
                   const day = i + 1
                   const slot = slotFor(day, meal)
                   const isEditing = editing?.day === day && editing.meal === meal
+                  const isSelected = selected?.day === day && selected.meal === meal
+                  const hasContent = !!slot?.recipeId || !!slot?.text
                   const save = () => setSlot.mutate({
                     dayOfWeek: day, mealType: meal, text, recipeId: recipeId || null,
                   })
                   return (
-                    <td key={day} onClick={() => {
-                      if (!isEditing) {
-                        setEditing({ day, meal }); setText(slot?.text ?? ''); setRecipeId(slot?.recipeId ?? '')
+                    <td key={day} className={isSelected ? 'selected' : undefined} onClick={() => {
+                      if (isEditing) return
+                      if (hasContent) {
+                        setSelected(isSelected ? null : { day, meal })
+                      } else {
+                        setEditing({ day, meal }); setText(''); setRecipeId('')
                       }
                     }}>
                       {isEditing ? (
@@ -128,6 +211,20 @@ export function Menu() {
             ))}
           </tbody>
         </table>
+      )}
+      {selected && selectedSlot && (selectedSlot.recipeId || selectedSlot.text) && (
+        <SlotDetail
+          title={`${dayNames[selected.day - 1]} · ${t(`menu.meals.${selected.meal}`)}`}
+          slot={selectedSlot}
+          recipe={selectedRecipe}
+          onEdit={() => {
+            setEditing({ day: selected.day, meal: selected.meal })
+            setText(selectedSlot.text ?? '')
+            setRecipeId(selectedSlot.recipeId ?? '')
+            setSelected(null)
+          }}
+          onClose={() => setSelected(null)}
+        />
       )}
     </section>
   )

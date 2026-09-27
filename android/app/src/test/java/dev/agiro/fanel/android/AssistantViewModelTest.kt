@@ -7,6 +7,7 @@ import dev.agiro.fanel.android.data.remote.AgentRequest
 import dev.agiro.fanel.android.data.remote.AgentResponse
 import dev.agiro.fanel.android.data.remote.AssistantApi
 import dev.agiro.fanel.android.data.remote.CreateRecipeRequest
+import dev.agiro.fanel.android.data.remote.DelegationDto
 import dev.agiro.fanel.android.data.remote.RecipeDto
 import dev.agiro.fanel.android.data.remote.RecipesApi
 import kotlinx.coroutines.Dispatchers
@@ -101,13 +102,89 @@ class AssistantViewModelTest {
 
         val request = assistantApi.lastRequest
         assertNotNull(request)
-        assertEquals("general", request!!.agentId)
+        assertNull(request!!.agentId)
         assertEquals("Hola", request.message)
         assertNull(request.memberId)
         val last = states.last().messages.last()
         assertEquals(ChatRole.ASSISTANT, last.role)
         assertEquals("Resposta de prova", last.text)
+        assertNotNull(last.dev)
+        assertEquals("orchestrator", last.dev!!.agentId)
+        assertEquals("conv-1", last.dev!!.conversationId)
         job.cancel()
+    }
+
+    @Test
+    fun sendParsesRecipeFromDelegation() = runBlocking {
+        val assistantApi = FakeAssistantApi().apply {
+            response = AgentResponse(
+                agentId = "orchestrator",
+                conversationId = "conv-1",
+                text = "He tret la recepta de la foto.",
+                toolCalls = null,
+                delegations = listOf(
+                    DelegationDto(
+                        "recipe-from-image",
+                        """{"name":"Truita","servings":2,"ingredients":[{"name":"ous","quantity":4}]}""",
+                        120L
+                    )
+                )
+            )
+        }
+        val recipesApi = RecordingRecipesApi()
+        val context = RuntimeEnvironment.getApplication()
+        val sessionStore = SessionStore(context).apply { householdId = "household-1" }
+        val vm = AssistantViewModel(context, assistantApi, recipesRepository(context, recipesApi), sessionStore)
+        val states = mutableListOf<AssistantUiState>()
+        val job = launch(UnconfinedTestDispatcher()) { vm.uiState.collect { states.add(it) } }
+
+        vm.send("Crea aquesta recepta", null)
+
+        val recipeMessage = states.last().messages.first { it.recipe != null }
+        assertEquals("Truita", recipeMessage.recipe?.name)
+        assertFalse(recipeMessage.hideText)
+        assertEquals(listOf("recipe-from-image"), recipeMessage.via)
+        assertEquals("Truita", recipesApi.lastCreateRequest?.name)
+        job.cancel()
+    }
+
+    @Test
+    fun sendParsesRecipeFromMainReplyAndHidesJson() = runBlocking {
+        val assistantApi = FakeAssistantApi().apply {
+            response = AgentResponse(
+                agentId = "orchestrator",
+                conversationId = "conv-1",
+                text = """```json
+                    {"name":"Truita","servings":2,"ingredients":[{"name":"ous","quantity":4}]}
+                    ```""".trimIndent(),
+                toolCalls = null,
+                delegations = null
+            )
+        }
+        val context = RuntimeEnvironment.getApplication()
+        val sessionStore = SessionStore(context).apply { householdId = "household-1" }
+        val vm = AssistantViewModel(context, assistantApi, recipesRepository(context, RecordingRecipesApi()), sessionStore)
+        val states = mutableListOf<AssistantUiState>()
+        val job = launch(UnconfinedTestDispatcher()) { vm.uiState.collect { states.add(it) } }
+
+        vm.send("Fes una recepta de truita", null)
+
+        val last = states.last().messages.last()
+        assertEquals("Truita", last.recipe?.name)
+        assertTrue(last.hideText)
+        job.cancel()
+    }
+
+    @Test
+    fun sendDoesNothingWhenNoAgentsAvailable() = runBlocking {
+        val assistantApi = FakeAssistantApi().apply { availableAgents = emptyList() }
+        val context = RuntimeEnvironment.getApplication()
+        val sessionStore = SessionStore(context).apply { householdId = "household-1" }
+        val vm = AssistantViewModel(context, assistantApi, recipesRepository(context, RecordingRecipesApi()), sessionStore)
+
+        vm.send("Hola", null)
+
+        assertNull(assistantApi.lastRequest)
     }
 
     @Test
@@ -130,12 +207,13 @@ class AssistantViewModelTest {
     fun sendAutoCreatesRecipeWhenAsked() = runBlocking {
         val assistantApi = FakeAssistantApi().apply {
             response = AgentResponse(
-                agentId = "general",
+                agentId = "orchestrator",
                 conversationId = "conv-1",
                 text = """```json
                     {"name":"Truita","servings":2,"ingredients":[{"name":"ous","quantity":4}]}
                     ```""".trimIndent(),
-                toolCalls = null
+                toolCalls = null,
+                delegations = null
             )
         }
         val recipesApi = RecordingRecipesApi()
@@ -150,12 +228,14 @@ class AssistantViewModelTest {
 }
 
 private class FakeAssistantApi : AssistantApi {
-    var response = AgentResponse("general", "conv-1", "Resposta de prova", null)
+    var response = AgentResponse("orchestrator", "conv-1", "Resposta de prova", null, null)
     var lastRequest: AgentRequest? = null
-
-    override suspend fun agents(householdId: String): List<AgentDto> = listOf(
-        AgentDto("general", "assistant.general.name", null, false, null)
+    var availableAgents = listOf(
+        AgentDto("orchestrator", "assistant.orchestrator.name", null, false, null, true, "ollama:llama3.1"),
+        AgentDto("recipe-from-image", "assistant.recipe-from-image.name", null, true, null, false, null)
     )
+
+    override suspend fun agents(householdId: String): List<AgentDto> = availableAgents
 
     override suspend fun chat(householdId: String, request: AgentRequest): AgentResponse {
         lastRequest = request

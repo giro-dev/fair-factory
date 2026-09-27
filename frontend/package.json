@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "gen:api": "openapi-typescript ../docs/openapi.json -o src/api/schema.d.ts",
     "check:api": "npm run gen:api && git diff --exit-code -- src/api/schema.d.ts"
   },
@@ -24,7 +24,9 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^15.4.0",
-    "react-router": "^7.1.5"
+    "react-markdown": "^10.1.0",
+    "react-router": "^7.1.5",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",

@@ -1,8 +1,16 @@
 spring:
   application:
     name: fanel
+  autoconfigure:
+    # The library's web layer (extra handler mappings, non-RFC-9457 error advice) does not
+    # fit this API; recipes.infra.CriteriaFilterConfiguration wires the needed beans instead.
+    exclude: dev.agiro.criteriafilter.autoconfigure.CriteriaFilterAutoConfiguration
   profiles:
     default: postgres
+  servlet:
+    multipart:
+      max-file-size: ${FANEL_MAX_UPLOAD_SIZE:50MB}
+      max-request-size: ${FANEL_MAX_UPLOAD_SIZE:50MB}
   mvc:
     problemdetails:
       enabled: true
@@ -60,25 +68,39 @@ fanel:
   calendar:
     ics-refresh-minutes: ${FANEL_CALENDAR_ICS_REFRESH_MINUTES:60}
   assistant:
+    orchestrator-id: orchestrator
     agents:
-      general:
-        name-key: assistant.general.name
-        description-key: assistant.general.description
-        prompt-key: general
+      orchestrator:
+        name-key: assistant.orchestrator.name
+        description-key: assistant.orchestrator.description
+        prompt-key: orchestrator
         supports-media: false
         tools:
           - AssistantTools
+          - Subagents
         model:
           provider: openai
           model: gpt-4o
-          temperature: 0.7
+          temperature: 0.3
       recipe-from-image:
         name-key: assistant.recipe-from-image.name
         description-key: assistant.recipe-from-image.description
         prompt-key: recipe-from-image
         supports-media: true
+        tool-description: "Extract a structured recipe proposal (JSON) from an attached photo of a dish or recipe card. Use whenever the user attached an image related to food/recipes."
         tools:
           - AssistantTools
+        model:
+          provider: openai
+          model: gpt-4o-mini
+          temperature: 0.2
+      recipe-extractor:
+        name-key: assistant.recipe-extractor.name
+        description-key: assistant.recipe-extractor.description
+        prompt-key: recipe-extractor
+        supports-media: false
+        tool-description: "Structure raw recipe text into a recipe JSON object. Used internally by the recipe book import; not meant for user-facing delegation."
+        tools: []
         model:
           provider: openai
           model: gpt-4o-mini
@@ -88,6 +110,7 @@ fanel:
         description-key: assistant.menu-planner.description
         prompt-key: menu-planner
         supports-media: false
+        tool-description: "Plan the household weekly menu: fills empty lunch/dinner slots of a given ISO week with household recipes. Pass the full task in natural language, including the week if the user mentioned one."
         tools:
           - AssistantTools
         model:

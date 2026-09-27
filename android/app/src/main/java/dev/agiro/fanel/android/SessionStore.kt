@@ -25,6 +25,10 @@ class SessionStore(context: Context) {
         get() = prefs.getString(KEY_MEMBER_NAME, "") ?: ""
         set(value) = prefs.edit().putString(KEY_MEMBER_NAME, value).apply()
 
+    var assistantDevMode: Boolean
+        get() = prefs.getBoolean(KEY_ASSISTANT_DEV, false)
+        set(value) = prefs.edit().putBoolean(KEY_ASSISTANT_DEV, value).apply()
+
     fun clear() = prefs.edit().clear().apply()
 
     private companion object {
@@ -34,5 +38,6 @@ class SessionStore(context: Context) {
         const val KEY_HOUSEHOLD_NAME = "household_name"
         const val KEY_MEMBER_ID = "member_id"
         const val KEY_MEMBER_NAME = "member_name"
+        const val KEY_ASSISTANT_DEV = "assistant_dev"
     }
 }

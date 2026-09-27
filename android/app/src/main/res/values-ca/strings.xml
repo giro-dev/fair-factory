@@ -26,6 +26,7 @@
     <string name="save">Desa</string>
     <string name="cancel">Cancel·la</string>
     <string name="delete">Suprimeix</string>
+    <string name="edit">Edita</string>
     <string name="delete_event_title">Suprimeix l\'esdeveniment</string>
     <string name="delete_event_message">Vols suprimir \"%1$s\"? Si és recurrent, s\'esborrarà tota la sèrie.</string>
     <string name="setup_title">Connecta\'t a Fanel</string>
@@ -142,6 +143,10 @@
     <string name="assistant_recipe_created">Recepta creada correctament</string>
     <string name="assistant_agent_general">Assistent general</string>
     <string name="assistant_agent_recipe_image">Recepta des d\'imatge</string>
+    <string name="assistant_agent_orchestrator">Assistent de Fanel</string>
+    <string name="assistant_agent_menu_planner">Planificador de menús</string>
+    <string name="assistant_via">via %1$s</string>
+    <string name="assistant_dev_conversation">conversa</string>
     <string name="offline_status">Sense connexió</string>
     <string name="whoami_title">Qui ets?</string>
     <string name="whoami_none">Sense triar</string>

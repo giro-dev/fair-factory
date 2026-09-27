@@ -1,4 +1,7 @@
-.PHONY: dev-backend dev-frontend dev-docs build test docker-build
+-include .env
+export
+
+.PHONY: dev-backend dev-frontend dev-docs build test docker-build rebuild
 
 dev-backend:
 	mvn -pl backend spring-boot:run -Dskip.frontend -Dspring-boot.run.profiles=dev,sqlite
@@ -18,3 +21,7 @@ test:
 
 docker-build:
 	docker build -f deploy/Dockerfile .
+
+rebuild:
+	$(MAKE) build
+	$(MAKE) dev-backend

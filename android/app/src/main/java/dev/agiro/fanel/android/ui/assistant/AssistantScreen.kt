@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,20 +23,19 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -57,15 +57,21 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.mikepenz.markdown.m3.Markdown
 import dev.agiro.fanel.android.AssistantViewModel
 import dev.agiro.fanel.android.ChatMessage
 import dev.agiro.fanel.android.ChatRole
+import dev.agiro.fanel.android.DevStats
+import dev.agiro.fanel.android.FanelApplication
 import dev.agiro.fanel.android.R
 import dev.agiro.fanel.android.data.remote.AgentDto
 import dev.agiro.fanel.android.data.remote.Attachment
+import dev.agiro.fanel.android.data.remote.DelegationDto
 import dev.agiro.fanel.android.data.remote.RecipeSuggestion
 import dev.agiro.fanel.android.ui.components.OfflineBanner
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +89,10 @@ fun AssistantScreen(
     val listState = rememberLazyListState()
 
     val context = LocalContext.current
+    val sessionStore = remember {
+        (context.applicationContext as FanelApplication).appContainer.sessionStore
+    }
+    var devMode by remember { mutableStateOf(sessionStore.assistantDevMode) }
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             runCatching {
@@ -114,11 +124,18 @@ fun AssistantScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.assistant_screen_title)) },
                 actions = {
-                    AgentPicker(
-                        agents = state.agents,
-                        selectedId = state.selectedAgentId,
-                        onSelect = { viewModel.selectAgent(it) }
-                    )
+                    TextButton(
+                        onClick = {
+                            devMode = !devMode
+                            sessionStore.assistantDevMode = devMode
+                        }
+                    ) {
+                        Text(
+                            "DEV",
+                            color = if (devMode) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings_title))
                     }
@@ -161,6 +178,8 @@ fun AssistantScreen(
                 itemsIndexed(state.messages) { index, message ->
                     MessageBubble(
                         message = message,
+                        agents = state.agents,
+                        devMode = devMode,
                         onCreateRecipe = { viewModel.createRecipe(it) }
                     )
                 }
@@ -189,7 +208,7 @@ fun AssistantScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (state.selectedAgent?.supportsMedia == true) {
+                if (state.canAttachMedia) {
                     IconButton(onClick = { pickImage.launch("image/*") }) {
                         Icon(
                             Icons.Filled.Add,
@@ -204,7 +223,7 @@ fun AssistantScreen(
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences
                     ),
-                    enabled = !state.pending && state.selectedAgentId != null,
+                    enabled = !state.pending && state.agents.isNotEmpty(),
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(
@@ -222,33 +241,12 @@ fun AssistantScreen(
 }
 
 @Composable
-private fun AgentPicker(
+private fun MessageBubble(
+    message: ChatMessage,
     agents: List<AgentDto>,
-    selectedId: String?,
-    onSelect: (String) -> Unit
+    devMode: Boolean,
+    onCreateRecipe: (RecipeSuggestion) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val selected = agents.firstOrNull { it.id == selectedId }
-    Box {
-        OutlinedButton(
-            onClick = { expanded = true },
-            enabled = agents.isNotEmpty()
-        ) {
-            Text(selected?.let { agentName(it) } ?: stringResource(R.string.assistant_no_agents))
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            agents.forEach { agent ->
-                DropdownMenuItem(
-                    text = { Text(agentName(agent)) },
-                    onClick = { onSelect(agent.id); expanded = false }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MessageBubble(message: ChatMessage, onCreateRecipe: (RecipeSuggestion) -> Unit) {
     val isUser = message.role == ChatRole.USER
     val containerColor = when {
         message.error -> MaterialTheme.colorScheme.errorContainer
@@ -277,13 +275,81 @@ private fun MessageBubble(message: ChatMessage, onCreateRecipe: (RecipeSuggestio
                         Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
-                if (message.text.isNotBlank() && message.recipe == null) {
-                    Text(message.text, style = MaterialTheme.typography.bodyMedium)
+                if (message.text.isNotBlank() && !message.hideText) {
+                    if (isUser || message.error) {
+                        Text(message.text, style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        Markdown(content = message.text)
+                    }
                 }
                 message.recipe?.let { recipe ->
                     RecipeSuggestionCard(recipe, onCreate = { onCreateRecipe(recipe) })
                 }
+                if (message.via.isNotEmpty()) {
+                    val viaLabel = message.via.map { agentLabel(it, agents) }.joinToString(", ")
+                    Text(
+                        stringResource(R.string.assistant_via, viaLabel),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                if (devMode && message.dev != null) {
+                    DevStatsBlock(message.dev!!, agents)
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun DevStatsBlock(dev: DevStats, agents: List<AgentDto>) {
+    val mono = MaterialTheme.typography.labelSmall.copy(fontFamily = FontFamily.Monospace)
+    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+    Text(
+        "${agentLabel(dev.agentId, agents)}${agentModel(dev.agentId, agents)?.let { " · $it" } ?: ""}" +
+                " · ${dev.latencyMs} ms",
+        style = mono,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Text(
+        "${stringResource(R.string.assistant_dev_conversation)}: ${dev.conversationId.take(8)}…",
+        style = mono,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    dev.delegations.forEachIndexed { index, delegation ->
+        DevDelegation(delegation, agents, mono, index)
+    }
+}
+
+@Composable
+private fun DevDelegation(
+    delegation: DelegationDto,
+    agents: List<AgentDto>,
+    mono: TextStyle,
+    index: Int
+) {
+    var expanded by remember(index) { mutableStateOf(false) }
+    Text(
+        "↳ ${agentLabel(delegation.agentId, agents)}" +
+                (agentModel(delegation.agentId, agents)?.let { " · $it" } ?: "") +
+                (delegation.latencyMs?.let { " · $it ms" } ?: ""),
+        style = mono,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clickable { expanded = !expanded }
+            .padding(vertical = 2.dp)
+    )
+    if (expanded) {
+        SelectionContainer {
+            Text(
+                delegation.text,
+                style = mono,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .padding(4.dp)
+            )
         }
     }
 }
@@ -338,8 +404,19 @@ private fun AttachmentImage(attachment: Attachment, modifier: Modifier = Modifie
 }
 
 @Composable
+private fun agentLabel(agentId: String, agents: List<AgentDto>): String {
+    val agent = agents.firstOrNull { it.id == agentId } ?: return agentId
+    return agentName(agent)
+}
+
+private fun agentModel(agentId: String, agents: List<AgentDto>): String? =
+    agents.firstOrNull { it.id == agentId }?.model
+
+@Composable
 private fun agentName(agent: AgentDto): String = when (agent.nameKey) {
+    "assistant.orchestrator.name" -> stringResource(R.string.assistant_agent_orchestrator)
     "assistant.general.name" -> stringResource(R.string.assistant_agent_general)
     "assistant.recipe-from-image.name" -> stringResource(R.string.assistant_agent_recipe_image)
+    "assistant.menu-planner.name" -> stringResource(R.string.assistant_agent_menu_planner)
     else -> agent.nameKey.substringAfterLast('.').ifBlank { agent.id }
 }

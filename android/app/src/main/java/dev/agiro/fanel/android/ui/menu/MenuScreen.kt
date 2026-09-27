@@ -50,6 +50,7 @@ private data class SlotTarget(val dayOfWeek: Int, val mealType: MealType)
 fun MenuScreen(viewModel: MenuViewModel, onOpenSettings: () -> Unit) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf<SlotTarget?>(null) }
+    var viewing by remember { mutableStateOf<SlotTarget?>(null) }
 
     Scaffold(
         topBar = {
@@ -130,11 +131,33 @@ fun MenuScreen(viewModel: MenuViewModel, onOpenSettings: () -> Unit) {
                         dayOfWeek = day,
                         slotFor = { meal -> state.slotFor(day, meal) },
                         recipeName = { state.recipeName(it) },
-                        onSlotClick = { meal -> editing = SlotTarget(day, meal) }
+                        onSlotClick = { meal ->
+                            val slot = state.slotFor(day, meal)
+                            if (slot?.recipeId != null || !slot?.text.isNullOrBlank()) {
+                                viewing = SlotTarget(day, meal)
+                            } else {
+                                editing = SlotTarget(day, meal)
+                            }
+                        }
                     )
                 }
             }
         }
+    }
+
+    viewing?.let { target ->
+        val slot = state.slotFor(target.dayOfWeek, target.mealType)
+        MealSlotDetailDialog(
+            dayLabel = dayName(target.dayOfWeek),
+            mealType = target.mealType,
+            slot = slot,
+            recipe = state.recipes.firstOrNull { it.id == slot?.recipeId },
+            onDismiss = { viewing = null },
+            onEdit = {
+                editing = target
+                viewing = null
+            }
+        )
     }
 
     editing?.let { target ->

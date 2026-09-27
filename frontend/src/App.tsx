@@ -5,11 +5,13 @@ import { api } from './api/client'
 import { Households } from './pages/Households'
 import { Menu } from './pages/Menu'
 import { Recipes } from './pages/Recipes'
+import { RecipeDetail } from './pages/RecipeDetail'
 import { Shopping } from './pages/Shopping'
 import { Calendar } from './pages/Calendar'
 import { Chores } from './pages/Chores'
 import { Members } from './pages/Members'
 import { Automation } from './pages/Automation'
+import { AssistantSettings } from './pages/AssistantSettings'
 import { Account } from './pages/Account'
 import { Login } from './pages/Login'
 import { Setup } from './pages/Setup'
@@ -83,6 +85,12 @@ const icons = {
       <path d="M12 7v5l3.5 2" />
     </svg>
   ),
+  assistant: (
+    <svg viewBox="0 0 24 24" width="1.15rem" height="1.15rem" {...stroke}>
+      <path d="M12 3l1.8 4.7L18.5 9l-4.7 1.3L12 15l-1.8-4.7L5.5 9l4.7-1.3z" />
+      <path d="M18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" />
+    </svg>
+  ),
   logout: (
     <svg viewBox="0 0 24 24" width="1.15rem" height="1.15rem" {...stroke}>
       <path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9" />
@@ -118,6 +126,7 @@ function Shell() {
           <HouseholdSwitcher />
           <div className="footer-actions">
             {canManageHouseholds && <NavLink to="/households">{icons.households}<span>{t('households.title')}</span></NavLink>}
+            {canManageHouseholds && <NavLink to="/assistent">{icons.assistant}<span>{t('nav.assistantSettings')}</span></NavLink>}
             <NavLink to="/compte" aria-label={t('account.title')} className="icon-link">{icons.account}</NavLink>
             <button type="button" className="icon-link" aria-label={t('account.logout')} onClick={logout}>{icons.logout}</button>
             <ThemeToggle />
@@ -130,6 +139,7 @@ function Shell() {
         <div className="topbar-actions">
           <HouseholdSwitcher />
           {canManageHouseholds && <NavLink to="/households" aria-label={t('households.title')} className="icon-link">{icons.households}</NavLink>}
+          {canManageHouseholds && <NavLink to="/assistent" aria-label={t('nav.assistantSettings')} className="icon-link">{icons.assistant}</NavLink>}
           <NavLink to="/compte" aria-label={t('account.title')} className="icon-link">{icons.account}</NavLink>
           <button type="button" className="icon-link" aria-label={t('account.logout')} onClick={logout}>{icons.logout}</button>
           <ThemeToggle />
@@ -142,11 +152,13 @@ function Shell() {
           <Route path="/compte" element={<Account />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/receptes" element={<Recipes />} />
+          <Route path="/receptes/:recipeId" element={<RecipeDetail />} />
           <Route path="/calendari" element={<Calendar />} />
           <Route path="/compra" element={<Shopping />} />
           <Route path="/tasques" element={<Chores />} />
           <Route path="/membres" element={<Members />} />
           <Route path="/automatitzacions" element={<Automation />} />
+          <Route path="/assistent" element={<AssistantSettings />} />
           <Route path="*" element={<Placeholder title="Fanel" />} />
         </Routes>
       </main>

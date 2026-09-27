@@ -26,6 +26,7 @@
     <string name="save">Guardar</string>
     <string name="cancel">Cancelar</string>
     <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
     <string name="delete_event_title">Eliminar evento</string>
     <string name="delete_event_message">¿Quieres eliminar \"%1$s\"? Si es recurrente, se borrará toda la serie.</string>
     <string name="setup_title">Conéctate a Fanel</string>
@@ -142,6 +143,10 @@
     <string name="assistant_recipe_created">Receta creada correctamente</string>
     <string name="assistant_agent_general">Asistente general</string>
     <string name="assistant_agent_recipe_image">Receta desde imagen</string>
+    <string name="assistant_agent_orchestrator">Asistente de Fanel</string>
+    <string name="assistant_agent_menu_planner">Planificador de menús</string>
+    <string name="assistant_via">vía %1$s</string>
+    <string name="assistant_dev_conversation">conversación</string>
     <string name="offline_status">Sin conexión</string>
     <string name="whoami_title">¿Quién eres?</string>
     <string name="whoami_none">Sin elegir</string>

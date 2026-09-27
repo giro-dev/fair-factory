@@ -13,6 +13,7 @@ import dev.agiro.fanel.android.data.remote.AgentRequest
 import dev.agiro.fanel.android.data.remote.AssistantApi
 import dev.agiro.fanel.android.data.remote.Attachment
 import dev.agiro.fanel.android.data.remote.CreateRecipeRequest
+import dev.agiro.fanel.android.data.remote.DelegationDto
 import dev.agiro.fanel.android.data.remote.IngredientDto
 import dev.agiro.fanel.android.data.remote.RecipeSuggestion
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +33,19 @@ data class ChatMessage(
     val text: String,
     val attachments: List<Attachment> = emptyList(),
     val recipe: RecipeSuggestion? = null,
+    /** Ids of the subagents the orchestrator delegated to, for the "via …" caption. */
+    val via: List<String> = emptyList(),
+    /** The text is raw structured content (recipe JSON): the recipe card renders it instead. */
+    val hideText: Boolean = false,
+    val dev: DevStats? = null,
     val error: Boolean = false
+)
+
+data class DevStats(
+    val agentId: String,
+    val latencyMs: Long,
+    val conversationId: String,
+    val delegations: List<DelegationDto>
 )
 
 class AssistantViewModel(
@@ -43,24 +56,21 @@ class AssistantViewModel(
 ) : AndroidViewModel(application) {
     private val householdId = MutableStateFlow("")
     private val _agents = MutableStateFlow<List<AgentDto>>(emptyList())
-    private val _selectedAgentId = MutableStateFlow<String?>(null)
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     private val _pending = MutableStateFlow(false)
     private val _errorRes = MutableStateFlow<Int?>(null)
-    private val conversationIds = mutableMapOf<String, String>()
+    private var conversationId: String = UUID.randomUUID().toString()
     private var pendingImage: Attachment? = null
 
     val uiState: StateFlow<AssistantUiState> = combine(
-        householdId, _agents, _selectedAgentId, _messages, _pending, _errorRes
-    ) { values ->
-        @Suppress("UNCHECKED_CAST")
+        householdId, _agents, _messages, _pending, _errorRes
+    ) { household, agents, messages, pending, errorRes ->
         AssistantUiState(
-            householdId = values[0] as String,
-            agents = values[1] as List<AgentDto>,
-            selectedAgentId = values[2] as String?,
-            messages = values[3] as List<ChatMessage>,
-            pending = values[4] as Boolean,
-            errorRes = values[5] as Int?
+            householdId = household,
+            agents = agents,
+            messages = messages,
+            pending = pending,
+            errorRes = errorRes
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AssistantUiState.empty())
 
@@ -76,24 +86,16 @@ class AssistantViewModel(
             runCatching { assistantApi.agents(newHouseholdId) }
                 .onSuccess { agents ->
                     _agents.value = agents
-                    if (_selectedAgentId.value == null) {
-                        _selectedAgentId.value = agents.firstOrNull()?.id
-                    }
                     _errorRes.value = null
                 }
                 .onFailure { _errorRes.value = R.string.assistant_agents_error }
         }
     }
 
-    fun selectAgent(agentId: String) {
-        _selectedAgentId.value = agentId
-    }
-
     fun send(text: String, attachment: Attachment?) {
         val currentHouseholdId = householdId.value
-        val agentId = _selectedAgentId.value
         val message = text.trim()
-        if (currentHouseholdId.isBlank() || agentId == null) return
+        if (currentHouseholdId.isBlank() || _agents.value.isEmpty()) return
         if (message.isEmpty() && attachment == null) return
 
         val attachments = listOfNotNull(attachment)
@@ -107,25 +109,42 @@ class AssistantViewModel(
         _pending.value = true
 
         viewModelScope.launch {
-            val conversationId = conversationIds[agentId] ?: UUID.randomUUID().toString()
+            val startedAt = System.currentTimeMillis()
             runCatching {
                 assistantApi.chat(
                     currentHouseholdId,
                     AgentRequest(
-                        agentId, conversationId, message, attachments,
+                        null, conversationId, message, attachments,
                         sessionStore.memberId.ifBlank { null }
                     )
                 )
             }
                 .onSuccess { response ->
-                    conversationIds[agentId] = response.conversationId
-                    val recipe = tryParseRecipe(response.text)
+                    val latencyMs = System.currentTimeMillis() - startedAt
+                    conversationId = response.conversationId
+                    val delegations = response.delegations.orEmpty()
+                    // Prefer the structured recipe from the recipe-from-image delegation; a recipe
+                    // parsed straight from the reply text hides it (the card renders it instead).
+                    var recipe = delegations
+                        .firstOrNull { it.agentId == RECIPE_AGENT_ID }
+                        ?.let { tryParseRecipe(it.text) }
+                    val hideText = if (recipe == null) {
+                        recipe = tryParseRecipe(response.text)
+                        recipe != null
+                    } else false
                     val recipeWithImage = if (recipe != null && recipe.imageData == null) {
                         pendingImage?.let { recipe.copy(imageMimeType = it.mimeType, imageData = it.data) }
                             ?: recipe
                     } else recipe
                     _messages.update {
-                        it + ChatMessage(ChatRole.ASSISTANT, response.text, recipe = recipeWithImage)
+                        it + ChatMessage(
+                            role = ChatRole.ASSISTANT,
+                            text = response.text,
+                            recipe = recipeWithImage,
+                            via = delegations.map { d -> d.agentId },
+                            hideText = hideText,
+                            dev = DevStats(response.agentId, latencyMs, response.conversationId, delegations)
+                        )
                     }
                     if (recipeWithImage != null && wantsCreate(message)) {
                         createRecipe(recipeWithImage)
@@ -198,6 +217,7 @@ class AssistantViewModel(
 
     companion object {
         private const val TAG = "AssistantViewModel"
+        private const val RECIPE_AGENT_ID = "recipe-from-image"
         private val gson = Gson()
 
         private val CREATE_TRIGGERS = listOf(
@@ -240,19 +260,17 @@ class AssistantViewModel(
 data class AssistantUiState(
     val householdId: String,
     val agents: List<AgentDto>,
-    val selectedAgentId: String?,
     val messages: List<ChatMessage>,
     val pending: Boolean,
     val errorRes: Int?
 ) {
-    val selectedAgent: AgentDto?
-        get() = agents.firstOrNull { it.id == selectedAgentId }
+    val canAttachMedia: Boolean
+        get() = agents.any { it.supportsMedia }
 
     companion object {
         fun empty(): AssistantUiState = AssistantUiState(
             householdId = "",
             agents = emptyList(),
-            selectedAgentId = null,
             messages = emptyList(),
             pending = false,
             errorRes = null

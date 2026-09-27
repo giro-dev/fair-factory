@@ -17,10 +17,18 @@
         <module>frontend</module>
         <module>backend</module>
     </modules>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <properties>
         <java.version>25</java.version>
         <!-- Override Spring Boot's managed Tomcat (11.0.24) to pick up CVE fixes -->
         <tomcat.version>11.0.26</tomcat.version>
+        <!-- criteria-filter is not on Maven Central; pinned to a jitpack commit build -->
+        <criteria-filter.version>c68c71760bae1a05a9ff257d7103ef2091af0cb0</criteria-filter.version>
         <spring-modulith.version>2.1.1</spring-modulith.version>
         <spring-ai.version>2.0.1</spring-ai.version>
         <testcontainers.version>1.20.4</testcontainers.version>

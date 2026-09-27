@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useHousehold } from '../context/HouseholdContext'
 import { api } from '../api/client'
 
@@ -10,6 +12,7 @@ type Agent = {
   descriptionKey: string
   supportsMedia: boolean
   toolNames: string[]
+  model?: string
 }
 
 type Attachment = { mimeType: string; data: string }
@@ -31,7 +34,17 @@ type Message = {
   text: string
   attachments?: Attachment[]
   recipe?: RecipeSuggestion
+  via?: string[]
+  hideText?: boolean
+  dev?: DevStats
   error?: boolean
+}
+
+type DevStats = {
+  agentId: string
+  latencyMs: number
+  conversationId: string
+  delegations: { agentId: string; text: string; latencyMs?: number }[]
 }
 
 type AgentResponse = {
@@ -39,6 +52,7 @@ type AgentResponse = {
   conversationId: string
   text: string
   toolCalls: string[]
+  delegations?: { agentId: string; text: string; latencyMs?: number }[]
 }
 
 type CreatedRecipe = {
@@ -128,24 +142,21 @@ export function AssistantChat() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [agents, setAgents] = useState<Agent[]>([])
-  const [selectedAgent, setSelectedAgent] = useState<string>('')
   const [loadError, setLoadError] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [pendingImage, setPendingImage] = useState<Attachment | null>(null)
-  const [conversationIds, setConversationIds] = useState<Record<string, string>>({})
+  const [conversationId, setConversationId] = useState<string>(() => uuid())
+  const [devMode, setDevMode] = useState(() => localStorage.getItem('fanel.assistant.dev') === '1')
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!household || !open) return
     setLoadError(null)
     api<Agent[]>(`/households/${household.id}/assistant/agents`)
-      .then((list) => {
-        setAgents(list)
-        setSelectedAgent((prev) => prev || (list[0]?.id ?? ''))
-      })
+      .then(setAgents)
       .catch((err) => {
         setAgents([])
         setLoadError(err instanceof Error ? err.message : t('error'))
@@ -158,10 +169,23 @@ export function AssistantChat() {
 
   if (!household) return null
 
-  const selected = agents.find((a) => a.id === selectedAgent)
+  const canAttach = agents.some((a) => a.supportsMedia)
+  const noAgents = !loadError && agents.length === 0
+
+  const toggleDevMode = () =>
+    setDevMode((v) => {
+      localStorage.setItem('fanel.assistant.dev', v ? '0' : '1')
+      return !v
+    })
+
+  const agentLabel = (id: string) => {
+    const agent = agents.find((a) => a.id === id)
+    return agent ? t(agent.nameKey) : id
+  }
+  const agentModel = (id: string) => agents.find((a) => a.id === id)?.model
 
   const send = async () => {
-    if (!selectedAgent || (!input.trim() && !file)) return
+    if (noAgents || (!input.trim() && !file)) return
     setPending(true)
 
     const userMessage = input.trim()
@@ -175,28 +199,43 @@ export function AssistantChat() {
       setPendingImage({ mimeType: file.type, data })
     }
 
-    console.debug('[AssistantChat] sending message:', { agent: selectedAgent, message: input, attachments: attachments.length, shouldCreate })
+    console.debug('[AssistantChat] sending message:', { message: input, attachments: attachments.length, shouldCreate })
 
     const userText = userMessage || (file ? t('assistant.imageAttached') : '')
     setMessages((prev) => [...prev, { role: 'user', text: userText, attachments }])
     setInput('')
     setFile(null)
 
-    const conversationId = conversationIds[selectedAgent] ?? uuid()
+    const startedAt = performance.now()
     try {
       const response = await api<AgentResponse>(`/households/${household.id}/assistant/chat`, {
         method: 'POST',
-        body: JSON.stringify({ agentId: selectedAgent, conversationId, message: input, attachments, memberId: member?.id ?? null }),
+        body: JSON.stringify({ conversationId, message: input, attachments, memberId: member?.id ?? null }),
       })
+      const latencyMs = Math.round(performance.now() - startedAt)
       console.debug('[AssistantChat] agent response:', response)
-      setConversationIds((prev) => ({ ...prev, [selectedAgent]: response.conversationId }))
-      const recipe = tryParseRecipe(response.text)
+      setConversationId(response.conversationId)
+      const delegationText = response.delegations?.find((d) => d.agentId === 'recipe-from-image')?.text
+      let recipe = delegationText ? tryParseRecipe(delegationText) : undefined
+      let hideText = false
+      if (!recipe) {
+        // A recipe proposal parsed straight from the reply text replaces it: the card renders it.
+        recipe = tryParseRecipe(response.text)
+        hideText = recipe != null
+      }
       if (recipe && pendingImage) {
         recipe.imageMimeType = pendingImage.mimeType
         recipe.imageData = pendingImage.data
         console.debug('[AssistantChat] attached image to recipe:', pendingImage.mimeType, pendingImage.data.length)
       }
-      setMessages((prev) => [...prev, { role: 'assistant', text: response.text, recipe }])
+      const via = response.delegations?.map((d) => agentLabel(d.agentId))
+      const dev: DevStats = {
+        agentId: response.agentId,
+        latencyMs,
+        conversationId: response.conversationId,
+        delegations: response.delegations ?? [],
+      }
+      setMessages((prev) => [...prev, { role: 'assistant', text: response.text, recipe, via, hideText, dev }])
       if (recipe && shouldCreate) {
         console.debug('[AssistantChat] auto-creating recipe because user asked')
         void createRecipe(recipe, true)
@@ -273,18 +312,15 @@ export function AssistantChat() {
           <div className="assistant-panel" role="dialog" aria-label={t('assistant.title')}>
             <div className="assistant-header">
               <h3>{t('assistant.title')}</h3>
-              <select
-                value={selectedAgent}
-                onChange={(e) => setSelectedAgent(e.target.value)}
-                aria-label={t('assistant.selectAgent')}
+              <button
+                type="button"
+                className={`assistant-dev-toggle${devMode ? ' on' : ''}`}
+                onClick={toggleDevMode}
+                aria-label={t('assistant.dev.toggle')}
+                aria-pressed={devMode}
               >
-                {agents.length === 0 && <option value="">{t('assistant.noAgents')}</option>}
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {t(a.nameKey)}
-                  </option>
-                ))}
-              </select>
+                DEV
+              </button>
               <button type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label={t('assistant.close')}>
                 ✕
               </button>
@@ -294,7 +330,7 @@ export function AssistantChat() {
 
             <div className="assistant-messages">
               {messages.length === 0 && !loadError && (
-                <p className="assistant-empty">{t('assistant.intro')}</p>
+                <p className="assistant-empty">{noAgents ? t('assistant.noAgents') : t('assistant.intro')}</p>
               )}
               {messages.map((m, i) => (
                 <div
@@ -312,7 +348,15 @@ export function AssistantChat() {
                       <span key={j}>{t('assistant.imageAttached')}</span>
                     )
                   ))}
-                  {m.text && <p>{m.text}</p>}
+                  {m.text && !m.hideText && (
+                    m.role === 'assistant' && !m.error ? (
+                      <div className="assistant-md">
+                        <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                      </div>
+                    ) : (
+                      <p>{m.text}</p>
+                    )
+                  )}
                   {m.recipe && (
                     <div className="assistant-recipe">
                       <h4>{m.recipe.name}</h4>
@@ -349,6 +393,31 @@ export function AssistantChat() {
                       </button>
                     </div>
                   )}
+                  {m.via && m.via.length > 0 && (
+                    <p className="assistant-via">{t('assistant.via', { agents: m.via.join(', ') })}</p>
+                  )}
+                  {devMode && m.dev && (
+                    <div className="assistant-dev">
+                      <div className="assistant-dev-line">
+                        {agentLabel(m.dev.agentId)}
+                        {agentModel(m.dev.agentId) && <> · {agentModel(m.dev.agentId)}</>}
+                        {' · '}{m.dev.latencyMs} ms
+                      </div>
+                      <div className="assistant-dev-line dim">
+                        {t('assistant.dev.conversation')}: {m.dev.conversationId.slice(0, 8)}…
+                      </div>
+                      {m.dev.delegations.map((d, k) => (
+                        <details key={k} className="assistant-dev-delegation">
+                          <summary>
+                            ↳ {agentLabel(d.agentId)}
+                            {agentModel(d.agentId) && <> · {agentModel(d.agentId)}</>}
+                            {d.latencyMs != null && <> · {d.latencyMs} ms</>}
+                          </summary>
+                          <pre>{d.text}</pre>
+                        </details>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={endRef} />
@@ -356,7 +425,7 @@ export function AssistantChat() {
 
             <div className="assistant-input">
               {!member && <p className="assistant-hint">{t('assistant.pickMember')}</p>}
-              {selected?.supportsMedia && (
+              {canAttach && (
                 <label className="assistant-file">
                   <input
                     type="file"
@@ -375,7 +444,8 @@ export function AssistantChat() {
                   rows={2}
                   disabled={pending}
                 />
-                <button type="button" onClick={() => void send()} disabled={pending || (!input.trim() && !file)}>
+                <button type="button" onClick={() => void send()}
+                        disabled={pending || noAgents || (!input.trim() && !file)}>
                   {t('assistant.send')}
                 </button>
               </div>

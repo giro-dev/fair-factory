@@ -6,7 +6,8 @@
     "shopping": "Compra",
     "chores": "Tasques",
     "members": "Membres",
-    "automation": "Automatitzacions"
+    "automation": "Automatitzacions",
+    "assistantSettings": "Assistent"
   },
   "theme": {
     "label": "Canviar tema",
@@ -61,17 +62,21 @@
     "send": "Envia",
     "placeholder": "Escriu un missatge…",
     "intro": "Hola! Puc ajudar-te amb el menú, la compra, les receptes, el calendari i les tasques.",
-    "selectAgent": "Tria l'agent",
     "close": "Tanca el xat",
-    "noAgents": "Cap agent disponible",
+    "noAgents": "Cap agent disponible. Configura un proveïdor a la pàgina Assistent.",
+    "via": "via {{agents}}",
     "pickMember": "Tria el teu perfil a \"Qui ets?\" per parlar amb l'assistent.",
     "imageAttached": "[Imatge adjunta]",
     "attachImage": "Afegir imatge",
     "createRecipe": "Crear recepta",
     "recipeCreated": "Recepta creada correctament.",
-    "general": {
-      "name": "Assistent general",
-      "description": "Xat amb l'assistent general de la llar."
+    "dev": {
+      "toggle": "Mode DEV (diagnòstic)",
+      "conversation": "conversa"
+    },
+    "orchestrator": {
+      "name": "Assistent de Fanel",
+      "description": "Orquestra les consultes i delega a agents especialitzats."
     },
     "recipe-from-image": {
       "name": "Recepta des d'imatge",
@@ -80,7 +85,40 @@
     "menu-planner": {
       "name": "Planificador de menús",
       "description": "Omple els forats del menú setmanal amb receptes de la llar."
+    },
+    "recipe-extractor": {
+      "name": "Extractor de receptes",
+      "description": "Estructura text en brut de receptes (ús intern en la importació de llibres)."
     }
+  },
+  "assistantSettings": {
+    "title": "Assistent",
+    "intro": "Configuració de l'assistent per a tota la instància. Les credencials dels proveïdors es defineixen només amb variables d'entorn; els canvis s'apliquen immediatament, sense reiniciar.",
+    "refreshModels": "Refresca els models",
+    "provider": {
+      "notConfigured": "No configurat (variable d'entorn)",
+      "error": "Error: {{error}}",
+      "models": "{{count}} models"
+    },
+    "badge": {
+      "orchestrator": "Orquestrador",
+      "vision": "Visió",
+      "custom": "Personalitzat"
+    },
+    "unavailable": "No disponible",
+    "enabled": "Actiu",
+    "providerLabel": "Proveïdor",
+    "model": "Model",
+    "otherModel": "Altre…",
+    "temperature": "Temperatura",
+    "maxTokens": "Tokens màxims",
+    "defaults": "Per defecte: {{provider}} / {{model}}",
+    "save": "Desa",
+    "reset": "Restableix",
+    "test": "Prova",
+    "testing": "Provant…",
+    "testOk": "{{latency}} ms — {{text}}",
+    "testError": "Error: {{error}}"
   },
   "account": {
     "title": "Compte",
@@ -108,6 +146,9 @@
     "week": "Setmana {{week}} · {{year}}",
     "noRecipe": "Sense recepta",
     "notesPlaceholder": "Notes (opcional)",
+    "notes": "Notes",
+    "edit": "Edita",
+    "close": "Tanca",
     "meals": {
       "BREAKFAST": "Esmorzar",
       "LUNCH": "Dinar",
@@ -140,7 +181,49 @@
     "grid": "Targetes",
     "noResults": "No s'ha trobat cap recepta.",
     "addIngredient": "Afegir ingredient",
-    "create": "Crear recepta"
+    "create": "Crear recepta",
+    "tagsPlaceholder": "Etiquetes (separades per comes)",
+    "category": "Categoria",
+    "save": "Desar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirm": "Eliminar la recepta «{{name}}»?",
+    "empty": "Encara no hi ha receptes. Crea'n una o importa un llibre.",
+    "totalCount_one": "{{count}} recepta",
+    "totalCount_other": "{{count}} receptes",
+    "ingredientPlaceholder": "Filtra per ingredient…",
+    "sort": "Ordena",
+    "sortBy": {
+      "name": "Nom",
+      "createdAt": "Data de creació",
+      "servings": "Racions"
+    },
+    "sortDirection": "Canvia la direcció d'ordenació",
+    "tagFilter": "Filtra per etiqueta",
+    "loadMore": "Carregar-ne més",
+    "back": "Enrere",
+    "close": "Tancar",
+    "importBook": "Importar llibre",
+    "importTitle": "Importar llibre de receptes",
+    "importHint": "Puja un llibre (PDF o EPUB) o enganxa l'adreça d'una recepta web. Et mostrarem les receptes trobades perquè triïs quines importar.",
+    "importChooseFile": "Tria un fitxer (PDF/EPUB)",
+    "importAnalyzeFile": "Analitza el llibre",
+    "importAnalyzeUrl": "Analitza la pàgina",
+    "importAnalyzing": "Analitzant…",
+    "importUrlPlaceholder": "https://… adreça d'una recepta web",
+    "importFound_one": "S'ha trobat {{count}} recepta candidata.",
+    "importFound_other": "S'han trobat {{count}} receptes candidates.",
+    "importAiOn": "L'assistent estructurarà cada recepta.",
+    "importAiOff": "No hi ha assistent configurat: s'importarà el text en brut a la descripció.",
+    "importSelectAll": "Seleccionar-les totes",
+    "importSelectNone": "Cap",
+    "importStructured": "Estructurada",
+    "importConfirm_one": "Importar {{count}} recepta",
+    "importConfirm_other": "Importar {{count}} receptes",
+    "importImporting": "Important…",
+    "importDone_one": "S'ha importat {{count}} recepta de {{source}}.",
+    "importDone_other": "S'han importat {{count}} receptes de {{source}}.",
+    "importFailed": "{{title}}: {{error}}"
   },
   "shopping": {
     "title": "Llista de la compra",

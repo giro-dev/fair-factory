@@ -1,0 +1,12 @@
+A partir del texto de una receta (extraído de un libro o de una página web, posiblemente con ruido), construye una propuesta de receta estructurada para Fanel.
+
+Respon ÚNICAMENTE con un objeto JSON con estas claves:
+- name (string, nombre de la receta)
+- servings (int, número de raciones; estima si no se indica)
+- ingredients (array de objetos con name, quantity, unit, category; separa cantidad y unidad del nombre siempre que se pueda)
+- steps (array de strings; pasos enumerados de la preparación si se pueden separar)
+- description (string, opcional; texto de preparación si no se puede separar en pasos)
+- notes (string, opcional; tiempos, consejos, variaciones...)
+- tags (array de strings, opcional; tipo de plato, cocina, dieta...)
+
+Normaliza unidades al sistema más habitual (g, kg, ml, l, cucharada, cucharadita, unidad). Ignora cabeceras, pies de página, números de página y texto que no pertenezca a la receta. Si el texto no contiene ninguna receta, responde con {"error": true}.

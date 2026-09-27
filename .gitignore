@@ -34,6 +34,7 @@ data/
 .idea/
 
 # Local env overrides (docker-compose reads deploy/.env automatically)
+/.env
 deploy/.env
 
 # Hugo docs site build output

@@ -23,6 +23,7 @@ Roadmap i fases: [`docs/ROADMAP.md`](docs/ROADMAP.md). Decisions: [`docs/adr/`](
 | 8 | Comunicació entre mòduls per **esdeveniments de domini** (Spring Modulith, registre persistit), no per crides directes a la implementació d'un altre mòdul. | [0001](docs/adr/0001-monolit-modular.md) |
 | 9 | **Assistent multiagent** amb **un model/API per funció**: cada agent té el seu `ModelProfile` (Ollama, OpenAI, Anthropic…) i les tools compartides del mòdul `assistant`. | [0009](docs/adr/0009-assistant-multiagent.md) |
 | 10 | **Login extern opcional via OIDC** (`fanel.oidc.*`): sessió només per al flux SSO; Basic/Bearer queden stateless; membres resolts per claim d'usuari i fixats per `oidc_subject`. | [0010](docs/adr/0010-oidc-opcional.md) |
+| 11 | **Assistent orquestrat**: un `orchestrator` és l'únic agent del xat i delega a subagents via tools `delegate_to_*`; configuració de models per agent al catàleg yml + overrides globals a BD editables pel panell d'admin (`/assistent`). Credencials només per env. | [0011](docs/adr/0011-orquestrador-i-config-models.md) |
 
 ## Estructura del repositori
 
@@ -118,4 +119,4 @@ Secrets/variables necessaris a GitHub:
 
 ## Per a agents amb MCP
 
-A partir de la Fase 3 Fanel exposa un servidor MCP a `/mcp` (Streamable HTTP, autenticació per token de household). Les eines disponibles es deriven de les `@Tool` del mòdul `assistant`; consulta `docs/ROADMAP.md` per l'estat.
+A partir de la Fase 3 Fanel exposa un servidor MCP a `/mcp` (Streamable HTTP, autenticació per token de household). Les eines disponibles es deriven de les `@Tool` del mòdul `assistant`; consulta `docs/ROADMAP.md` per l'estat. L'orquestrador també és invocable programàticament via `AssistantApi` (`assistant.api`).

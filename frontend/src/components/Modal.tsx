@@ -5,9 +5,10 @@ type ModalProps = {
   title: string
   onClose: () => void
   children: ReactNode
+  wide?: boolean
 }
 
-export function Modal({ title, onClose, children }: ModalProps) {
+export function Modal({ title, onClose, children, wide }: ModalProps) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKeyDown)
@@ -16,7 +17,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" role="dialog" aria-modal="true" aria-label={title}
+      <div className={wide ? 'modal-sheet wide' : 'modal-sheet'} role="dialog" aria-modal="true" aria-label={title}
            onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h3>{title}</h3>

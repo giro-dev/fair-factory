@@ -293,6 +293,110 @@
         }
       }
     },
+    "/api/v1/households/{householdId}/recipes/{recipeId}" : {
+      "get" : {
+        "tags" : [ "recipes-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "recipeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecipeDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "recipes-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "recipeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateRecipe"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecipeDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "recipes-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "recipeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/v1/households/{householdId}/menu/slots" : {
       "put" : {
         "tags" : [ "menu-controller" ],
@@ -444,7 +548,7 @@
     "/api/v1/households/{householdId}/calendar/subscriptions/{subscriptionId}" : {
       "put" : {
         "tags" : [ "calendar-subscription-controller" ],
-        "operationId" : "update",
+        "operationId" : "update_1",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -487,7 +591,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-subscription-controller" ],
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -515,7 +619,7 @@
     "/api/v1/households/{householdId}/automation/rules/{ruleId}" : {
       "put" : {
         "tags" : [ "automation-controller" ],
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -558,7 +662,7 @@
       },
       "delete" : {
         "tags" : [ "automation-controller" ],
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -579,6 +683,59 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/assistant/agents/{agentId}" : {
+      "put" : {
+        "tags" : [ "assistant-admin-controller" ],
+        "operationId" : "update_3",
+        "parameters" : [ {
+          "name" : "agentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgentConfigUpdate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentConfigDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "assistant-admin-controller" ],
+        "operationId" : "reset",
+        "parameters" : [ {
+          "name" : "agentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -994,6 +1151,215 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/RecipeDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/households/{householdId}/recipes/search" : {
+      "post" : {
+        "tags" : [ "recipes-controller" ],
+        "operationId" : "search",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "tag",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "ingredient",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 24
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "name"
+          }
+        }, {
+          "name" : "direction",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "asc"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FilterRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RecipePageDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/households/{householdId}/recipes/import" : {
+      "post" : {
+        "tags" : [ "recipe-import-controller" ],
+        "operationId" : "upload",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportSessionInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/households/{householdId}/recipes/import/{importId}/confirm" : {
+      "post" : {
+        "tags" : [ "recipe-import-controller" ],
+        "operationId" : "confirm",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "importId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ConfirmImport"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportOutcome"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/households/{householdId}/recipes/import/url" : {
+      "post" : {
+        "tags" : [ "recipe-import-controller" ],
+        "operationId" : "fromUrl",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UrlImport"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ImportSessionInfo"
                 }
               }
             }
@@ -1507,6 +1873,32 @@
         }
       }
     },
+    "/api/v1/admin/assistant/agents/{agentId}/test" : {
+      "post" : {
+        "tags" : [ "assistant-admin-controller" ],
+        "operationId" : "test",
+        "parameters" : [ {
+          "name" : "agentId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgentTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/households/{id}/members/{memberId}" : {
       "delete" : {
         "tags" : [ "household-controller" ],
@@ -1652,7 +2044,7 @@
     "/api/v1/households/{householdId}/chores/{choreId}" : {
       "delete" : {
         "tags" : [ "chores-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -1678,7 +2070,7 @@
       },
       "patch" : {
         "tags" : [ "chores-controller" ],
-        "operationId" : "update_2",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -1723,7 +2115,7 @@
     "/api/v1/households/{householdId}/calendar/{eventId}" : {
       "delete" : {
         "tags" : [ "calendar-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -1749,7 +2141,7 @@
       },
       "patch" : {
         "tags" : [ "calendar-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "householdId",
           "in" : "path",
@@ -1833,7 +2225,7 @@
     "/api/v1/households/{id}" : {
       "get" : {
         "tags" : [ "household-controller" ],
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1880,67 +2272,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/v1/households/{householdId}/recipes/{recipeId}" : {
-      "get" : {
-        "tags" : [ "recipes-controller" ],
-        "operationId" : "get_1",
-        "parameters" : [ {
-          "name" : "householdId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "name" : "recipeId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/RecipeDto"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "recipes-controller" ],
-        "operationId" : "delete_4",
-        "parameters" : [ {
-          "name" : "householdId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "name" : "recipeId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK"
           }
         }
       }
@@ -2095,6 +2426,85 @@
           }
         }
       }
+    },
+    "/api/v1/admin/assistant/providers" : {
+      "get" : {
+        "tags" : [ "assistant-admin-controller" ],
+        "operationId" : "providers_1",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProviderDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/assistant/agents" : {
+      "get" : {
+        "tags" : [ "assistant-admin-controller" ],
+        "operationId" : "agents",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AgentConfigDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/households/{householdId}/recipes/import/{importId}" : {
+      "delete" : {
+        "tags" : [ "recipe-import-controller" ],
+        "operationId" : "discard",
+        "parameters" : [ {
+          "name" : "householdId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "importId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -2244,6 +2654,126 @@
             "items" : {
               "$ref" : "#/components/schemas/ShoppingItemDto"
             }
+          }
+        }
+      },
+      "CreateRecipe" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "steps" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "ingredients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IngredientDto"
+            }
+          },
+          "imageMimeType" : {
+            "type" : "string"
+          },
+          "imageData" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "IngredientDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          }
+        }
+      },
+      "RecipeDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "householdId" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "servings" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "notes" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "steps" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "imageMimeType" : {
+            "type" : "string"
+          },
+          "imageData" : {
+            "type" : "string"
+          },
+          "ingredients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IngredientDto"
+            }
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },
@@ -2457,6 +2987,93 @@
           }
         }
       },
+      "AgentConfigUpdate" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "model" : {
+            "type" : "string"
+          },
+          "temperature" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "maxTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AgentConfigDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "nameKey" : {
+            "type" : "string"
+          },
+          "descriptionKey" : {
+            "type" : "string"
+          },
+          "supportsMedia" : {
+            "type" : "boolean"
+          },
+          "orchestrator" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "model" : {
+            "type" : "string"
+          },
+          "temperature" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "maxTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "defaults" : {
+            "$ref" : "#/components/schemas/ModelDefaults"
+          },
+          "overridden" : {
+            "type" : "boolean"
+          },
+          "available" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ModelDefaults" : {
+        "type" : "object",
+        "properties" : {
+          "provider" : {
+            "type" : "string"
+          },
+          "model" : {
+            "type" : "string"
+          },
+          "temperature" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "maxTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "SetupRequest" : {
         "type" : "object",
         "properties" : {
@@ -2584,125 +3201,195 @@
         },
         "required" : [ "name" ]
       },
-      "CreateRecipe" : {
+      "FilterCondition" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/FilterNode"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "field" : {
+              "type" : "string"
+            },
+            "operator" : {
+              "type" : "string",
+              "enum" : [ "EQ", "NE", "GT", "GTE", "LT", "LTE", "LIKE", "IN", "BETWEEN", "IS_NULL", "IS_NOT_NULL", "JSON_CONTAINS", "JSON_CONTAINED_BY", "JSON_EXISTS", "JSON_EXISTS_ANY", "JSON_EXISTS_ALL", "JSON_PATH_EQ", "JSON_PATH_LIKE", "JSON_ARRAY_CONTAINS", "JSON_ARRAY_CONTAINS_ALL", "JSON_ARRAY_CONTAINS_ANY" ]
+            },
+            "value" : { },
+            "values" : {
+              "type" : "array",
+              "items" : { }
+            }
+          }
+        } ]
+      },
+      "FilterGroup" : {
+        "allOf" : [ {
+          "$ref" : "#/components/schemas/FilterNode"
+        }, {
+          "type" : "object",
+          "properties" : {
+            "combinator" : {
+              "type" : "string",
+              "enum" : [ "AND", "OR" ],
+              "writeOnly" : true
+            },
+            "filters" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "$ref" : "#/components/schemas/FilterCondition"
+                }, {
+                  "$ref" : "#/components/schemas/FilterGroup"
+                } ]
+              },
+              "writeOnly" : true
+            },
+            "and" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "$ref" : "#/components/schemas/FilterCondition"
+                }, {
+                  "$ref" : "#/components/schemas/FilterGroup"
+                } ]
+              }
+            },
+            "or" : {
+              "type" : "array",
+              "items" : {
+                "oneOf" : [ {
+                  "$ref" : "#/components/schemas/FilterCondition"
+                }, {
+                  "$ref" : "#/components/schemas/FilterGroup"
+                } ]
+              }
+            }
+          }
+        } ]
+      },
+      "FilterNode" : { },
+      "FilterRequest" : {
         "type" : "object",
         "properties" : {
-          "name" : {
-            "type" : "string",
-            "minLength" : 1
-          },
-          "servings" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "notes" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "steps" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "ingredients" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/IngredientDto"
-            }
-          },
-          "imageMimeType" : {
-            "type" : "string"
-          },
-          "imageData" : {
-            "type" : "string"
+          "filter" : {
+            "oneOf" : [ {
+              "$ref" : "#/components/schemas/FilterCondition"
+            }, {
+              "$ref" : "#/components/schemas/FilterGroup"
+            } ]
           }
         },
-        "required" : [ "name" ]
+        "required" : [ "filter" ]
       },
-      "IngredientDto" : {
+      "RecipePageDto" : {
         "type" : "object",
         "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RecipeDto"
+            }
           },
-          "name" : {
-            "type" : "string"
-          },
-          "quantity" : {
-            "type" : "number",
-            "format" : "double"
-          },
-          "unit" : {
-            "type" : "string"
-          },
-          "category" : {
-            "type" : "string"
-          }
-        }
-      },
-      "RecipeDto" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "householdId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "servings" : {
+          "totalHits" : {
             "type" : "integer",
-            "format" : "int32"
+            "format" : "int64"
           },
-          "notes" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "steps" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "imageMimeType" : {
-            "type" : "string"
-          },
-          "imageData" : {
-            "type" : "string"
-          },
-          "ingredients" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/IngredientDto"
-            }
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
+          "hasMore" : {
+            "type" : "boolean"
           }
         }
+      },
+      "CandidateInfo" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "snippet" : {
+            "type" : "string"
+          },
+          "structured" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ImportSessionInfo" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "candidates" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CandidateInfo"
+            }
+          },
+          "aiAvailable" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ConfirmImport" : {
+        "type" : "object",
+        "properties" : {
+          "candidates" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "minItems" : 1
+          }
+        },
+        "required" : [ "candidates" ]
+      },
+      "ImportFailure" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ImportOutcome" : {
+        "type" : "object",
+        "properties" : {
+          "imported" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RecipeDto"
+            }
+          },
+          "failures" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ImportFailure"
+            }
+          }
+        }
+      },
+      "UrlImport" : {
+        "type" : "object",
+        "properties" : {
+          "url" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "url" ]
       },
       "PushKeys" : {
         "type" : "object",
@@ -2970,6 +3657,27 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "delegations" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Delegation"
+            }
+          }
+        }
+      },
+      "Delegation" : {
+        "type" : "object",
+        "properties" : {
+          "agentId" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "latencyMs" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -3047,6 +3755,24 @@
             "items" : {
               "$ref" : "#/components/schemas/MealSlotDto"
             }
+          }
+        }
+      },
+      "AgentTestResult" : {
+        "type" : "object",
+        "properties" : {
+          "ok" : {
+            "type" : "boolean"
+          },
+          "latencyMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
           }
         }
       },
@@ -3180,6 +3906,15 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "toolDescription" : {
+            "type" : "string"
+          },
+          "orchestrator" : {
+            "type" : "boolean"
+          },
+          "model" : {
+            "type" : "string"
           }
         }
       },
@@ -3189,6 +3924,26 @@
           "timeout" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "ProviderDto" : {
+        "type" : "object",
+        "properties" : {
+          "provider" : {
+            "type" : "string"
+          },
+          "available" : {
+            "type" : "boolean"
+          },
+          "models" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "error" : {
+            "type" : "string"
           }
         }
       },

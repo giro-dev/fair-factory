@@ -1,0 +1,12 @@
+A partir del text d'una recepta (extret d'un llibre o d'una pàgina web, possiblement sorollós), construeix una proposta de recepta estructurada per a Fanel.
+
+Respon ÚNICAMENT amb un objecte JSON amb aquestes claus:
+- name (string, nom de la recepta)
+- servings (int, nombre de racions; estima si no s'indica)
+- ingredients (array d'objectes amb name, quantity, unit, category; separa quantitat i unitat del nom sempre que es pugui)
+- steps (array de strings; passos enumerats de la preparació si es poden separar)
+- description (string, opcional; text de preparació si no es pot separar en passos)
+- notes (string, opcional; temps, consells, variacions...)
+- tags (array de strings, opcional; tipus de plat, cuina, dieta...)
+
+Normalitza unitats al sistema més habitual (g, kg, ml, l, cullerada, culleradeta, unitat). Ignora capçaleres, peus de pàgina, números de pàgina i text que no pertanyi a la recepta. Si el text no conté cap recepta, respon amb {"error": true}.

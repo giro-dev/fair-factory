@@ -6,7 +6,8 @@
     "shopping": "Compra",
     "chores": "Tareas",
     "members": "Miembros",
-    "automation": "Automatizaciones"
+    "automation": "Automatizaciones",
+    "assistantSettings": "Asistente"
   },
   "theme": {
     "label": "Cambiar tema",
@@ -61,17 +62,21 @@
     "send": "Enviar",
     "placeholder": "Escribe un mensaje…",
     "intro": "¡Hola! Puedo ayudarte con el menú, la compra, las recetas, el calendario y las tareas.",
-    "selectAgent": "Elige el agente",
     "close": "Cerrar chat",
-    "noAgents": "Ningún agente disponible",
+    "noAgents": "Ningún agente disponible. Configura un proveedor en la página Asistente.",
+    "via": "vía {{agents}}",
     "pickMember": "Elige tu perfil en \"¿Quién eres?\" para hablar con el asistente.",
     "imageAttached": "[Imagen adjunta]",
     "attachImage": "Añadir imagen",
     "createRecipe": "Crear receta",
     "recipeCreated": "Receta creada correctamente.",
-    "general": {
-      "name": "Asistente general",
-      "description": "Chat con el asistente general del hogar."
+    "dev": {
+      "toggle": "Modo DEV (diagnóstico)",
+      "conversation": "conversación"
+    },
+    "orchestrator": {
+      "name": "Asistente de Fanel",
+      "description": "Orquesta las consultas y delega en agentes especializados."
     },
     "recipe-from-image": {
       "name": "Receta desde imagen",
@@ -80,7 +85,40 @@
     "menu-planner": {
       "name": "Planificador de menús",
       "description": "Rellena los huecos del menú semanal con recetas del hogar."
+    },
+    "recipe-extractor": {
+      "name": "Extractor de recetas",
+      "description": "Estructura texto en bruto de recetas (uso interno en la importación de libros)."
     }
+  },
+  "assistantSettings": {
+    "title": "Asistente",
+    "intro": "Configuración del asistente para toda la instancia. Las credenciales de los proveedores se definen solo con variables de entorno; los cambios se aplican inmediatamente, sin reiniciar.",
+    "refreshModels": "Actualizar modelos",
+    "provider": {
+      "notConfigured": "No configurado (variable de entorno)",
+      "error": "Error: {{error}}",
+      "models": "{{count}} modelos"
+    },
+    "badge": {
+      "orchestrator": "Orquestador",
+      "vision": "Visión",
+      "custom": "Personalizado"
+    },
+    "unavailable": "No disponible",
+    "enabled": "Activo",
+    "providerLabel": "Proveedor",
+    "model": "Modelo",
+    "otherModel": "Otro…",
+    "temperature": "Temperatura",
+    "maxTokens": "Tokens máximos",
+    "defaults": "Por defecto: {{provider}} / {{model}}",
+    "save": "Guardar",
+    "reset": "Restablecer",
+    "test": "Probar",
+    "testing": "Probando…",
+    "testOk": "{{latency}} ms — {{text}}",
+    "testError": "Error: {{error}}"
   },
   "account": {
     "title": "Cuenta",
@@ -108,6 +146,9 @@
     "week": "Semana {{week}} · {{year}}",
     "noRecipe": "Sin receta",
     "notesPlaceholder": "Notas (opcional)",
+    "notes": "Notas",
+    "edit": "Editar",
+    "close": "Cerrar",
     "meals": {
       "BREAKFAST": "Desayuno",
       "LUNCH": "Comida",
@@ -140,7 +181,49 @@
     "grid": "Tarjetas",
     "noResults": "No se ha encontrado ninguna receta.",
     "addIngredient": "Añadir ingrediente",
-    "create": "Crear receta"
+    "create": "Crear receta",
+    "tagsPlaceholder": "Etiquetas (separadas por comas)",
+    "category": "Categoría",
+    "save": "Guardar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Eliminar la receta «{{name}}»?",
+    "empty": "Aún no hay recetas. Crea una o importa un libro.",
+    "totalCount_one": "{{count}} receta",
+    "totalCount_other": "{{count}} recetas",
+    "ingredientPlaceholder": "Filtrar por ingrediente…",
+    "sort": "Ordenar",
+    "sortBy": {
+      "name": "Nombre",
+      "createdAt": "Fecha de creación",
+      "servings": "Raciones"
+    },
+    "sortDirection": "Cambiar dirección de ordenación",
+    "tagFilter": "Filtrar por etiqueta",
+    "loadMore": "Cargar más",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "importBook": "Importar libro",
+    "importTitle": "Importar libro de recetas",
+    "importHint": "Sube un libro (PDF o EPUB) o pega la dirección de una receta web. Te mostraremos las recetas encontradas para que elijas cuáles importar.",
+    "importChooseFile": "Elige un archivo (PDF/EPUB)",
+    "importAnalyzeFile": "Analizar el libro",
+    "importAnalyzeUrl": "Analizar la página",
+    "importAnalyzing": "Analizando…",
+    "importUrlPlaceholder": "https://… dirección de una receta web",
+    "importFound_one": "Se ha encontrado {{count}} receta candidata.",
+    "importFound_other": "Se han encontrado {{count}} recetas candidatas.",
+    "importAiOn": "El asistente estructurará cada receta.",
+    "importAiOff": "No hay asistente configurado: se importará el texto en bruto en la descripción.",
+    "importSelectAll": "Seleccionarlas todas",
+    "importSelectNone": "Ninguna",
+    "importStructured": "Estructurada",
+    "importConfirm_one": "Importar {{count}} receta",
+    "importConfirm_other": "Importar {{count}} recetas",
+    "importImporting": "Importando…",
+    "importDone_one": "Se ha importado {{count}} receta de {{source}}.",
+    "importDone_other": "Se han importado {{count}} recetas de {{source}}.",
+    "importFailed": "{{title}}: {{error}}"
   },
   "shopping": {
     "title": "Lista de la compra",

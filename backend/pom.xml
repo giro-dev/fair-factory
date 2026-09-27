@@ -29,6 +29,9 @@
         <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
         <dependency><groupId>org.xerial</groupId><artifactId>sqlite-jdbc</artifactId><version>3.47.2.0</version><scope>runtime</scope></dependency>
         <dependency><groupId>org.hibernate.orm</groupId><artifactId>hibernate-community-dialects</artifactId></dependency>
+        <dependency><groupId>com.github.giro-dev</groupId><artifactId>criteria-filter</artifactId><version>${criteria-filter.version}</version></dependency>
+        <dependency><groupId>org.apache.pdfbox</groupId><artifactId>pdfbox</artifactId><version>3.0.5</version></dependency>
+        <dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>1.21.1</version></dependency>
         <dependency><groupId>com.github.f4b6a3</groupId><artifactId>uuid-creator</artifactId><version>6.1.1</version></dependency>
         <dependency><groupId>com.interaso</groupId><artifactId>webpush</artifactId><version>1.2.0</version></dependency>
         <dependency><groupId>net.sf.biweekly</groupId><artifactId>biweekly</artifactId><version>0.6.8</version></dependency>

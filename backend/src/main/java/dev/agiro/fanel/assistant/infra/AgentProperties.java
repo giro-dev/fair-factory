@@ -9,7 +9,16 @@ import java.util.Map;
 
 @ConfigurationProperties(prefix = "fanel.assistant")
 public class AgentProperties {
+    private String orchestratorId = "orchestrator";
     private Map<String, AgentConfig> agents = Collections.emptyMap();
+
+    public String getOrchestratorId() {
+        return orchestratorId;
+    }
+
+    public void setOrchestratorId(String orchestratorId) {
+        this.orchestratorId = orchestratorId;
+    }
 
     public Map<String, AgentConfig> getAgents() {
         return agents;
@@ -23,6 +32,7 @@ public class AgentProperties {
         private String nameKey;
         private String descriptionKey;
         private String promptKey;
+        private String toolDescription;
         private boolean supportsMedia;
         private List<String> tools = List.of("AssistantTools");
         private ModelProfile model;
@@ -35,6 +45,9 @@ public class AgentProperties {
 
         public String getPromptKey() { return promptKey; }
         public void setPromptKey(String promptKey) { this.promptKey = promptKey; }
+
+        public String getToolDescription() { return toolDescription; }
+        public void setToolDescription(String toolDescription) { this.toolDescription = toolDescription; }
 
         public boolean isSupportsMedia() { return supportsMedia; }
         public void setSupportsMedia(boolean supportsMedia) { this.supportsMedia = supportsMedia; }
