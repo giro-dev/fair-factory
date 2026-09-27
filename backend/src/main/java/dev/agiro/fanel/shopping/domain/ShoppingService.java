@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -44,10 +45,15 @@ public class ShoppingService implements ShoppingApi {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<ShoppingListDto> findDefaultList(UUID householdId) {
+        return lists.findFirstByHouseholdIdOrderByName(householdId).map(ShoppingService::toDto);
+    }
+
+    @Override
     public ShoppingListDto getDefaultList(UUID householdId) {
-        ShoppingList list = lists.findFirstByHouseholdIdOrderByName(householdId)
-                .orElseGet(() -> lists.save(new ShoppingList(householdId, DEFAULT_LIST_NAME)));
-        return toDto(list);
+        return findDefaultList(householdId)
+                .orElseGet(() -> toDto(lists.save(new ShoppingList(householdId, DEFAULT_LIST_NAME))));
     }
 
     @Override

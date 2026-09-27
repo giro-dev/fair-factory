@@ -60,12 +60,7 @@ export function Shopping() {
   const listsQuery = useQuery({
     queryKey: ['shopping', 'lists', household?.id],
     queryFn: async () => {
-      const lists = await api<ShoppingList[]>(`/households/${household!.id}/shopping/lists`)
-      if (lists.length === 0) {
-        const def = await api<ShoppingList>(`/households/${household!.id}/shopping/lists/default`)
-        return [def]
-      }
-      return lists
+      return api<ShoppingList[]>(`/households/${household!.id}/shopping/lists`)
     },
     enabled: !!household,
   })

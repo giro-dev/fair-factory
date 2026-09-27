@@ -37,9 +37,6 @@ interface ShoppingApi {
         @Path("listId") listId: String
     )
 
-    @GET("/api/v1/households/{householdId}/shopping/lists/default")
-    suspend fun defaultList(@Path("householdId") householdId: String): ShoppingListDto
-
     @POST("/api/v1/households/{householdId}/shopping/lists/{listId}/items")
     suspend fun addItem(
         @Path("householdId") householdId: String,

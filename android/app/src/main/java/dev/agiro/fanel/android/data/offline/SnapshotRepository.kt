@@ -7,6 +7,7 @@ import dev.agiro.fanel.android.data.local.CachedSnapshotEntity
 import dev.agiro.fanel.android.data.local.PendingOperationDao
 import dev.agiro.fanel.android.data.local.PendingOperationEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
@@ -44,6 +45,9 @@ abstract class SnapshotRepository<T>(
     fun observePendingCount(householdId: String): Flow<Int> =
         pendingDao.observePendingCount(householdId, domain)
 
+    /** Operations of this domain that the server rejected during the last push. */
+    fun observeDropped(): Flow<PendingOperationEntity> = pusher.dropped.filter { it.domain == domain }
+
     suspend fun cached(householdId: String, key: String = DEFAULT_KEY): T? =
         snapshotDao.find(householdId, domain, key)?.let(::decode)
 
@@ -79,23 +83,13 @@ abstract class SnapshotRepository<T>(
     }
 
     private suspend fun enqueueJson(householdId: String, type: String, targetId: String?, payloadJson: String?) {
-        pendingDao.upsert(
-            PendingOperationEntity(
-                id = UUID.randomUUID().toString(),
-                householdId = householdId,
-                domain = domain,
-                type = type,
-                targetId = targetId,
-                payloadJson = payloadJson,
-                createdAtEpochMs = clock()
-            )
-        )
+        pusher.enqueue(householdId, domain, type, targetId, payloadJson, clock = clock)
     }
 
     /** Drops every queued operation targeting [targetId]; returns true when a local create was among them. */
     protected suspend fun discardPending(householdId: String, targetId: String): Boolean {
         val local = isLocalId(targetId)
-        pendingDao.deleteByTarget(householdId, domain, targetId)
+        pusher.discard(householdId, domain, targetId)
         return local
     }
 

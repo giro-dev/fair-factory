@@ -8,16 +8,14 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 @Database(
     entities = [
         CalendarEventEntity::class,
-        OutboxEntity::class,
         CachedSnapshotEntity::class,
         PendingOperationEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class FanelDatabase : RoomDatabase() {
     abstract fun calendarEventDao(): CalendarEventDao
-    abstract fun outboxDao(): OutboxDao
     abstract fun cachedSnapshotDao(): CachedSnapshotDao
     abstract fun pendingOperationDao(): PendingOperationDao
 
@@ -42,6 +40,21 @@ abstract class FanelDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE calendar_events ADD COLUMN durationMinutes INTEGER")
+            }
+        }
+
+        /** Moves the legacy calendar-only `outbox` queue into the shared `pending_operations` table. */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "INSERT INTO pending_operations " +
+                        "(id, householdId, domain, type, targetId, payloadJson, createdAtEpochMs) " +
+                        "SELECT localId || CASE operation " +
+                        "WHEN 'CREATE' THEN '' WHEN 'UPDATE' THEN ':UPDATE' ELSE ':DELETE' END, " +
+                        "householdId, 'calendar', operation, localId, payloadJson, createdAtEpochMs " +
+                        "FROM outbox"
+                )
+                db.execSQL("DROP TABLE outbox")
             }
         }
     }

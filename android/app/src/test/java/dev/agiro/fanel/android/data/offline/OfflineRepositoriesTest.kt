@@ -106,6 +106,22 @@ class OfflineRepositoriesTest {
     }
 
     @Test
+    fun rejectedCreateLeavesLocalListVisibleAfterPull() = runBlocking {
+        val store = store()
+        val api = FakeShoppingApi().apply { failWithStatus = 400 }
+        val repository = ShoppingRepository(api, store.snapshotDao, store.pendingDao, store.pusher)
+
+        val localId = repository.createList(householdId, "Setmanal")
+        repository.sync(householdId)
+
+        assertTrue(api.lists.isEmpty())
+        assertEquals(0, repository.observePendingCount(householdId).first())
+        val lists = repository.observeLists(householdId).first()
+        assertEquals(listOf(localId), lists.map { it.id })
+        assertEquals(listOf("Setmanal"), lists.map { it.name })
+    }
+
+    @Test
     fun pusherDropsUnrecoverableOperationsButKeepsTransientOnes() = runBlocking {
         val store = store()
         val api = FakeRecipesApi()
@@ -176,10 +192,16 @@ private class FakeRecipesApi : RecipesApi {
 private class FakeShoppingApi : ShoppingApi {
     val lists = mutableListOf<ShoppingListDto>()
     var offline = false
+    var failWithStatus: Int? = null
     var lastAddListId: String? = null
 
     private fun gate() {
         if (offline) throw IOException("offline")
+    }
+
+    private fun mutationGate() {
+        gate()
+        failWithStatus?.let { throw httpError(it) }
     }
 
     override suspend fun listLists(householdId: String): List<ShoppingListDto> {
@@ -188,7 +210,7 @@ private class FakeShoppingApi : ShoppingApi {
     }
 
     override suspend fun createList(householdId: String, request: ListNameRequest): ShoppingListDto {
-        gate()
+        mutationGate()
         val created = ShoppingListDto("l-${lists.size + 1}", householdId, request.name, emptyList())
         lists.add(created)
         return created
@@ -206,11 +228,6 @@ private class FakeShoppingApi : ShoppingApi {
     override suspend fun deleteList(householdId: String, listId: String) {
         gate()
         lists.removeAll { it.id == listId }
-    }
-
-    override suspend fun defaultList(householdId: String): ShoppingListDto {
-        gate()
-        return lists.firstOrNull() ?: createList(householdId, ListNameRequest("Compra"))
     }
 
     override suspend fun addItem(householdId: String, listId: String, request: AddItemRequest): ShoppingItemDto {

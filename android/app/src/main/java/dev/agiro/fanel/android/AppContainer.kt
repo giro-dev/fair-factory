@@ -31,9 +31,11 @@ class AppContainer(context: Context) : AppContainerContract {
         context.applicationContext,
         FanelDatabase::class.java,
         "fanel-android.db"
-    ).addMigrations(FanelDatabase.MIGRATION_1_2, FanelDatabase.MIGRATION_2_3).build()
+    ).addMigrations(FanelDatabase.MIGRATION_1_2, FanelDatabase.MIGRATION_2_3, FanelDatabase.MIGRATION_3_4).build()
 
     private val syncPreferences = SyncPreferences(context.applicationContext)
+
+    private val pusher = OutboxPusher(database.pendingOperationDao())
 
     private var _householdApi: HouseholdApi = buildHouseholdApi()
     override val householdApi: HouseholdApi
@@ -105,7 +107,6 @@ class AppContainer(context: Context) : AppContainerContract {
     private fun buildOfflineRepositories(): OfflineRepositories {
         val snapshotDao = database.cachedSnapshotDao()
         val pendingDao = database.pendingOperationDao()
-        val pusher = OutboxPusher(pendingDao)
         val members = MembersRepository(_householdApi, snapshotDao, pendingDao, pusher)
         val recipes = RecipesRepository(_recipesApi, snapshotDao, pendingDao, pusher)
         val menu = MenuRepository(_menuApi, snapshotDao, pendingDao, pusher)
@@ -141,7 +142,7 @@ class AppContainer(context: Context) : AppContainerContract {
     private fun buildCalendarRepository(): CalendarRepositoryContract = CalendarRepository(
         api = ApiFactory.calendarApi(sessionStore.serverUrl, authStore),
         eventDao = database.calendarEventDao(),
-        outboxDao = database.outboxDao(),
+        pusher = pusher,
         syncPreferences = syncPreferences
     )
 }

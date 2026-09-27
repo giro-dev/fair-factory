@@ -30,6 +30,7 @@ class ShoppingRepository(
         observe(householdId).map { it.orEmpty() }
 
     suspend fun createList(householdId: String, name: String): String {
+        require(name.isNotBlank()) { "List name must not be blank" }
         val localId = newLocalId()
         mutate(householdId, empty = ::emptyList) { it + ShoppingListDto(localId, householdId, name, emptyList()) }
         enqueue(householdId, OP_CREATE_LIST, localId, ListNameRequest(name))
@@ -37,6 +38,7 @@ class ShoppingRepository(
     }
 
     suspend fun renameList(householdId: String, listId: String, name: String) {
+        require(name.isNotBlank()) { "List name must not be blank" }
         mutate(householdId, empty = ::emptyList) { lists ->
             lists.map { if (it.id == listId) it.copy(name = name) else it }
         }
@@ -96,9 +98,21 @@ class ShoppingRepository(
         enqueue(householdId, OP_CLEAR_PURCHASED, listId)
     }
 
+    /**
+     * Replaces the snapshot with the server state, preserving locally created lists and items
+     * (ids with the local- prefix) that have no remote counterpart so unsynced work is never
+     * wiped by a pull.
+     */
     override suspend fun pull(householdId: String) {
-        val lists = api.listLists(householdId).ifEmpty { listOf(api.defaultList(householdId)) }
-        write(householdId, lists)
+        val remote = api.listLists(householdId)
+        val local = cached(householdId).orEmpty()
+        val remoteIds = remote.mapTo(HashSet()) { it.id }
+        val merged = remote.map { list ->
+            val unsyncedItems = local.firstOrNull { it.id == list.id }?.items.orEmpty()
+                .filter { isLocalId(it.id) }
+            if (unsyncedItems.isEmpty()) list else list.copy(items = list.items.orEmpty() + unsyncedItems)
+        } + local.filter { isLocalId(it.id) && it.id !in remoteIds }
+        write(householdId, merged)
     }
 
     override suspend fun execute(operation: PendingOperationEntity): IdRemap? {

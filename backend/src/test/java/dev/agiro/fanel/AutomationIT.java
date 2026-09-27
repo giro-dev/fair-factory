@@ -59,9 +59,11 @@ abstract class AutomationIT {
                         .content("{\"name\":\"Pare\",\"role\":\"ADMIN\"}"))
                 .andExpect(status().isCreated());
 
-        String defaultListJson = mvc.perform(get(base + "/shopping/lists/default")
-                        .with(httpBasic("admin", "admin")))
-                .andExpect(status().isOk())
+        String defaultListJson = mvc.perform(post(base + "/shopping/lists")
+                        .with(httpBasic("admin", "admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Compra\"}"))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String listId = com.jayway.jsonpath.JsonPath.read(defaultListJson, "$.id");
         mvc.perform(post(base + "/shopping/lists/" + listId + "/items").with(httpBasic("admin", "admin"))

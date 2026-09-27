@@ -1,5 +1,6 @@
 package dev.agiro.fanel.shopping.web;
 
+import dev.agiro.fanel.shared.web.EntityNotFoundException;
 import dev.agiro.fanel.shopping.api.ShoppingApi;
 import dev.agiro.fanel.shopping.api.ShoppingItemDto;
 import dev.agiro.fanel.shopping.api.ShoppingListDto;
@@ -51,7 +52,8 @@ public class ShoppingController {
 
     @GetMapping("/lists/default")
     public ShoppingListDto defaultList(@PathVariable UUID householdId) {
-        return shopping.getDefaultList(householdId);
+        return shopping.findDefaultList(householdId)
+                .orElseThrow(() -> new EntityNotFoundException("No shopping list for household: " + householdId));
     }
 
     @PostMapping("/lists/{listId}/items")

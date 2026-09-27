@@ -4,8 +4,10 @@ import com.google.gson.Gson
 import dev.agiro.fanel.android.SyncPreferences
 import dev.agiro.fanel.android.data.local.CalendarEventDao
 import dev.agiro.fanel.android.data.local.CalendarEventEntity
-import dev.agiro.fanel.android.data.local.OutboxDao
-import dev.agiro.fanel.android.data.local.OutboxEntity
+import dev.agiro.fanel.android.data.local.PendingOperationEntity
+import dev.agiro.fanel.android.data.offline.IdRemap
+import dev.agiro.fanel.android.data.offline.OperationHandler
+import dev.agiro.fanel.android.data.offline.OutboxPusher
 import dev.agiro.fanel.android.data.remote.CalendarApi
 import dev.agiro.fanel.android.data.remote.CalendarEventDto
 import dev.agiro.fanel.android.data.remote.CreateEventRequest
@@ -20,11 +22,15 @@ import java.util.UUID
 class CalendarRepository(
     private val api: CalendarApi,
     private val eventDao: CalendarEventDao,
-    private val outboxDao: OutboxDao,
+    private val pusher: OutboxPusher,
     private val syncPreferences: SyncPreferences
-) : CalendarRepositoryContract {
+) : CalendarRepositoryContract, OperationHandler {
     private val gson = Gson()
     private val syncTimestamps = MutableSharedFlow<Pair<String, Long>>(extraBufferCapacity = 16)
+
+    init {
+        pusher.register(DOMAIN, this)
+    }
 
     override fun observeEvents(
         householdId: String,
@@ -58,16 +64,7 @@ class CalendarRepository(
                 pendingStatus = CalendarEventEntity.PENDING_CREATE
             )
         )
-        outboxDao.upsert(
-            OutboxEntity(
-                localId = localId,
-                householdId = householdId,
-                remoteId = null,
-                operation = OutboxEntity.OP_CREATE,
-                payloadJson = gson.toJson(CreateEventRequest.from(draft)),
-                createdAtEpochMs = System.currentTimeMillis()
-            )
-        )
+        enqueueCreate(householdId, localId, gson.toJson(CreateEventRequest.from(draft)))
     }
 
     override suspend fun updateEvent(event: CalendarEventEntity, draft: CalendarDraft) {
@@ -87,16 +84,8 @@ class CalendarRepository(
                     recurrenceUntil = draft.recurrenceUntil
                 )
             )
-            outboxDao.upsert(
-                OutboxEntity(
-                    localId = event.localId,
-                    householdId = event.householdId,
-                    remoteId = null,
-                    operation = OutboxEntity.OP_CREATE,
-                    payloadJson = gson.toJson(CreateEventRequest.from(draft)),
-                    createdAtEpochMs = System.currentTimeMillis()
-                )
-            )
+            // Still local-only: replace the queued create so only the latest data is sent.
+            enqueueCreate(event.householdId, event.localId, gson.toJson(CreateEventRequest.from(draft)))
         } else {
             eventDao.applyUpdateByRemoteId(
                 householdId = event.householdId,
@@ -122,81 +111,81 @@ class CalendarRepository(
                     pendingStatus = CalendarEventEntity.PENDING_UPDATE
                 )
             )
-            outboxDao.upsert(
-                OutboxEntity(
-                    localId = event.localId,
-                    householdId = event.householdId,
-                    remoteId = remoteId,
-                    operation = OutboxEntity.OP_UPDATE,
-                    payloadJson = gson.toJson(UpdateEventRequest.from(draft)),
-                    createdAtEpochMs = System.currentTimeMillis()
-                )
+            // Deterministic id so repeated edits collapse into a single queued update.
+            pusher.enqueue(
+                event.householdId, DOMAIN, OP_UPDATE, event.localId,
+                gson.toJson(UpdateEventRequest.from(draft)),
+                id = "${event.localId}:UPDATE"
             )
         }
     }
 
     override suspend fun deleteEvent(event: CalendarEventEntity) {
-        val remoteId = event.remoteId
-        if (remoteId == null) {
-            outboxDao.delete(event.localId)
+        if (event.remoteId == null) {
+            pusher.discard(event.householdId, DOMAIN, event.localId)
             eventDao.deleteByLocalId(event.householdId, event.localId)
         } else {
             eventDao.upsert(event.copy(pendingStatus = CalendarEventEntity.PENDING_DELETE))
-            outboxDao.upsert(
-                OutboxEntity(
-                    localId = event.localId,
-                    householdId = event.householdId,
-                    remoteId = remoteId,
-                    operation = OutboxEntity.OP_DELETE,
-                    payloadJson = null,
-                    createdAtEpochMs = System.currentTimeMillis()
-                )
+            pusher.discard(event.householdId, DOMAIN, event.localId)
+            pusher.enqueue(
+                event.householdId, DOMAIN, OP_DELETE, event.localId, null,
+                id = "${event.localId}:DELETE"
             )
         }
     }
 
     override suspend fun fullSync(householdId: String, from: String, to: String) {
         if (householdId.isBlank()) throw IllegalArgumentException("householdId is required")
-        pushPending(householdId)
+        pusher.pushAll(householdId)
         pullVisibleRange(householdId, from, to)
         val now = System.currentTimeMillis()
         syncPreferences.setLastSuccessfulSync(householdId, now)
         syncTimestamps.tryEmit(householdId to now)
     }
 
-    private suspend fun pushPending(householdId: String) {
-        for (entry in outboxDao.pendingForHousehold(householdId)) {
-            when (entry.operation) {
-                OutboxEntity.OP_CREATE -> {
-                    val request = gson.fromJson(entry.payloadJson, CreateEventRequest::class.java)
-                    val created = api.create(householdId, request)
-                    val entity = eventDao.findByLocalId(householdId, entry.localId)
-                    if (entity != null) {
-                        eventDao.deleteByLocalId(householdId, entry.localId)
-                        eventDao.upsert(created.toEntity(householdId, entry.localId))
-                    }
-                    outboxDao.delete(entry.localId)
+    override suspend fun execute(operation: PendingOperationEntity): IdRemap? {
+        val householdId = operation.householdId
+        val targetId = operation.targetId ?: return null
+        return when (operation.type) {
+            OP_CREATE -> {
+                val request = gson.fromJson(operation.payloadJson, CreateEventRequest::class.java)
+                val created = api.create(householdId, request)
+                if (eventDao.findByLocalId(householdId, targetId) != null) {
+                    eventDao.deleteByLocalId(householdId, targetId)
+                    eventDao.upsert(created.toEntity(householdId, targetId))
                 }
-
-                OutboxEntity.OP_UPDATE -> {
-                    val remoteId = entry.remoteId ?: continue
-                    val request = gson.fromJson(entry.payloadJson, UpdateEventRequest::class.java)
-                    api.update(householdId, remoteId, request)
-                    val entity = eventDao.findByLocalId(householdId, entry.localId)
-                    if (entity != null) {
-                        eventDao.upsert(entity.copy(pendingStatus = null))
-                    }
-                    outboxDao.delete(entry.localId)
-                }
-
-                OutboxEntity.OP_DELETE -> {
-                    entry.remoteId?.let { api.delete(householdId, it) }
-                    eventDao.deleteByLocalId(householdId, entry.localId)
-                    outboxDao.delete(entry.localId)
-                }
+                IdRemap(targetId, created.id)
             }
+
+            OP_UPDATE -> {
+                val entity = findEntity(householdId, targetId)
+                api.update(
+                    householdId,
+                    entity?.remoteId ?: targetId,
+                    gson.fromJson(operation.payloadJson, UpdateEventRequest::class.java)
+                )
+                entity?.let { eventDao.upsert(it.copy(pendingStatus = null)) }
+                null
+            }
+
+            OP_DELETE -> {
+                val entity = findEntity(householdId, targetId)
+                api.delete(householdId, entity?.remoteId ?: targetId)
+                eventDao.deleteByLocalId(householdId, entity?.localId ?: targetId)
+                null
+            }
+
+            else -> null
         }
     }
+
+    private suspend fun enqueueCreate(householdId: String, localId: String, payloadJson: String) {
+        pusher.enqueue(householdId, DOMAIN, OP_CREATE, localId, payloadJson, id = localId)
+    }
+
+    /** Looks up the event by local id first, then by remote id (the target may have been remapped). */
+    private suspend fun findEntity(householdId: String, id: String): CalendarEventEntity? =
+        eventDao.findByLocalId(householdId, id) ?: eventDao.findByRemoteId(householdId, id)
 
     private suspend fun pullVisibleRange(householdId: String, from: String, to: String) {
         val remote = api.list(householdId, from, to)
@@ -222,4 +211,11 @@ class CalendarRepository(
             recurrenceUntil = recurrenceUntil,
             pendingStatus = null
         )
+
+    companion object {
+        const val DOMAIN = "calendar"
+        const val OP_CREATE = "CREATE"
+        const val OP_UPDATE = "UPDATE"
+        const val OP_DELETE = "DELETE"
+    }
 }

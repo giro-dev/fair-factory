@@ -93,6 +93,7 @@
     <string name="shopping_screen_title">Llista de la compra</string>
     <string name="shopping_load_error">No s\'ha pogut carregar la llista de la compra</string>
     <string name="shopping_save_error">No s\'ha pogut desar el canvi</string>
+    <string name="shopping_sync_dropped">Alguns canvis no s\'han pogut sincronitzar amb el servidor</string>
     <string name="shopping_new_list">Nova llista</string>
     <string name="shopping_list_name">Nom de la llista</string>
     <string name="shopping_rename_list">Reanomena la llista</string>

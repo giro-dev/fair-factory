@@ -82,6 +82,9 @@ class ShoppingViewModel(
     init {
         activateHousehold(sessionStore.householdId)
         subscribeToEvents()
+        viewModelScope.launch {
+            repository.observeDropped().collect { _errorRes.value = R.string.shopping_sync_dropped }
+        }
     }
 
     private fun subscribeToEvents() {

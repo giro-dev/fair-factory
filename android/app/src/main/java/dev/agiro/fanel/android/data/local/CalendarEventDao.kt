@@ -18,6 +18,9 @@ interface CalendarEventDao {
     @Query("SELECT * FROM calendar_events WHERE householdId = :householdId AND localId = :localId")
     suspend fun findByLocalId(householdId: String, localId: String): CalendarEventEntity?
 
+    @Query("SELECT * FROM calendar_events WHERE householdId = :householdId AND remoteId = :remoteId")
+    suspend fun findByRemoteId(householdId: String, remoteId: String): CalendarEventEntity?
+
     @Query(
         "DELETE FROM calendar_events " +
             "WHERE householdId = :householdId AND remoteId IS NOT NULL AND pendingStatus IS NULL " +

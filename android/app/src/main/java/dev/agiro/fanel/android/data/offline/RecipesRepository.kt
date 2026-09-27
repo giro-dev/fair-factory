@@ -52,7 +52,10 @@ class RecipesRepository(
     }
 
     override suspend fun pull(householdId: String) {
-        write(householdId, api.list(householdId))
+        val remote = api.list(householdId)
+        val remoteIds = remote.mapTo(HashSet()) { it.id }
+        val unsynced = cached(householdId).orEmpty().filter { isLocalId(it.id) && it.id !in remoteIds }
+        write(householdId, remote + unsynced)
     }
 
     override suspend fun execute(operation: PendingOperationEntity): IdRemap? = when (operation.type) {

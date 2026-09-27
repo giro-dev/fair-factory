@@ -51,13 +51,13 @@ class ShoppingViewModelTest {
     }
 
     @Test
-    fun createsDefaultListWhenNoneExist() = runBlocking {
+    fun showsEmptyStateWhenNoListsExist() = runBlocking {
         val api = FakeShoppingApi()
         val (vm, states) = viewModel(api)
         val job = launch(UnconfinedTestDispatcher()) { vm.uiState.collect { states.add(it) } }
 
-        assertEquals(1, api.defaultListCalls)
-        assertEquals("default", states.last().activeList?.id)
+        assertEquals(emptyList<ShoppingListDto>(), states.last().lists)
+        assertEquals(null, states.last().activeList)
         job.cancel()
     }
 
@@ -145,7 +145,6 @@ class ShoppingViewModelTest {
 
 private class FakeShoppingApi : ShoppingApi {
     var lists: MutableList<ShoppingListDto> = mutableListOf()
-    var defaultListCalls = 0
     var lastAddListId: String? = null
     var lastAddRequest: AddItemRequest? = null
     var lastUpdateItemId: String? = null
@@ -175,13 +174,6 @@ private class FakeShoppingApi : ShoppingApi {
 
     override suspend fun deleteList(householdId: String, listId: String) {
         lists.removeAll { it.id == listId }
-    }
-
-    override suspend fun defaultList(householdId: String): ShoppingListDto {
-        defaultListCalls++
-        val created = ShoppingListDto("default", householdId, "Compra", emptyList())
-        lists.add(created)
-        return created
     }
 
     override suspend fun addItem(

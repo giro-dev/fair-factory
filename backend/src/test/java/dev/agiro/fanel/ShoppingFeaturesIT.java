@@ -33,13 +33,26 @@ abstract class ShoppingFeaturesIT {
                 .andReturn().getResponse().getContentAsString();
         String householdId = com.jayway.jsonpath.JsonPath.read(householdJson, "$.id");
 
-        // Default list exists
-        String defaultListJson = mvc.perform(get("/api/v1/households/" + householdId + "/shopping/lists/default")
+        // No default list until one is created explicitly
+        mvc.perform(get("/api/v1/households/" + householdId + "/shopping/lists/default")
                         .with(httpBasic("admin", "admin")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Compra"))
+                .andExpect(status().isNotFound());
+
+        String defaultListJson = mvc.perform(post("/api/v1/households/" + householdId + "/shopping/lists")
+                        .with(httpBasic("admin", "admin"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Compra"}
+                                """))
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         String defaultListId = com.jayway.jsonpath.JsonPath.read(defaultListJson, "$.id");
+
+        // Default list resolves to the first one once it exists
+        mvc.perform(get("/api/v1/households/" + householdId + "/shopping/lists/default")
+                        .with(httpBasic("admin", "admin")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Compra"));
 
         // Create second list "Farmàcia"
         String pharmaListJson = mvc.perform(post("/api/v1/households/" + householdId + "/shopping/lists")
