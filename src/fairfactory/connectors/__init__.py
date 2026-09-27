@@ -10,6 +10,11 @@ from fairfactory.connectors.figueres import (
     FigueresContractesConnector,
 )
 from fairfactory.connectors.girona import DiputacioGironaConnector
+from fairfactory.connectors.partits import (
+    AlcaldesHistorialConnector,
+    CarrecsElectesConnector,
+    PartitsCuratsConnector,
+)
 from fairfactory.connectors.pcsp import PCSPConnector
 from fairfactory.connectors.sede import SedeSieroConnector
 from fairfactory.connectors.siero import SieroConnector
@@ -29,6 +34,9 @@ CONNECTORS: dict[str, type[Connector]] = {
         DiputacioGironaConnector,
         CatalunyaSocrataConnector,
         AocContractesConnector,
+        AlcaldesHistorialConnector,
+        CarrecsElectesConnector,
+        PartitsCuratsConnector,
     )
 }
 

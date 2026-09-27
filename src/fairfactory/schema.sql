@@ -154,6 +154,25 @@ CREATE TABLE IF NOT EXISTS document (
     UNIQUE (font, id_extern)
 );
 
+CREATE TABLE IF NOT EXISTS administracio_partit (
+    id                INTEGER PRIMARY KEY,
+    font              TEXT NOT NULL REFERENCES font(codi),
+    id_extern         TEXT NOT NULL,
+    administracio_id  INTEGER NOT NULL REFERENCES administracio(id),
+    partit_codi       TEXT,
+    partit_nom        TEXT,
+    responsable       TEXT,          -- alcalde/essa o president/a
+    data_inici        TEXT,          -- inici del mandat
+    data_fi           TEXT,          -- NULL = mandat vigent
+    confianca         TEXT CHECK (confianca IN ('alta', 'mitjana', 'baixa')),
+    url               TEXT,
+    raw               TEXT,
+    actualitzat       TEXT NOT NULL,
+    UNIQUE (font, id_extern)
+);
+CREATE INDEX IF NOT EXISTS idx_adminpartit_admin ON administracio_partit(administracio_id);
+CREATE INDEX IF NOT EXISTS idx_adminpartit_dates ON administracio_partit(data_inici, data_fi);
+
 CREATE VIEW IF NOT EXISTS v_contractes_per_any AS
 SELECT a.nom AS administracio,
        substr(COALESCE(c.data_adjudicacio, c.data_publicacio), 1, 4) AS any,
@@ -233,3 +252,21 @@ SELECT a.nom AS administracio,
        ROUND(SUM(s.import), 2) AS total
 FROM subvencio s LEFT JOIN administracio a ON a.id = s.administracio_id
 GROUP BY 1, 2;
+
+-- Contractes agrupats pel partit del cap de l'administració en la data del
+-- contracte (adjudicació o publicació). Els contractes sense mandat conegut
+-- o sense data queden a 'sense dada'.
+CREATE VIEW IF NOT EXISTS v_contractes_per_partit AS
+SELECT a.nom AS administracio,
+       COALESCE(p.partit_codi, 'sense dada') AS partit,
+       substr(COALESCE(c.data_adjudicacio, c.data_publicacio), 1, 4) AS any,
+       COUNT(*) AS n,
+       ROUND(SUM(COALESCE(c.import_adjudicacio, c.import_licitacio)), 2) AS total
+FROM contracte c
+JOIN administracio a ON a.id = c.administracio_id
+LEFT JOIN administracio_partit p
+       ON p.administracio_id = c.administracio_id
+      AND COALESCE(c.data_adjudicacio, c.data_publicacio) >= p.data_inici
+      AND (p.data_fi IS NULL
+           OR COALESCE(c.data_adjudicacio, c.data_publicacio) <= p.data_fi)
+GROUP BY 1, 2, 3;

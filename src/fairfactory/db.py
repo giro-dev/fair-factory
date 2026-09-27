@@ -149,7 +149,15 @@ def upsert(conn: sqlite3.Connection, table: str, rows: Iterable[Mapping[str, Any
     return n
 
 
-DATA_TABLES = ("contracte", "subvencio", "dataset", "indicador", "pressupost", "document")
+DATA_TABLES = (
+    "contracte",
+    "subvencio",
+    "dataset",
+    "indicador",
+    "pressupost",
+    "document",
+    "administracio_partit",
+)
 
 
 def merge_into(conn: sqlite3.Connection, src_path: Path | str) -> None:

@@ -26,6 +26,9 @@ Administracions cobertes actualment: **Ayuntamiento de Siero**, **Principado de 
 | `aoc_contractes`        | AOC – dataset agregat PSCP (ine10/àmbit per admin) | `contracte`  |
 | `diputacio_girona`      | Diputació de Girona – pressuposts (PDFs)          | `document`   |
 | `catalunya_socrata`     | Generalitat – execució pressupostària (Socrata)   | `pressupost` |
+| `gencat_historial_alcaldes` | Generalitat – historial d'alcaldes/esses 1979-avui (Socrata) | `administracio_partit` |
+| `gencat_carrecs_electes` | Generalitat – càrrecs electes vigents dels ens locals (Socrata) | `administracio_partit` |
+| `partits_curats`        | Registres de partits verificats manualment        | `administracio_partit` |
 
 Els connectors `bdns` i `pcsp` també cobreixen les administracions catalanes
 (Figueres, Diputació de Girona i Generalitat).

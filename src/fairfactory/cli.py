@@ -82,6 +82,7 @@ def cmd_stats(args) -> int:
         "indicador",
         "pressupost",
         "document",
+        "administracio_partit",
     ):
         stats[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
     runs = [

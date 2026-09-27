@@ -33,9 +33,10 @@ jobs:
             fonts: >-
               bdns aoc_contractes figueres_ckan figueres_contractes
               diputacio_girona catalunya_socrata
+              gencat_historial_alcaldes gencat_carrecs_electes
             extra_args: "--bdns-admin figueres,girona,diputacio_girona,catalunya"
           - grup: compartit
-            fonts: "datos_gob pcsp"
+            fonts: "datos_gob pcsp partits_curats"
             extra_args: ""
     runs-on: ubuntu-latest
     timeout-minutes: 120

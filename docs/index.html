@@ -216,6 +216,16 @@
           <li>Les gràfiques i taules fan agregacions a la volada — si una administració no
             apareix a una secció, és que aquella font no li cobreix (vegeu «administracions» a
             la taula de fonts).</li>
+          <li><b>Color polític</b>: la taula <code>administracio_partit</code> registra el
+            partit del cap de cada administració (alcalde/essa, president/a) amb les dates
+            del mandat. Fonts: datasets oficials de la Generalitat (historial
+            d'alcaldes/esses 1979–avui i càrrecs electes vigents, via Socrata) i
+            registres verificats manualment per als ens que aquests datasets no
+            cobreixen (Generalitat, Principat, Diputació de Girona, Siero). El camp
+            <code>confianca</code> marca la fiabilitat de cada registre i
+            <code>partit_nom</code> conserva el literal original de la font
+            (<code>partit_codi</code> és una normalització aproximada). Els contractes
+            s'assignen al mandat vigent en la seva data.</li>
         </ul>
       </section>
       <section>
@@ -339,9 +349,9 @@ createApp({
       cards: [],
       schema: [],
       // resultats crus de les consultes (es filtren per administració en els computed)
-      raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [],
+      raw: { perAny: [], importAny: [], topAdj: [], subv: [], ind: [], partitAny: [],
              vContractes: null, vTop: null, vSubv: null, tablon: null, docsPerFont: null,
-             topBeneficiaris: null, vPressupost: null, execucio: [],
+             topBeneficiaris: null, vPressupost: null, execucio: [], vPartits: null,
              vFluxTotal: null, vFraccionament: null, fonts: null, adminsList: null },
       sql: `SELECT adjudicatari_nom, COUNT(*) n, ROUND(SUM(import_adjudicacio), 2) total
 FROM contracte WHERE font = 'siero_transparencia'
@@ -355,6 +365,13 @@ GROUP BY adjudicatari_nom ORDER BY total DESC LIMIT 20;`,
           `SELECT data_adjudicacio, organ, titol, adjudicatari_nom, import_adjudicacio
 FROM contracte WHERE import_adjudicacio > 50000
 ORDER BY import_adjudicacio DESC LIMIT 50;` },
+        { label: "Contractes per partit", sql:
+          "SELECT * FROM v_contractes_per_partit ORDER BY any DESC, total DESC;" },
+        { label: "Mandats vigents", sql:
+          `SELECT a.nom AS administracio, p.partit_codi AS partit, p.partit_nom,
+                  p.responsable, p.data_inici, p.confianca
+           FROM administracio_partit p JOIN administracio a ON a.id = p.administracio_id
+           WHERE p.data_fi IS NULL ORDER BY a.comunitat, a.nom;` },
         { label: "Indicadors de Siero", sql:
           "SELECT seccio, nom, valor, variacio_anual, periode FROM indicador ORDER BY seccio;" },
         { label: "Tabló d'anuncis", sql:
@@ -407,6 +424,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         groupedBar("Contractes per any", this.filterAdmin(this.raw.perAny)),
         groupedBar("Import adjudicat per any", this.filterAdmin(this.raw.importAny), { eur: true }),
         groupedBar("Top adjudicataris per import", this.filterAdmin(this.raw.topAdj), { horizontal: true, eur: true }),
+        groupedBar("Import per partit del govern", this.filterAdmin(this.raw.partitAny), { horizontal: true, eur: true }),
       ];
     },
     subvencioChart() {
@@ -439,6 +457,8 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         { title: "Principals adjudicataris", result: this.filterAdmin(this.raw.vTop) },
         { title: "Possible fraccionament de contracte (≥3 contractes/trimestre, ≥15k€)",
           result: this.filterAdmin(this.raw.vFraccionament) },
+        { title: "Contractes per partit del govern i any",
+          result: this.filterAdmin(this.raw.vPartits) },
       ];
     },
     subvencioSections() {
@@ -508,7 +528,18 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
     loadDashboard() {
       this.generat = this.q("SELECT MAX(fi) AS fi FROM ingest_run")?.values?.[0]?.[0];
 
-      this.admins = this.rows("SELECT nom, comunitat FROM administracio ORDER BY comunitat, nivell");
+      // el desplegable només llista administracions amb dades carregades
+      // (la taula administracio també conté tots els ens locals catalans,
+      // omplerts pel connector de partits)
+      this.admins = this.rows(
+        `SELECT nom, comunitat FROM administracio WHERE id IN (
+           SELECT DISTINCT administracio_id FROM contracte
+           UNION SELECT DISTINCT administracio_id FROM subvencio
+           UNION SELECT DISTINCT administracio_id FROM dataset
+           UNION SELECT DISTINCT administracio_id FROM indicador
+           UNION SELECT DISTINCT administracio_id FROM pressupost
+           UNION SELECT DISTINCT administracio_id FROM document
+         ) ORDER BY comunitat, nivell`);
 
       this.cards = [
         ["contracte", "Contractes"],
@@ -517,6 +548,7 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
         ["indicador", "Indicadors"],
         ["pressupost", "Pressupostos"],
         ["document", "Documents"],
+        ["administracio_partit", "Mandats per partit"],
       ].map(([t, label]) => ({
         label,
         n: this.q(`SELECT COUNT(*) AS n FROM ${t}`)?.values?.[0]?.[0] ?? 0,
@@ -560,6 +592,12 @@ FROM document WHERE font = 'siero_sede' ORDER BY data DESC;` },
          WHERE rn <= 50 ORDER BY administracio, total DESC`);
       this.raw.vFraccionament = this.q(
         "SELECT * FROM v_fraccionament_sospitos LIMIT 500");
+      this.raw.vPartits = this.q(
+        "SELECT * FROM v_contractes_per_partit ORDER BY any DESC, total DESC");
+      this.raw.partitAny = this.rows(
+        `SELECT partit, administracio, ROUND(SUM(total), 2) t
+         FROM v_contractes_per_partit WHERE any IS NOT NULL
+         GROUP BY partit, administracio ORDER BY t DESC LIMIT 80`);
       this.raw.vPressupost = this.q(
         "SELECT * FROM v_pressupost_per_exercici ORDER BY exercici DESC, definitiu DESC");
       this.raw.execucio = this.rows(
