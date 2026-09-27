@@ -92,6 +92,23 @@ python -m http.server -d docs 8000
 - **Reutilitza les dades**: `docs/transparencia.sqlite.gz` és la BD completa publicada;
   respecta la llicència de cada font (taula `font`) i cita l'origen.
 
+## Ingesta local i publicació manual
+
+Alguns portals bloquegen el rang d'IPs dels runners de GitHub Actions (timeouts de
+connexió). Per ingestar des d'una màquina local i publicar el resultat:
+
+```bash
+fair-factory ingest                              # BD completa a data/transparencia.sqlite
+fair-factory --db data/transparencia.sqlite slim # buida subvencio.raw (artefacte web)
+fair-factory --db data/transparencia.sqlite export-summary --out docs/summary.json
+gzip -9c data/transparencia.sqlite > docs/transparencia.sqlite.gz
+git add docs/transparencia.sqlite.gz docs/summary.json && git commit -m "data: publica"
+```
+
+La pròxima execució del workflow fusiona les BDs parcials **a sobre de la publicada
+anterior** (`merge --keep`), així que les fonts que fallin a la CI conserven les
+dades de l'última ingesta local.
+
 ## Desenvolupament
 
 ```bash
