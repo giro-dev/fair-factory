@@ -20,27 +20,46 @@ def cmd_init(args) -> int:
     return 0
 
 
-def cmd_ingest(args) -> int:
+def _connector_kwargs(cls, args) -> dict:
+    """Tradueix les cli_options declarades pel connector a kwargs d'__init__."""
+    kwargs = {}
+    for flag, _add_kwargs, param in cls.cli_options:
+        val = getattr(args, flag.lstrip("-").replace("-", "_"), None)
+        if val is not None:
+            kwargs[param] = val
+    return kwargs
+
+
+def _run_connector(args, name: str) -> tuple[str, bool]:
+    """Executa un connector amb connexió pròpia (permet paral·lelisme)."""
     conn = connect(args.db)
-    init_db(conn)
-    client = Client(delay=args.delay)
-    names = args.sources or list(CONNECTORS)
-    failed = []
-    for name in names:
+    try:
+        init_db(conn)
         cls = CONNECTORS[name]
-        # cada connector declara les seves opcions a `cli_options`; aquí es
-        # passen els valors parsejats sense lògica específica per connector
-        kwargs = {}
-        for flag, _add_kwargs, param in cls.cli_options:
-            val = getattr(args, flag.lstrip("-").replace("-", "_"), None)
-            if val is not None:
-                kwargs[param] = val
-        connector = cls(conn, client, limit=args.limit, **kwargs)
-        try:
-            connector.run()
-        except Exception:  # noqa: BLE001 - one failing source must not abort the rest
-            log.exception("%s: error d'ingesta", name)
-            failed.append(name)
+        cls(conn, Client(delay=args.delay), limit=args.limit, **_connector_kwargs(cls, args)).run()
+        return name, True
+    except Exception:  # noqa: BLE001 - one failing source must not abort the rest
+        log.exception("%s: error d'ingesta", name)
+        return name, False
+    finally:
+        conn.close()
+
+
+def cmd_ingest(args) -> int:
+    names = args.sources or list(CONNECTORS)
+    if str(args.db) == ":memory:" and args.jobs > 1:
+        log.warning("--jobs>1 no funciona amb :memory: (cada connexió és una BD pròpia)")
+        args.jobs = 1
+    if args.jobs > 1:
+        # cada connector és I/O-bound (espera HTTP); un fil per connector
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=min(args.jobs, len(names))) as pool:
+            results = list(pool.map(lambda n: _run_connector(args, n), names))
+        failed = [n for n, ok in results if not ok]
+    else:
+        failed = [n for n in names if not _run_connector(args, n)[1]]
+    conn = connect(args.db)
     conn.execute("VACUUM")
     conn.close()
     if failed:
@@ -191,6 +210,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ing.add_argument("--limit", type=int, help="màxim de registres per font (proves)")
     ing.add_argument("--delay", type=float, default=1.0, help="segons entre peticions")
+    ing.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        metavar="N",
+        help="connectors en paral·lel (un fil cadascun, connexió SQLite pròpia)",
+    )
     # opcions específiques de cada connector, declarades a `cli_options`
     for cls in CONNECTORS.values():
         for flag, add_kwargs, _param in cls.cli_options:

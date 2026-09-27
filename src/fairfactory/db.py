@@ -75,6 +75,11 @@ def connect(path: Path | str = DEFAULT_DB) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    if str(path) != ":memory:":
+        # WAL + busy_timeout permeten escriptures concurrents des de diverses
+        # connexions (un fil per connector a `ingest --jobs`)
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA busy_timeout = 30000")
     return conn
 
 
