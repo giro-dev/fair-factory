@@ -1,8 +1,8 @@
 {
-  "generat": "2026-09-26T20:00:04+00:00",
+  "generat": "2026-09-27T08:44:39+00:00",
   "taules": {
-    "contracte": 21481,
-    "subvencio": 550261,
+    "contracte": 21567,
+    "subvencio": 718111,
     "dataset": 518,
     "indicador": 27,
     "pressupost": 46,
@@ -31,6 +31,13 @@
       "url": "https://www.figueres.cat"
     },
     {
+      "codi": "girona",
+      "nom": "Ajuntament de Girona",
+      "nivell": "local",
+      "comunitat": "Catalunya",
+      "url": "https://ajuntament.girona.cat"
+    },
+    {
       "codi": "diputacio_girona",
       "nom": "Diputació de Girona",
       "nivell": "local",
@@ -43,13 +50,6 @@
       "nivell": "autonomic",
       "comunitat": "Catalunya",
       "url": "https://gencat.cat"
-    },
-    {
-      "codi": "girona",
-      "nom": "Ajuntament de Girona",
-      "nivell": "local",
-      "comunitat": "Catalunya",
-      "url": "https://ajuntament.girona.cat"
     }
   ],
   "fonts": [
@@ -69,8 +69,8 @@
       ],
       "total_registres": 18084,
       "darrera_ingesta": {
-        "inici": "2026-09-26T17:53:41+00:00",
-        "fi": "2026-09-26T17:54:06+00:00",
+        "inici": "2026-09-27T07:24:34+00:00",
+        "fi": "2026-09-27T07:24:58+00:00",
         "estat": "ok",
         "registres": 18084,
         "missatge": null
@@ -89,8 +89,8 @@
       ],
       "total_registres": 17,
       "darrera_ingesta": {
-        "inici": "2026-09-25T23:14:51+00:00",
-        "fi": "2026-09-25T23:15:00+00:00",
+        "inici": "2026-09-27T07:23:54+00:00",
+        "fi": "2026-09-27T07:24:04+00:00",
         "estat": "ok",
         "registres": 17,
         "missatge": null
@@ -105,18 +105,19 @@
         "subvencio"
       ],
       "administracions": [
+        "Ajuntament de Figueres",
         "Ajuntament de Girona",
         "Ayuntamiento de Siero",
         "Diputació de Girona",
         "Generalitat de Catalunya",
         "Principado de Asturias"
       ],
-      "total_registres": 550261,
+      "total_registres": 718111,
       "darrera_ingesta": {
-        "inici": "2026-09-26T17:54:18+00:00",
-        "fi": "2026-09-26T17:54:23+00:00",
+        "inici": "2026-09-27T07:23:54+00:00",
+        "fi": "2026-09-27T08:44:39+00:00",
         "estat": "ok",
-        "registres": 1713,
+        "registres": 718111,
         "missatge": null
       }
     },
@@ -133,8 +134,8 @@
       ],
       "total_registres": 46,
       "darrera_ingesta": {
-        "inici": "2026-09-26T09:37:02+00:00",
-        "fi": "2026-09-26T09:37:57+00:00",
+        "inici": "2026-09-27T07:24:32+00:00",
+        "fi": "2026-09-27T07:25:12+00:00",
         "estat": "ok",
         "registres": 46,
         "missatge": null
@@ -153,8 +154,8 @@
       ],
       "total_registres": 518,
       "darrera_ingesta": {
-        "inici": "2026-09-25T23:13:16+00:00",
-        "fi": "2026-09-25T23:13:26+00:00",
+        "inici": "2026-09-27T07:23:54+00:00",
+        "fi": "2026-09-27T07:24:05+00:00",
         "estat": "ok",
         "registres": 518,
         "missatge": null
@@ -173,8 +174,8 @@
       ],
       "total_registres": 30,
       "darrera_ingesta": {
-        "inici": "2026-09-26T09:37:01+00:00",
-        "fi": "2026-09-26T09:37:02+00:00",
+        "inici": "2026-09-27T07:24:32+00:00",
+        "fi": "2026-09-27T07:24:32+00:00",
         "estat": "ok",
         "registres": 30,
         "missatge": null
@@ -193,8 +194,8 @@
       ],
       "total_registres": 696,
       "darrera_ingesta": {
-        "inici": "2026-09-26T09:36:42+00:00",
-        "fi": "2026-09-26T09:36:59+00:00",
+        "inici": "2026-09-27T07:24:05+00:00",
+        "fi": "2026-09-27T07:24:34+00:00",
         "estat": "ok",
         "registres": 696,
         "missatge": null
@@ -213,8 +214,8 @@
       ],
       "total_registres": 10,
       "darrera_ingesta": {
-        "inici": "2026-09-26T09:36:59+00:00",
-        "fi": "2026-09-26T09:37:01+00:00",
+        "inici": "2026-09-27T07:24:32+00:00",
+        "fi": "2026-09-27T07:24:34+00:00",
         "estat": "ok",
         "registres": 10,
         "missatge": null
@@ -229,15 +230,17 @@
         "contracte"
       ],
       "administracions": [
+        "Ayuntamiento de Siero",
+        "Diputació de Girona",
         "Generalitat de Catalunya",
         "Principado de Asturias"
       ],
-      "total_registres": 36,
+      "total_registres": 122,
       "darrera_ingesta": {
-        "inici": "2026-09-26T11:16:41+00:00",
-        "fi": "2026-09-26T11:19:23+00:00",
+        "inici": "2026-09-27T07:23:54+00:00",
+        "fi": "2026-09-27T07:25:09+00:00",
         "estat": "ok",
-        "registres": 36,
+        "registres": 122,
         "missatge": null
       }
     },
@@ -254,8 +257,8 @@
       ],
       "total_registres": 27,
       "darrera_ingesta": {
-        "inici": "2026-09-26T19:59:58+00:00",
-        "fi": "2026-09-26T20:00:04+00:00",
+        "inici": "2026-09-27T07:24:04+00:00",
+        "fi": "2026-09-27T07:24:27+00:00",
         "estat": "ok",
         "registres": 27,
         "missatge": null
@@ -274,8 +277,8 @@
       ],
       "total_registres": 10,
       "darrera_ingesta": {
-        "inici": "2026-09-25T23:14:24+00:00",
-        "fi": "2026-09-25T23:14:25+00:00",
+        "inici": "2026-09-27T07:24:04+00:00",
+        "fi": "2026-09-27T07:24:04+00:00",
         "estat": "ok",
         "registres": 10,
         "missatge": null
@@ -295,8 +298,8 @@
       ],
       "total_registres": 3761,
       "darrera_ingesta": {
-        "inici": "2026-09-25T23:13:37+00:00",
-        "fi": "2026-09-25T23:14:20+00:00",
+        "inici": "2026-09-27T07:23:54+00:00",
+        "fi": "2026-09-27T07:24:32+00:00",
         "estat": "ok",
         "registres": 3772,
         "missatge": null
@@ -305,139 +308,99 @@
   ],
   "ingestes": [
     {
-      "font": "siero_cifras",
-      "inici": "2026-09-26T19:59:58+00:00",
-      "fi": "2026-09-26T20:00:04+00:00",
-      "estat": "ok",
-      "registres": 27,
-      "missatge": null
-    },
-    {
-      "font": "bdns",
-      "inici": "2026-09-26T17:54:18+00:00",
-      "fi": "2026-09-26T17:54:23+00:00",
-      "estat": "ok",
-      "registres": 1713,
-      "missatge": null
-    },
-    {
       "font": "aoc_contractes",
-      "inici": "2026-09-26T17:53:41+00:00",
-      "fi": "2026-09-26T17:54:06+00:00",
+      "inici": "2026-09-27T07:24:34+00:00",
+      "fi": "2026-09-27T07:24:58+00:00",
       "estat": "ok",
       "registres": 18084,
       "missatge": null
     },
     {
-      "font": "pcsp",
-      "inici": "2026-09-26T11:16:41+00:00",
-      "fi": "2026-09-26T11:19:23+00:00",
-      "estat": "ok",
-      "registres": 36,
-      "missatge": null
-    },
-    {
-      "font": "bdns",
-      "inici": "2026-09-26T09:38:32+00:00",
-      "fi": null,
-      "estat": "running",
-      "registres": 0,
-      "missatge": null
-    },
-    {
       "font": "catalunya_socrata",
-      "inici": "2026-09-26T09:37:02+00:00",
-      "fi": "2026-09-26T09:37:57+00:00",
+      "inici": "2026-09-27T07:24:32+00:00",
+      "fi": "2026-09-27T07:25:12+00:00",
       "estat": "ok",
       "registres": 46,
       "missatge": null
     },
     {
       "font": "diputacio_girona",
-      "inici": "2026-09-26T09:37:01+00:00",
-      "fi": "2026-09-26T09:37:02+00:00",
+      "inici": "2026-09-27T07:24:32+00:00",
+      "fi": "2026-09-27T07:24:32+00:00",
       "estat": "ok",
       "registres": 30,
       "missatge": null
     },
     {
       "font": "figueres_contractes",
-      "inici": "2026-09-26T09:36:59+00:00",
-      "fi": "2026-09-26T09:37:01+00:00",
+      "inici": "2026-09-27T07:24:32+00:00",
+      "fi": "2026-09-27T07:24:34+00:00",
       "estat": "ok",
       "registres": 10,
       "missatge": null
     },
     {
       "font": "figueres_ckan",
-      "inici": "2026-09-26T09:36:42+00:00",
-      "fi": "2026-09-26T09:36:59+00:00",
+      "inici": "2026-09-27T07:24:05+00:00",
+      "fi": "2026-09-27T07:24:34+00:00",
       "estat": "ok",
       "registres": 696,
       "missatge": null
     },
     {
-      "font": "asturias_transparencia",
-      "inici": "2026-09-25T23:14:51+00:00",
-      "fi": "2026-09-25T23:15:00+00:00",
-      "estat": "ok",
-      "registres": 17,
-      "missatge": null
-    },
-    {
       "font": "siero_cifras",
-      "inici": "2026-09-25T23:14:25+00:00",
-      "fi": "2026-09-25T23:14:30+00:00",
+      "inici": "2026-09-27T07:24:04+00:00",
+      "fi": "2026-09-27T07:24:27+00:00",
       "estat": "ok",
       "registres": 27,
       "missatge": null
     },
     {
       "font": "siero_sede",
-      "inici": "2026-09-25T23:14:24+00:00",
-      "fi": "2026-09-25T23:14:25+00:00",
+      "inici": "2026-09-27T07:24:04+00:00",
+      "fi": "2026-09-27T07:24:04+00:00",
       "estat": "ok",
       "registres": 10,
       "missatge": null
     },
     {
-      "font": "asturias_transparencia",
-      "inici": "2026-09-25T23:14:20+00:00",
-      "fi": "2026-09-25T23:14:24+00:00",
+      "font": "datos_gob",
+      "inici": "2026-09-27T07:23:54+00:00",
+      "fi": "2026-09-27T07:24:05+00:00",
       "estat": "ok",
-      "registres": 1,
+      "registres": 518,
+      "missatge": null
+    },
+    {
+      "font": "asturias_transparencia",
+      "inici": "2026-09-27T07:23:54+00:00",
+      "fi": "2026-09-27T07:24:04+00:00",
+      "estat": "ok",
+      "registres": 17,
+      "missatge": null
+    },
+    {
+      "font": "bdns",
+      "inici": "2026-09-27T07:23:54+00:00",
+      "fi": "2026-09-27T08:44:39+00:00",
+      "estat": "ok",
+      "registres": 718111,
       "missatge": null
     },
     {
       "font": "siero_transparencia",
-      "inici": "2026-09-25T23:13:37+00:00",
-      "fi": "2026-09-25T23:14:20+00:00",
+      "inici": "2026-09-27T07:23:54+00:00",
+      "fi": "2026-09-27T07:24:32+00:00",
       "estat": "ok",
       "registres": 3772,
       "missatge": null
     },
     {
       "font": "pcsp",
-      "inici": "2026-09-25T23:13:26+00:00",
-      "fi": "2026-09-25T23:13:37+00:00",
+      "inici": "2026-09-27T07:23:54+00:00",
+      "fi": "2026-09-27T07:25:09+00:00",
       "estat": "ok",
-      "registres": 30,
-      "missatge": null
-    },
-    {
-      "font": "datos_gob",
-      "inici": "2026-09-25T23:13:16+00:00",
-      "fi": "2026-09-25T23:13:26+00:00",
-      "estat": "ok",
-      "registres": 518,
-      "missatge": null
-    },
-    {
-      "font": "bdns",
-      "inici": "2026-09-25T23:08:46+00:00",
-      "fi": "2026-09-25T23:13:16+00:00",
-      "estat": "ok",
-      "registres": 127987,
+      "registres": 122,
       "missatge": null
     }
   ]
